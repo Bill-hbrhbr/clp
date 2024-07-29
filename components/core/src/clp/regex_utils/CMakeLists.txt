@@ -3,11 +3,13 @@ set(
         "constants.hpp"
         "ErrorCode.hpp"
         "regex_translation_utils.hpp"
+        "RegexErrorCode.hpp"
         "RegexToWildcardTranslatorConfig.hpp"
 )
 add_library(
         regex_utils
         ErrorCode.cpp
+        RegexErrorCode.cpp
         regex_translation_utils.cpp
         ${REGEX_UTILS_HEADER_LIST}
 )
