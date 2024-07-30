@@ -20,7 +20,7 @@ TEST_CASE("regex_to_wildcard_simple_translations", "[regex_utils][re2wc][simple_
 
 TEST_CASE("regex_to_wildcard_unescaped_metachar", "[regex_utils][re2wc][unescaped_metachar]") {
     REQUIRE((regex_to_wildcard(".? xyz .* zyx .").error() == ErrorCode::UnsupportedQuestionMark));
-    //REQUIRE((regex_to_wildcard(". xyz .** zyx .").error() == RegexErrorCode{RegexErrorEnum::Star}));
+    REQUIRE((regex_to_wildcard(". xyz .** zyx .").error() == RegexErrorCode{RegexErrorEnum::Star}));
     REQUIRE((regex_to_wildcard(". xyz .*+ zyx .").error() == ErrorCode::UntranslatablePlus));
     REQUIRE((regex_to_wildcard(". xyz |.* zyx .").error() == ErrorCode::UnsupportedPipe));
     REQUIRE((regex_to_wildcard(". xyz ^.* zyx .").error() == ErrorCode::IllegalCaret));

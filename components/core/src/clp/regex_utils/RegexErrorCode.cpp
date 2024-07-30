@@ -3,17 +3,15 @@
 #include <string>
 
 #include <error_handling/ErrorCode.hpp>
-//#include "GenericErrorCode.hpp"
 
-namespace clp::error_handling {
 template <>
 auto clp::regex_utils::RegexErrorCategory::name() const noexcept -> char const* {
     return "regex utility";
 }
 
 template <>
-auto clp::regex_utils::RegexErrorCategory::message(int ev) const -> std::string {
-    switch (static_cast<clp::regex_utils::RegexErrorEnum>(ev)) {
+auto clp::regex_utils::RegexErrorCategory::message(clp::regex_utils::RegexErrorEnum ev) const -> std::string {
+    switch (ev) {
         case clp::regex_utils::RegexErrorEnum::Success:
             return "Success.";
 
@@ -34,7 +32,3 @@ auto clp::regex_utils::RegexErrorCategory::message(int ev) const -> std::string 
             return "(unrecognized error)";
     }
 }
-}
-
-template class clp::error_handling::ErrorCategory<clp::regex_utils::RegexErrorEnum>;
-template class clp::error_handling::ErrorCode<clp::regex_utils::RegexErrorEnum>;

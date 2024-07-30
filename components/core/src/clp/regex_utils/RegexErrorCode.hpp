@@ -6,7 +6,6 @@
 #include <system_error>
 
 #include <error_handling/ErrorCode.hpp>
-//#include "GenericErrorCode.hpp"
 
 namespace clp::regex_utils {
 enum class RegexErrorEnum : uint8_t {
@@ -26,8 +25,6 @@ enum class RegexErrorEnum : uint8_t {
     TokenUnquantifiable,
 };
 
-//using RegexErrorCategory = clp::error_handling::ErrorCategory<RegexErrorEnum>;
-//using RegexErrorCode = clp::error_handling::ErrorCode<RegexErrorEnum>;
 using RegexErrorCategory = clp::error_handling::ErrorCategory<RegexErrorEnum>;
 using RegexErrorCode = clp::error_handling::ErrorCode<RegexErrorEnum>;
 }  // namespace clp::regex_utils
