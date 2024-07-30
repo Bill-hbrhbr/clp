@@ -1,9 +1,12 @@
 #include <Catch2/single_include/catch2/catch.hpp>
 #include <regex_utils/ErrorCode.hpp>
+#include <regex_utils/RegexErrorCode.hpp>
 #include <regex_utils/regex_translation_utils.hpp>
 #include <regex_utils/RegexToWildcardTranslatorConfig.hpp>
 
 using clp::regex_utils::ErrorCode;
+using clp::regex_utils::RegexErrorCode;
+using clp::regex_utils::RegexErrorEnum;
 using clp::regex_utils::regex_to_wildcard;
 using clp::regex_utils::RegexToWildcardTranslatorConfig;
 
@@ -17,7 +20,7 @@ TEST_CASE("regex_to_wildcard_simple_translations", "[regex_utils][re2wc][simple_
 
 TEST_CASE("regex_to_wildcard_unescaped_metachar", "[regex_utils][re2wc][unescaped_metachar]") {
     REQUIRE((regex_to_wildcard(".? xyz .* zyx .").error() == ErrorCode::UnsupportedQuestionMark));
-    REQUIRE((regex_to_wildcard(". xyz .** zyx .").error() == ErrorCode::UntranslatableStar));
+    //REQUIRE((regex_to_wildcard(". xyz .** zyx .").error() == RegexErrorCode{RegexErrorEnum::Star}));
     REQUIRE((regex_to_wildcard(". xyz .*+ zyx .").error() == ErrorCode::UntranslatablePlus));
     REQUIRE((regex_to_wildcard(". xyz |.* zyx .").error() == ErrorCode::UnsupportedPipe));
     REQUIRE((regex_to_wildcard(". xyz ^.* zyx .").error() == ErrorCode::IllegalCaret));

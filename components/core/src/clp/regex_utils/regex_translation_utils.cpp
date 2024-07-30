@@ -11,6 +11,7 @@
 
 #include "regex_utils/constants.hpp"
 #include "regex_utils/ErrorCode.hpp"
+#include "regex_utils/RegexErrorCode.hpp"
 #include "regex_utils/RegexToWildcardTranslatorConfig.hpp"
 
 namespace clp::regex_utils {
@@ -204,7 +205,8 @@ auto normal_state_transition(
             state.set_next_state(TranslatorState::RegexPatternState::End);
             break;
         case cRegexZeroOrMore:
-            return ErrorCode::UntranslatableStar;
+            return RegexErrorCode{RegexErrorEnum::Star};
+            //return ErrorCode::UntranslatableStar;
         case cRegexOneOrMore:
             return ErrorCode::UntranslatablePlus;
         case cRegexZeroOrOne:
