@@ -240,6 +240,8 @@ add_subdirectory(src/clp/make_dictionaries_readable)
 add_subdirectory(src/clp_s)
 add_subdirectory(src/reducer)
 
+add_subdirectory(submodules/clp-cpp EXCLUDE_FROM_ALL)
+
 set(SOURCE_FILES_clp_s_unitTest
     src/clp_s/search/AndExpr.cpp
     src/clp_s/search/AndExpr.hpp
@@ -550,6 +552,8 @@ target_link_libraries(unitTest
         clp::string_utils
         yaml-cpp::yaml-cpp
         ZStd::ZStd
+        clp::array
+        clp::error_handling
         )
 target_compile_features(unitTest
         PRIVATE cxx_std_20
