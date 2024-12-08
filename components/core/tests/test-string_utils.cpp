@@ -3,7 +3,7 @@
 #include <boost/foreach.hpp>
 #include <boost/range/combine.hpp>
 #include <Catch2/single_include/catch2/catch.hpp>
-#include <string_utils/string_utils.hpp>
+#include <clp/string_utils/string_utils.hpp>
 
 using clp::string_utils::clean_up_wildcard_search_string;
 using clp::string_utils::convert_string_to_int;

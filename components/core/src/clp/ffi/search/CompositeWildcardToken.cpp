@@ -1,6 +1,6 @@
 #include "CompositeWildcardToken.hpp"
 
-#include <string_utils/string_utils.hpp>
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../../ir/parsing.hpp"
 #include "../../ir/types.hpp"

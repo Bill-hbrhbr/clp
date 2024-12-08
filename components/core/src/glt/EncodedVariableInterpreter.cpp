@@ -3,7 +3,7 @@
 #include <cassert>
 #include <cmath>
 
-#include <string_utils/string_utils.hpp>
+#include <clp/string_utils/string_utils.hpp>
 
 #include "Defs.h"
 #include "ffi/ir_stream/decoding_methods.hpp"

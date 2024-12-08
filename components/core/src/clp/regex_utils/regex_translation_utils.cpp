@@ -7,7 +7,7 @@
 #include <system_error>
 
 #include <outcome/single-header/outcome.hpp>
-#include <string_utils/string_utils.hpp>
+#include <clp/string_utils/string_utils.hpp>
 
 #include "regex_utils/constants.hpp"
 #include "regex_utils/ErrorCode.hpp"

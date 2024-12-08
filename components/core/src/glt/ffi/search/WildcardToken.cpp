@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include <string_utils/string_utils.hpp>
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../../ir/types.hpp"
 #include "../../type_utils.hpp"
