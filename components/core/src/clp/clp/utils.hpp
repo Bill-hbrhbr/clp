@@ -9,9 +9,9 @@
 
 #include "../GlobalMetadataDB.hpp"
 #include "../GlobalMetadataDBConfig.hpp"
-#include "ErrorCode.hpp"
+#include "../ErrorCode.hpp"
 #include "FileToCompress.hpp"
-#include "TraceableException.hpp"
+#include "../TraceableException.hpp"
 
 namespace clp::clp {
 // Types

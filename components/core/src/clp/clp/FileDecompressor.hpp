@@ -14,9 +14,9 @@
 #include "../streaming_archive/reader/Archive.hpp"
 #include "../streaming_archive/reader/File.hpp"
 #include "../streaming_archive/reader/Message.hpp"
-#include "ErrorCode.hpp"
-#include "ir/types.hpp"
-#include "Utils.hpp"
+#include "../ErrorCode.hpp"
+#include "../ir/types.hpp"
+#include "../Utils.hpp"
 
 namespace clp::clp {
 /**

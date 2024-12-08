@@ -12,7 +12,7 @@
 #include "../TraceableException.hpp"
 #include "../Utils.hpp"
 #include "FileDecompressor.hpp"
-#include "ir/constants.hpp"
+#include "../ir/constants.hpp"
 #include "utils.hpp"
 
 using std::cerr;

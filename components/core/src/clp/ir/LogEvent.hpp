@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "EncodedTextAst.hpp"
-#include "time_types.hpp"
+#include "../time_types.hpp"
 #include "types.hpp"
 
 namespace clp::ir {
