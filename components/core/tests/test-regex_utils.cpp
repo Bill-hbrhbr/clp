@@ -1,7 +1,7 @@
 #include <Catch2/single_include/catch2/catch.hpp>
-#include <regex_utils/ErrorCode.hpp>
-#include <regex_utils/regex_translation_utils.hpp>
-#include <regex_utils/RegexToWildcardTranslatorConfig.hpp>
+#include <clp/regex_utils/ErrorCode.hpp>
+#include <clp/regex_utils/regex_translation_utils.hpp>
+#include <clp/regex_utils/RegexToWildcardTranslatorConfig.hpp>
 
 using clp::regex_utils::ErrorCode;
 using clp::regex_utils::regex_to_wildcard;

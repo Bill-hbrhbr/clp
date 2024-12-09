@@ -229,7 +229,7 @@ set(sqlite_DYNAMIC_LIBS "dl;m;pthread")
 include(cmake/Modules/FindLibraryDependencies.cmake)
 FindDynamicLibraryDependencies(sqlite "${sqlite_DYNAMIC_LIBS}")
 
-add_subdirectory(src/clp/regex_utils)
+#add_subdirectory(src/clp/regex_utils)
 
 add_subdirectory(src/clp/clg)
 add_subdirectory(src/clp/clo)
@@ -547,12 +547,12 @@ target_link_libraries(unitTest
         OpenSSL::Crypto
         ${sqlite_LIBRARY_DEPENDENCIES}
         ${STD_FS_LIBS}
-        clp::regex_utils
         yaml-cpp::yaml-cpp
         ZStd::ZStd
         clp::array
         clp::error_handling
         clp::string_utils
+        clp::regex_utils
         )
 target_compile_features(unitTest
         PRIVATE cxx_std_20
