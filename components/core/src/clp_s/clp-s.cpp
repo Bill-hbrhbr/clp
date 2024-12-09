@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 
+#include <clp/string_utils/string_utils.hpp>
 #include <json/single_include/nlohmann/json.hpp>
 #include <mongocxx/instance.hpp>
 #include <spdlog/sinks/stdout_sinks.h>
@@ -33,14 +34,13 @@
 #include "search/SchemaMatch.hpp"
 #include "TimestampPattern.hpp"
 #include "TraceableException.hpp"
-#include "Utils.hpp"
 
 using namespace clp_s::search;
+using clp::string_utils::tokenize_column_descriptor;
 using clp_s::cArchiveFormatDevelopmentVersionFlag;
 using clp_s::cEpochTimeMax;
 using clp_s::cEpochTimeMin;
 using clp_s::CommandLineArguments;
-using clp_s::StringUtils;
 
 namespace {
 /**
@@ -192,7 +192,7 @@ bool search_archive(
     try {
         for (auto const& column : command_line_arguments.get_projection_columns()) {
             std::vector<std::string> descriptor_tokens;
-            if (false == StringUtils::tokenize_column_descriptor(column, descriptor_tokens)) {
+            if (false == tokenize_column_descriptor(column, descriptor_tokens)) {
                 SPDLOG_ERROR("Can not tokenize invalid column: \"{}\"", column);
                 return false;
             }

@@ -1,8 +1,7 @@
 #include "TimestampDictionaryReader.hpp"
 
+#include <clp/string_utils/string_utils.hpp>
 #include <unordered_set>
-
-#include "Utils.hpp"
 
 namespace clp_s {
 void TimestampDictionaryReader::open(std::string const& dictionary_path) {
@@ -44,7 +43,7 @@ void TimestampDictionaryReader::read_new_entries() {
         TimestampEntry entry;
         std::vector<std::string> tokens;
         entry.try_read_from_file(m_dictionary_decompressor);
-        if (false == StringUtils::tokenize_column_descriptor(entry.get_key_name(), tokens)) {
+        if (false == clp::string_utils::tokenize_column_descriptor(entry.get_key_name(), tokens)) {
             throw OperationFailed(ErrorCodeCorrupt, __FILENAME__, __LINE__);
         }
         m_entries.emplace_back(std::move(entry));

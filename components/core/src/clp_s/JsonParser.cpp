@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stack>
 
+#include <clp/string_utils/string_utils.hpp>
 #include <simdjson.h>
 #include <spdlog/spdlog.h>
 
@@ -23,7 +24,7 @@ JsonParser::JsonParser(JsonParserOption const& option)
 
     if (false == m_timestamp_key.empty()) {
         if (false
-            == clp_s::StringUtils::tokenize_column_descriptor(m_timestamp_key, m_timestamp_column))
+            == clp::string_utils::tokenize_column_descriptor(m_timestamp_key, m_timestamp_column))
         {
             SPDLOG_ERROR("Can not parse invalid timestamp key: \"{}\"", m_timestamp_key);
             throw OperationFailed(ErrorCodeBadParam, __FILENAME__, __LINE__);

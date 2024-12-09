@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <antlr4-runtime.h>
+#include <clp/string_utils/string_utils.hpp>
 #include <spdlog/spdlog.h>
 
 #include "KqlBaseVisitor.h"
@@ -11,7 +12,6 @@
 // If redlining may want to add ${workspaceFolder}/build/**
 // to include path for vscode C/C++ utils
 
-#include "../../Utils.hpp"
 #include "../AndExpr.hpp"
 #include "../BooleanLiteral.hpp"
 #include "../ColumnDescriptor.hpp"
@@ -27,6 +27,9 @@ using namespace antlr4;
 using namespace kql;
 
 namespace clp_s::search::kql {
+using clp::string_utils::clean_up_wildcard_search_string;
+using clp::string_utils::tokenize_column_descriptor;
+
 class ErrorListener : public BaseErrorListener {
 public:
     void syntaxError(
@@ -92,7 +95,7 @@ public:
         } else if (auto ret = NullLiteral::create_from_string(token)) {
             return ret;
         } else {
-            return StringLiteral::create(StringUtils::clean_up_wildcard_search_string(token));
+            return StringLiteral::create(clean_up_wildcard_search_string(token));
         }
     }
 
@@ -112,7 +115,7 @@ public:
         std::string column = unquote_string(ctx->LITERAL()->getText());
 
         std::vector<std::string> descriptor_tokens;
-        if (false == StringUtils::tokenize_column_descriptor(column, descriptor_tokens)) {
+        if (false == tokenize_column_descriptor(column, descriptor_tokens)) {
             SPDLOG_ERROR("Can not tokenize invalid column: \"{}\"", column);
             return nullptr;
         }

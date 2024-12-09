@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 
+#include <clp/string_utils/string_utils.hpp>
+
 #include "../../clp/type_utils.hpp"
 #include "../Utils.hpp"
 #include "AndExpr.hpp"
@@ -17,6 +19,8 @@
 #define eval(op, a, b) (((op) == FilterOperation::EQ) ? ((a) == (b)) : ((a) != (b)))
 
 namespace clp_s::search {
+using clp::string_utils::wildcard_match_unsafe;
+
 bool Output::filter() {
     auto top_level_expr = m_expr;
 
@@ -484,7 +488,7 @@ bool Output::evaluate_clp_string_filter(
             for (auto const& subquery : q->get_sub_queries()) {
                 if (subquery.matches_logtype(id) && subquery.matches_vars(vars)) {
                     if (subquery.wildcard_match_required()) {
-                        matched = StringUtils::wildcard_match_unsafe(
+                        matched = wildcard_match_unsafe(
                                 std::get<std::string>(reader->extract_value(m_cur_message)),
                                 q->get_search_string(),
                                 !q->get_ignore_case()
@@ -496,7 +500,7 @@ bool Output::evaluate_clp_string_filter(
                 }
             }
         } else {
-            matched = StringUtils::wildcard_match_unsafe(
+            matched = wildcard_match_unsafe(
                     std::get<std::string>(reader->extract_value(m_cur_message)),
                     q->get_search_string(),
                     !q->get_ignore_case()

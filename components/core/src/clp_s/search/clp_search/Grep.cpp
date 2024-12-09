@@ -6,14 +6,21 @@
 #include <string>
 #include <utility>
 
-#include "../../Utils.hpp"
+#include <clp/string_utils/string_utils.hpp>
+
 #include "../../VariableEncoder.hpp"
 #include "EncodedVariableInterpreter.hpp"
 
+namespace clp_s::search::clp_search {
+using clp::string_utils::clean_up_wildcard_search_string;
+using clp::string_utils::is_alphabet;
+using clp::string_utils::is_decimal_digit;
+using clp::string_utils::is_delim;
+using clp::string_utils::is_wildcard;
+using clp::string_utils::wildcard_match_unsafe;
 using std::string;
 using std::vector;
 
-namespace clp_s::search::clp_search {
 // Local types
 enum class SubQueryMatchabilityResult {
     MayMatch,  // The subquery might match a message
@@ -422,13 +429,13 @@ std::optional<Query> Grep::process_raw_query(
     }
 
     // Clean-up search string
-    processed_search_string = StringUtils::clean_up_wildcard_search_string(processed_search_string);
+    processed_search_string = clean_up_wildcard_search_string(processed_search_string);
 
     // Replace non-greedy wildcards with greedy wildcards since we currently have no support for
     // searching compressed files with non-greedy wildcards
     std::replace(processed_search_string.begin(), processed_search_string.end(), '?', '*');
     // Clean-up in case any instances of "?*" or "*?" were changed into "**"
-    processed_search_string = StringUtils::clean_up_wildcard_search_string(processed_search_string);
+    processed_search_string = clean_up_wildcard_search_string(processed_search_string);
 
     // Split search_string into tokens with wildcards
     vector<QueryToken> query_tokens;
@@ -528,7 +535,7 @@ bool Grep::get_bounds_of_next_potential_var(
             if (is_escaped) {
                 is_escaped = false;
 
-                if (StringUtils::is_delim(c)) {
+                if (is_delim(c)) {
                     // Found escaped non-delimiter, so reverse the index to retain the escape
                     // character
                     --begin_pos;
@@ -538,11 +545,11 @@ bool Grep::get_bounds_of_next_potential_var(
                 // Escape character
                 is_escaped = true;
             } else {
-                if (StringUtils::is_wildcard(c)) {
+                if (is_wildcard(c)) {
                     contains_wildcard = true;
                     break;
                 }
-                if (false == StringUtils::is_delim(c)) {
+                if (false == is_delim(c)) {
                     break;
                 }
             }
@@ -560,7 +567,7 @@ bool Grep::get_bounds_of_next_potential_var(
             if (is_escaped) {
                 is_escaped = false;
 
-                if (StringUtils::is_delim(c)) {
+                if (is_delim(c)) {
                     // Found escaped delimiter, so reverse the index to retain the escape
                     // character
                     --end_pos;
@@ -570,17 +577,17 @@ bool Grep::get_bounds_of_next_potential_var(
                 // Escape character
                 is_escaped = true;
             } else {
-                if (StringUtils::is_wildcard(c)) {
+                if (is_wildcard(c)) {
                     contains_wildcard = true;
-                } else if (StringUtils::is_delim(c)) {
+                } else if (is_delim(c)) {
                     // Found delimiter that's not also a wildcard
                     break;
                 }
             }
 
-            if (StringUtils::is_decimal_digit(c)) {
+            if (is_decimal_digit(c)) {
                 contains_decimal_digit = true;
-            } else if (StringUtils::is_alphabet(c)) {
+            } else if (is_alphabet(c)) {
                 contains_alphabet = true;
             }
         }
@@ -604,13 +611,13 @@ bool Grep::get_bounds_of_next_potential_var(
                 if (is_escaped) {
                     is_escaped = false;
 
-                    if (StringUtils::is_alphabet(c)) {
+                    if (is_alphabet(c)) {
                         break;
                     }
                 } else if ('\\' == c) {
                     // Escape character
                     is_escaped = true;
-                } else if (StringUtils::is_wildcard(c)) {
+                } else if (is_wildcard(c)) {
                     found_wildcard_before_alphabet = true;
                     break;
                 }
