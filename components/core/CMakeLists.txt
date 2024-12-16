@@ -224,12 +224,20 @@ else()
     message(FATAL_ERROR "Could not find ${CLP_LIBS_STRING} libraries for ZStd")
 endif()
 
+# Add clp-cpp
+find_package(clp-cpp QUIET)
+if(clp-cpp_FOUND)
+    message(STATUS "Found clp-cpp ${clp-cpp_VERSION}")
+elseif (EXISTS ${CMAKE_CURRENT_LIST_DIR}/submodules/clp-cpp)
+    add_subdirectory(submodules/clp-cpp EXCLUDE_FROM_ALL)
+else()
+    message(FATAL_ERROR "Could not find ${CLP_LIBS_STRING} libraries for clp-cpp")
+endif()
+
 # sqlite dependencies
 set(sqlite_DYNAMIC_LIBS "dl;m;pthread")
 include(cmake/Modules/FindLibraryDependencies.cmake)
 FindDynamicLibraryDependencies(sqlite "${sqlite_DYNAMIC_LIBS}")
-
-#add_subdirectory(src/clp/regex_utils)
 
 add_subdirectory(src/clp/clg)
 add_subdirectory(src/clp/clo)
@@ -238,8 +246,6 @@ add_subdirectory(src/glt/glt)
 add_subdirectory(src/clp/make_dictionaries_readable)
 add_subdirectory(src/clp_s)
 add_subdirectory(src/reducer)
-
-add_subdirectory(submodules/clp-cpp EXCLUDE_FROM_ALL)
 
 set(SOURCE_FILES_clp_s_unitTest
     src/clp_s/search/AndExpr.cpp
