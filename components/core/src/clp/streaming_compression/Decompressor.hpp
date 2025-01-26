@@ -1,12 +1,9 @@
 #ifndef CLP_STREAMING_COMPRESSION_DECOMPRESSOR_HPP
 #define CLP_STREAMING_COMPRESSION_DECOMPRESSOR_HPP
 
-#include <string>
-
 #include "../FileReader.hpp"
 #include "../ReaderInterface.hpp"
 #include "../TraceableException.hpp"
-#include "Constants.hpp"
 
 namespace clp::streaming_compression {
 class Decompressor : public ReaderInterface {
@@ -19,20 +16,24 @@ public:
                 : TraceableException(error_code, filename, line_number) {}
 
         // Methods
-        char const* what() const noexcept override {
+        [[nodiscard]] auto what() const noexcept -> char const* override {
             return "streaming_compression::Decompressor operation failed";
         }
     };
 
     // Constructor
-    explicit Decompressor(CompressorType type) : m_compression_type(type) {}
+    Decompressor() = default;
 
     // Destructor
     ~Decompressor() = default;
 
-    // Explicitly disable copy and move constructor/assignment
+    // Delete copy constructor and assignment operator
     Decompressor(Decompressor const&) = delete;
-    Decompressor& operator=(Decompressor const&) = delete;
+    auto operator=(Decompressor const&) -> Decompressor& = delete;
+
+    // Default move constructor and assignment operator
+    Decompressor(Decompressor&&) noexcept = default;
+    auto operator=(Decompressor&&) noexcept -> Decompressor& = default;
 
     // Methods
     /**
@@ -40,27 +41,23 @@ public:
      * @param compressed_data_buffer
      * @param compressed_data_buffer_size
      */
-    virtual void open(char const* compressed_data_buffer, size_t compressed_data_buffer_size) = 0;
+    virtual auto open(char const* compressed_data_buffer, size_t compressed_data_buffer_size) -> void = 0;
     /**
      * Initializes the decompressor to decompress from an open file
      * @param file_reader
      * @param file_read_buffer_capacity The maximum amount of data to read from a file at a time
      */
-    virtual void open(FileReader& file_reader, size_t file_read_buffer_capacity) = 0;
+    virtual auto open(FileReader& file_reader, size_t file_read_buffer_capacity) -> void = 0;
     /**
      * Closes decompression stream
      */
-    virtual void close() = 0;
+    virtual auto close() -> void = 0;
 
-    virtual ErrorCode get_decompressed_stream_region(
+    virtual auto get_decompressed_stream_region(
             size_t decompressed_stream_pos,
             char* extraction_buf,
             size_t extraction_len
-    ) = 0;
-
-protected:
-    // Variables
-    CompressorType m_compression_type;
+    ) -> ErrorCode = 0;
 };
 }  // namespace clp::streaming_compression
 
