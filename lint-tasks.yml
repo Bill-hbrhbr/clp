@@ -165,6 +165,7 @@ tasks:
           FLAGS:
             - "--config-file '{{.ROOT_DIR}}/.clang-tidy'"
             - "-p '{{.G_CORE_COMPONENT_BUILD_DIR}}'"
+            - "-system-headers=false"
           OUTPUT_DIR: "{{.G_LINT_CLANG_TIDY_DIR}}"
           VENV_DIR: "{{.G_LINT_VENV_DIR}}"
 
@@ -756,6 +757,7 @@ tasks:
           FLAGS:
             - "--config-file '{{.ROOT_DIR}}/.clang-tidy'"
             - "-p '{{.G_CORE_COMPONENT_BUILD_DIR}}'"
+            - "-system-headers=false"
           INCLUDE_PATTERNS:
             - "{{.G_CORE_COMPONENT_DIR}}/src/*"
             - "{{.G_CORE_COMPONENT_DIR}}/tests/*"
