@@ -14,7 +14,6 @@
 using clp::error_handling::ErrorCategory;
 using clp::error_handling::ErrorCode;
 using std::string;
-using std::string_view;
 
 namespace {
 enum class AlwaysSuccessErrorCodeEnum : uint8_t {
@@ -31,11 +30,11 @@ using AlwaysSuccessErrorCategory = ErrorCategory<AlwaysSuccessErrorCodeEnum>;
 using BinaryErrorCode = ErrorCode<BinaryErrorCodeEnum>;
 using BinaryErrorCategory = ErrorCategory<BinaryErrorCodeEnum>;
 
-constexpr string_view cAlwaysSuccessErrorCategoryName{"Always Success Error Code"};
-constexpr string_view cBinaryTestErrorCategoryName{"Binary Error Code"};
-constexpr string_view cSuccessErrorMsg{"Success"};
-constexpr string_view cFailureErrorMsg{"Failure"};
-constexpr string_view cUnrecognizedErrorCode{"Unrecognized Error Code"};
+constexpr std::string_view cAlwaysSuccessErrorCategoryName{"Always Success Error Code"};
+constexpr std::string_view cBinaryTestErrorCategoryName{"Binary Error Code"};
+constexpr std::string_view cSuccessErrorMsg{"Success"};
+constexpr std::string_view cFailureErrorMsg{"Failure"};
+constexpr std::string_view cUnrecognizedErrorCode{"Unrecognized Error Code"};
 constexpr std::array cFailureConditions{std::errc::not_connected, std::errc::timed_out};
 constexpr std::array cNoneFailureConditions{std::errc::broken_pipe, std::errc::address_in_use};
 }  // namespace
