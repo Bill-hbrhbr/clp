@@ -51,7 +51,7 @@ template <>
 auto AlwaysSuccessErrorCategory::message(AlwaysSuccessErrorCodeEnum error_enum) const -> string {
     switch (error_enum) {
         case AlwaysSuccessErrorCodeEnum::Success:
-            return string{cSuccessErrorMsg};
+            return std::string{cSuccessErrorMsg};
         default:
             return string{cUnrecognizedErrorCode};
     }
