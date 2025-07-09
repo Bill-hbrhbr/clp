@@ -1,6 +1,7 @@
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Callable
 
 import pytest
 from conftest import BaseTestParams
@@ -44,31 +45,17 @@ def grep_sorted_search_results_path(
     return grep_sorted_search_results_path
 
 
+@pytest.fixture(scope="module", autouse=True)
+def compress(test_params: BaseTestParams, logs_dir: Path, run_clp_package) -> None:
+    cmd = [str(test_params.clp_package_sbin_dir / "compress.sh"), str(logs_dir)]
+    run_and_assert(cmd, stdout=subprocess.PIPE)
+
+
 def test_search(
     test_params: BaseTestParams, logs_dir: Path, query: str, grep_sorted_search_results_path: Path
 ) -> None:
-    package_sbin_dir = test_params.clp_package_dir / "sbin"
-    cmd = [str(package_sbin_dir / "compress.sh"), str(logs_dir)]
-    run_and_assert(cmd, stdout=subprocess.PIPE)
-
-    _test_basic_search(
-        package_sbin_dir,
-        query,
-        False,
-        grep_sorted_search_results_path,
-        test_params.test_output_dir,
-    )
-    _test_basic_search(package_sbin_dir, query.lower(), False, None, test_params.test_output_dir)
-    _test_basic_search(
-        package_sbin_dir,
-        query[:-1] + query[-1].lower(),
-        True,
-        grep_sorted_search_results_path,
-        test_params.test_output_dir,
-    )
-
     cmd = [
-        str(package_sbin_dir / "search.sh"),
+        str(test_params.clp_package_sbin_dir / "search.sh"),
         "--raw",
         "--file-path",
         str(
@@ -109,28 +96,42 @@ def test_search(
     # assert expected_output == proc.stdout.decode().strip(), "clp-text search returned wrong count by time buckets"
 
 
-def _test_basic_search(
-    package_sbin_dir: Path,
+@pytest.mark.parametrize(
+    "query_transform, ignore_case, expect_results",
+    [
+        (lambda q: q, False, True),
+        (lambda q: q.lower(), False, False),
+        (lambda q: q[:-1] + q[-1].lower(), True, True),
+    ],
+)
+def test_basic_search(
+    test_params: BaseTestParams,
     query: str,
+    query_transform: Callable[[str], str],
     ignore_case: bool,
-    expected_results_path: Path | None,
-    test_output_dir: Path,
+    grep_sorted_search_results_path: Path,
+    expect_results: bool,
 ) -> None:
-    cmd = [str(package_sbin_dir / "search.sh"), "--raw", query]
+    cmd = [str(test_params.clp_package_sbin_dir / "search.sh"), "--raw", query_transform(query)]
     if ignore_case:
         cmd.append("--ignore-case")
     proc = run_and_assert(cmd, stdout=subprocess.PIPE)
 
-    if expected_results_path is None:
+    if not expect_results:
         assert "" == proc.stdout.decode(), "clp-text search results don't match expected output"
     else:
         sorted_output = sorted(proc.stdout.decode().splitlines(keepends=True))
-        clp_sorted_search_results_path = test_output_dir / "clp-text-search.txt"
+        clp_sorted_search_results_path = test_params.test_output_dir / "clp-text-search.txt"
         with open(clp_sorted_search_results_path, "w") as f:
             for line in sorted_output:
                 f.write(line)
 
-        cmd = ["diff", "--brief", str(expected_results_path), str(clp_sorted_search_results_path)]
+        cmd = [
+            "diff",
+            "--brief",
+            str(grep_sorted_search_results_path),
+            str(clp_sorted_search_results_path),
+        ]
         proc = subprocess.run(cmd, stdout=subprocess.PIPE)
         if 0 != proc.returncode:
             if 1 == proc.returncode:

@@ -14,6 +14,7 @@ from utils import (
 class BaseTestParams:
     clp_bins_dir: Path
     clp_package_dir: Path
+    clp_package_sbin_dir: Path
     test_output_dir: Path
     uncompressed_logs_dir: Path
 
@@ -23,6 +24,7 @@ def test_params() -> BaseTestParams:
     return BaseTestParams(
         clp_bins_dir=Path(get_env_var("CLP_BINS_DIR")),
         clp_package_dir=Path(get_env_var("CLP_PACKAGE_DIR")),
+        clp_package_sbin_dir=Path(get_env_var("CLP_PACKAGE_SBIN_DIR")),
         test_output_dir=Path(get_env_var("TEST_OUTPUT_DIR")),
         uncompressed_logs_dir=Path(get_env_var("UNCOMPRESSED_LOGS_DIR")),
     )
@@ -35,13 +37,12 @@ def create_test_output_dir(test_params: BaseTestParams) -> None:
 
 @pytest.fixture(scope="module", autouse=True)
 def run_clp_package(test_params: BaseTestParams) -> None:
-    package_sbin_dir = test_params.clp_package_dir / "sbin"
     clean_package_data(test_params.clp_package_dir)
     try:
-        cmd = [str(package_sbin_dir / "start-clp.sh")]
+        cmd = [str(test_params.clp_package_sbin_dir / "start-clp.sh")]
         run_and_assert(cmd)
         yield
     finally:
-        cmd = [str(package_sbin_dir / "stop-clp.sh")]
+        cmd = [str(test_params.clp_package_sbin_dir / "stop-clp.sh")]
         run_and_assert(cmd, check=True)
         clean_package_data(test_params.clp_package_dir)
