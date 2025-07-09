@@ -1,9 +1,10 @@
-import shutil
-from dataclasses import dataclass
 import os
-from pathlib import Path
-import pytest
+import shutil
 import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+
+import pytest
 
 
 @dataclass(frozen=True)
@@ -30,13 +31,7 @@ def test_search(get_base_test_params: BaseTestParams) -> None:
     logs_dir = test_params.uncompressed_logs_dir / "hive-24hrs"
 
     # TODO cache with pytest cache
-    cmd = [
-        "grep",
-        "--recursive",
-        "--no-filename",
-        query,
-        str(logs_dir)
-    ]
+    cmd = ["grep", "--recursive", "--no-filename", query, str(logs_dir)]
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
 
     sorted_output = sorted(proc.stdout.decode().splitlines(keepends=True))
@@ -56,19 +51,43 @@ def test_search(get_base_test_params: BaseTestParams) -> None:
         cmd = [str(package_sbin_dir / "compress.sh"), str(logs_dir)]
         _run_and_assert(cmd, stdout=subprocess.PIPE)
 
-        _test_basic_search(package_sbin_dir, query, False, grep_sorted_search_results_path,
-                           test_params.test_output_dir)
-        _test_basic_search(package_sbin_dir, query.lower(), False, None,
-                           test_params.test_output_dir)
-        _test_basic_search(package_sbin_dir, query[:-1] + query[-1].lower(), True,
-                           grep_sorted_search_results_path, test_params.test_output_dir)
+        _test_basic_search(
+            package_sbin_dir,
+            query,
+            False,
+            grep_sorted_search_results_path,
+            test_params.test_output_dir,
+        )
+        _test_basic_search(
+            package_sbin_dir, query.lower(), False, None, test_params.test_output_dir
+        )
+        _test_basic_search(
+            package_sbin_dir,
+            query[:-1] + query[-1].lower(),
+            True,
+            grep_sorted_search_results_path,
+            test_params.test_output_dir,
+        )
 
-        cmd = [str(package_sbin_dir / "search.sh"), "--raw", "--file-path",
-               str(logs_dir / "logs" / "i-8fca0980" / "application_1427088391284_0097" / "container_1427088391284_0097_01_000007" / "syslog"),
-               query]
+        cmd = [
+            str(package_sbin_dir / "search.sh"),
+            "--raw",
+            "--file-path",
+            str(
+                logs_dir
+                / "logs"
+                / "i-8fca0980"
+                / "application_1427088391284_0097"
+                / "container_1427088391284_0097_01_000007"
+                / "syslog"
+            ),
+            query,
+        ]
         proc = _run_and_assert(cmd, stdout=subprocess.PIPE)
         expected_output = "2015-03-23 11:54:22,594 INFO [main] org.apache.hadoop.hive.ql.exec.MapOperator: DESERIALIZE_ERRORS:0\n"
-        assert expected_output == proc.stdout.decode(), "clp-text search within specific file doesn't match expected output"
+        assert (
+            expected_output == proc.stdout.decode()
+        ), "clp-text search within specific file doesn't match expected output"
 
         # cmd = [str(package_sbin_dir / "search.sh"), "--raw", "--count", query]
         # proc = _run_and_assert(cmd, stdout=subprocess.PIPE)
@@ -116,8 +135,13 @@ def _run_and_assert(cmd, **kwargs):
     return proc
 
 
-def _test_basic_search(package_sbin_dir: Path, query: str, ignore_case: bool,
-                       expected_results_path: Path | None, test_output_dir: Path) -> None:
+def _test_basic_search(
+    package_sbin_dir: Path,
+    query: str,
+    ignore_case: bool,
+    expected_results_path: Path | None,
+    test_output_dir: Path,
+) -> None:
     cmd = [str(package_sbin_dir / "search.sh"), "--raw", query]
     if ignore_case:
         cmd.append("--ignore-case")
@@ -132,8 +156,7 @@ def _test_basic_search(package_sbin_dir: Path, query: str, ignore_case: bool,
             for line in sorted_output:
                 f.write(line)
 
-        cmd = ["diff", "--brief", str(expected_results_path),
-               str(clp_sorted_search_results_path)]
+        cmd = ["diff", "--brief", str(expected_results_path), str(clp_sorted_search_results_path)]
         proc = subprocess.run(cmd, stdout=subprocess.PIPE)
         if 0 != proc.returncode:
             if 1 == proc.returncode:
