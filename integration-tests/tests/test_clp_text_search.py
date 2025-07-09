@@ -1,72 +1,70 @@
 import shutil
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
 import pytest
-from conftest import BaseTestParams
+from conftest import EnvParams
 from utils import run_and_assert
 
 pytestmark = pytest.mark.clp
 
 
-@pytest.fixture(scope="module", params=["hive-24hrs"])
-def name(request) -> str:
-    yield request.param
+@dataclass(frozen=True)
+class TextSearchParams:
+    name: str
+    logs_dir: Path
+    query: str
+    grep_label: str
+    grep_sorted_search_results_path: Path
 
 
-@pytest.fixture(scope="module", params=["DESERIALIZE_ERRORS"])
-def query(request) -> str:
-    yield request.param
+@pytest.fixture(scope="module", params=[("hive-24hrs", "DESERIALIZE_ERRORS")])
+def test_params(request, env_params: EnvParams) -> TextSearchParams:
+    name, query = request.param
+    logs_dir = env_params.uncompressed_logs_dir / name
+    grep_label = f"grep-{name}-{query}"
+    grep_sorted_search_results_path = env_params.test_output_dir / grep_label
 
+    if not request.config.cache.get(grep_label, False):
+        print(f"Running grep with query '{query}' in {logs_dir}.")
+        cmd = ["grep", "--recursive", "--no-filename", query, str(logs_dir)]
+        proc = run_and_assert(cmd, stdout=subprocess.PIPE, check=True)
+        sorted_output = sorted(proc.stdout.decode().splitlines(keepends=True))
+        with open(grep_sorted_search_results_path, "w") as f:
+            f.writelines(sorted_output)
+        request.config.cache.set(grep_label, True)
 
-@pytest.fixture(scope="module")
-def logs_dir(test_params: BaseTestParams, name: str) -> Path:
-    yield test_params.uncompressed_logs_dir / name
-
-
-@pytest.fixture(scope="module")
-def grep_sorted_search_results_path(
-    request, test_params: BaseTestParams, logs_dir: Path, name: str, query: str
-) -> Path:
-    label = f"grep-{name}-{query}"
-    grep_sorted_search_results_path = test_params.test_output_dir / label
-    if request.config.cache.get(label, False):
-        return grep_sorted_search_results_path
-
-    print(f"Running grep with query {query} in {logs_dir}.")
-    cmd = ["grep", "--recursive", "--no-filename", query, str(logs_dir)]
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
-    sorted_output = sorted(proc.stdout.decode().splitlines(keepends=True))
-    with open(grep_sorted_search_results_path, "w") as f:
-        for line in sorted_output:
-            f.write(line)
-    request.config.cache.set(label, True)
-    return grep_sorted_search_results_path
+    return TextSearchParams(
+        name=name,
+        logs_dir=logs_dir,
+        query=query,
+        grep_label=grep_label,
+        grep_sorted_search_results_path=grep_sorted_search_results_path,
+    )
 
 
 @pytest.fixture(scope="module", autouse=True)
-def compress(test_params: BaseTestParams, logs_dir: Path, run_clp_package) -> None:
-    cmd = [str(test_params.clp_package_sbin_dir / "compress.sh"), str(logs_dir)]
+def compress(env_params: EnvParams, test_params: TextSearchParams, run_clp_package) -> None:
+    cmd = [str(env_params.clp_package_sbin_dir / "compress.sh"), str(test_params.logs_dir)]
     run_and_assert(cmd, stdout=subprocess.PIPE)
 
 
-def test_search(
-    test_params: BaseTestParams, logs_dir: Path, query: str, grep_sorted_search_results_path: Path
-) -> None:
+def test_search(env_params: EnvParams, test_params: TextSearchParams) -> None:
     cmd = [
-        str(test_params.clp_package_sbin_dir / "search.sh"),
+        str(env_params.clp_package_sbin_dir / "search.sh"),
         "--raw",
         "--file-path",
         str(
-            logs_dir
+            test_params.logs_dir
             / "logs"
             / "i-8fca0980"
             / "application_1427088391284_0097"
             / "container_1427088391284_0097_01_000007"
             / "syslog"
         ),
-        query,
+        test_params.query,
     ]
     proc = run_and_assert(cmd, stdout=subprocess.PIPE)
     expected_output = "2015-03-23 11:54:22,594 INFO [main] org.apache.hadoop.hive.ql.exec.MapOperator: DESERIALIZE_ERRORS:0\n"
@@ -105,14 +103,17 @@ def test_search(
     ],
 )
 def test_basic_search(
-    test_params: BaseTestParams,
-    query: str,
+    env_params: EnvParams,
+    test_params: TextSearchParams,
     query_transform: Callable[[str], str],
     ignore_case: bool,
-    grep_sorted_search_results_path: Path,
     expect_results: bool,
 ) -> None:
-    cmd = [str(test_params.clp_package_sbin_dir / "search.sh"), "--raw", query_transform(query)]
+    cmd = [
+        str(env_params.clp_package_sbin_dir / "search.sh"),
+        "--raw",
+        query_transform(test_params.query),
+    ]
     if ignore_case:
         cmd.append("--ignore-case")
     proc = run_and_assert(cmd, stdout=subprocess.PIPE)
@@ -121,7 +122,7 @@ def test_basic_search(
         assert "" == proc.stdout.decode(), "clp-text search results don't match expected output"
     else:
         sorted_output = sorted(proc.stdout.decode().splitlines(keepends=True))
-        clp_sorted_search_results_path = test_params.test_output_dir / "clp-text-search.txt"
+        clp_sorted_search_results_path = env_params.test_output_dir / "clp-text-search.txt"
         with open(clp_sorted_search_results_path, "w") as f:
             for line in sorted_output:
                 f.write(line)
@@ -129,7 +130,7 @@ def test_basic_search(
         cmd = [
             "diff",
             "--brief",
-            str(grep_sorted_search_results_path),
+            str(test_params.grep_sorted_search_results_path),
             str(clp_sorted_search_results_path),
         ]
         proc = subprocess.run(cmd, stdout=subprocess.PIPE)

@@ -11,7 +11,7 @@ from utils import (
 
 
 @dataclass(frozen=True)
-class BaseTestParams:
+class EnvParams:
     clp_bins_dir: Path
     clp_package_dir: Path
     clp_package_sbin_dir: Path
@@ -20,8 +20,8 @@ class BaseTestParams:
 
 
 @pytest.fixture(scope="session")
-def test_params() -> BaseTestParams:
-    return BaseTestParams(
+def env_params() -> EnvParams:
+    return EnvParams(
         clp_bins_dir=Path(get_env_var("CLP_BINS_DIR")),
         clp_package_dir=Path(get_env_var("CLP_PACKAGE_DIR")),
         clp_package_sbin_dir=Path(get_env_var("CLP_PACKAGE_SBIN_DIR")),
@@ -31,18 +31,18 @@ def test_params() -> BaseTestParams:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def create_test_output_dir(test_params: BaseTestParams) -> None:
-    test_params.test_output_dir.mkdir(parents=True, exist_ok=True)
+def create_test_output_dir(env_params: EnvParams) -> None:
+    env_params.test_output_dir.mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture(scope="module", autouse=True)
-def run_clp_package(test_params: BaseTestParams) -> None:
-    clean_package_data(test_params.clp_package_dir)
+def run_clp_package(env_params: EnvParams) -> None:
+    clean_package_data(env_params.clp_package_dir)
     try:
-        cmd = [str(test_params.clp_package_sbin_dir / "start-clp.sh")]
+        cmd = [str(env_params.clp_package_sbin_dir / "start-clp.sh")]
         run_and_assert(cmd)
         yield
     finally:
-        cmd = [str(test_params.clp_package_sbin_dir / "stop-clp.sh")]
+        cmd = [str(env_params.clp_package_sbin_dir / "stop-clp.sh")]
         run_and_assert(cmd, check=True)
-        clean_package_data(test_params.clp_package_dir)
+        clean_package_data(env_params.clp_package_dir)
