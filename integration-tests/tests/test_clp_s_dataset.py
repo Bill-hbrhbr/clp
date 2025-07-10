@@ -2,7 +2,6 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-
 import pytest
 
 pytestmark = pytest.mark.clp_s
@@ -44,7 +43,12 @@ def compress(env_params: EnvParams, test_params: DatasetSearchParams, run_clp_pa
 
 
 def test_count(env_params: EnvParams, test_params: DatasetSearchParams) -> None:
-    cmd = [str(env_params.clp_package_sbin_dir / "search.sh"), "--dataset", test_params.dataset]
+    cmd = [
+        str(env_params.clp_package_sbin_dir / "search.sh"),
+        "--dataset",
+        test_params.dataset,
+        test_params.query,
+    ]
     proc = run_and_assert(cmd, stdout=subprocess.PIPE, check=True)
 
     output_lines = proc.stdout.decode().splitlines()
