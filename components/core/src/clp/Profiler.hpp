@@ -70,11 +70,9 @@ public:
     static void init() {
         if constexpr (PROF_ENABLED) {
             m_continuous_measurements = new std::vector<Stopwatch>(
-                    enum_to_underlying_type(ContinuousMeasurementIndex::Length)
-            );
+                    enum_to_underlying_type(ContinuousMeasurementIndex::Length));
             m_fragmented_measurements = new std::vector<Stopwatch>(
-                    enum_to_underlying_type(FragmentedMeasurementIndex::Length)
-            );
+                    enum_to_underlying_type(FragmentedMeasurementIndex::Length));
         }
     }
 
@@ -153,21 +151,17 @@ private:
     if (PROF_ENABLED \
         && ::clp::Profiler::cContinuousMeasurementEnabled[enum_to_underlying_type(x)]) \
     { \
-        SPDLOG_INFO( \
-                "{} took {} s", \
-                #x, \
-                ::clp::Profiler::get_continuous_measurement_in_seconds<x>() \
-        ); \
+        SPDLOG_INFO("{} took {} s", \
+                    #x, \
+                    ::clp::Profiler::get_continuous_measurement_in_seconds<x>()); \
     }
 #define LOG_FRAGMENTED_MEASUREMENT(x) \
     if (PROF_ENABLED \
         && ::clp::Profiler::cFragmentedMeasurementEnabled[enum_to_underlying_type(x)]) \
     { \
-        SPDLOG_INFO( \
-                "{} took {} s", \
-                #x, \
-                ::clp::Profiler::get_fragmented_measurement_in_seconds<x>() \
-        ); \
+        SPDLOG_INFO("{} took {} s", \
+                    #x, \
+                    ::clp::Profiler::get_fragmented_measurement_in_seconds<x>()); \
     }
 #define PROFILER_SPDLOG_INFO(...) \
     if (PROF_ENABLED) { \

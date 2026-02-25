@@ -19,11 +19,9 @@
 namespace clp_s::timestamp_parser::test {
 namespace {
 struct ExpectedParsingResult {
-    ExpectedParsingResult(
-            std::string_view timestamp,
-            std::string_view pattern,
-            epochtime_t epoch_timestamp
-    )
+    ExpectedParsingResult(std::string_view timestamp,
+                          std::string_view pattern,
+                          epochtime_t epoch_timestamp)
             : timestamp(timestamp),
               pattern(pattern),
               epoch_timestamp(epoch_timestamp) {}
@@ -34,11 +32,9 @@ struct ExpectedParsingResult {
 };
 
 struct ExpectedCatSequenceTransformation {
-    ExpectedCatSequenceTransformation(
-            std::string_view timestamp,
-            std::string_view cat_sequence,
-            std::string_view transformed_pattern
-    )
+    ExpectedCatSequenceTransformation(std::string_view timestamp,
+                                      std::string_view cat_sequence,
+                                      std::string_view transformed_pattern)
             : timestamp{timestamp},
               cat_sequence{cat_sequence},
               transformed_pattern{transformed_pattern} {}
@@ -53,10 +49,8 @@ struct ExpectedCatSequenceTransformation {
  * @param specifier The format specifier.
  * @param content A list of string payloads that are valid content for `specifier`.
  */
-void assert_specifier_accepts_valid_content(
-        std::string specifier,
-        std::vector<std::string> const& content
-);
+void assert_specifier_accepts_valid_content(std::string specifier,
+                                            std::vector<std::string> const& content);
 
 /**
  * Generates all numbers in the range [`begin`, `end`], left-padded with `padding` up to
@@ -89,10 +83,8 @@ auto generate_padded_numbers_in_range(size_t begin, size_t end, size_t field_len
  */
 [[nodiscard]] auto generate_padded_number_subset(size_t num_digits) -> std::vector<std::string>;
 
-void assert_specifier_accepts_valid_content(
-        std::string specifier,
-        std::vector<std::string> const& content
-) {
+void assert_specifier_accepts_valid_content(std::string specifier,
+                                            std::vector<std::string> const& content) {
     // We use a trailing literal to ensure that the specifier exactly consumes all of the content.
     auto const pattern{fmt::format(R"(\{}a)", specifier)};
     std::string generated_pattern;
@@ -102,12 +94,10 @@ void assert_specifier_accepts_valid_content(
     for (auto const& test_case : content) {
         auto const timestamp{fmt::format("{}a", test_case)};
         CAPTURE(timestamp);
-        auto const result{parse_timestamp(
-                timestamp,
-                timestamp_pattern_result.value(),
-                false,
-                generated_pattern
-        )};
+        auto const result{parse_timestamp(timestamp,
+                                          timestamp_pattern_result.value(),
+                                          false,
+                                          generated_pattern)};
         REQUIRE_FALSE(result.has_error());
         REQUIRE(result.value().second == pattern);
     }
@@ -161,15 +151,13 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
             REQUIRE(ErrorCode{ErrorCodeEnum::InvalidCharacter} == result.error());
         }
 
-        std::vector<std::string> const illegal_escape_timestamp_pattern_templates{
-                R"(\u0000)",
-                R"(\b)",
-                R"(\f)",
-                R"(\n)",
-                R"(\r)",
-                R"(\t)",
-                R"(\u)"
-        };
+        std::vector<std::string> const illegal_escape_timestamp_pattern_templates{R"(\u0000)",
+                                                                                  R"(\b)",
+                                                                                  R"(\f)",
+                                                                                  R"(\n)",
+                                                                                  R"(\r)",
+                                                                                  R"(\t)",
+                                                                                  R"(\u)"};
         for (auto const& illegal_timestamp_pattern_template :
              illegal_escape_timestamp_pattern_templates)
         {
@@ -186,14 +174,12 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
         std::string generated_pattern;
         REQUIRE_FALSE(
                 parse_timestamp(R"(\)", backlash_pattern_result.value(), false, generated_pattern)
-                        .has_error()
-        );
+                        .has_error());
         REQUIRE(parse_timestamp(R"(\\)", backlash_pattern_result.value(), false, generated_pattern)
                         .has_error());
         REQUIRE_FALSE(
                 parse_timestamp(R"(\\)", backlash_pattern_result.value(), true, generated_pattern)
-                        .has_error()
-        );
+                        .has_error());
         REQUIRE(parse_timestamp(R"(\)", backlash_pattern_result.value(), true, generated_pattern)
                         .has_error());
     }
@@ -205,44 +191,37 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
         auto const four_digit_years{generate_padded_numbers_in_range(0, 9999, 4, '0')};
         assert_specifier_accepts_valid_content("Y", four_digit_years);
 
-        std::vector<std::string> const months{
-                "January",
-                "February",
-                "March",
-                "April",
-                "May",
-                "June",
-                "July",
-                "August",
-                "September",
-                "October",
-                "November",
-                "December"
-        };
+        std::vector<std::string> const months{"January",
+                                              "February",
+                                              "March",
+                                              "April",
+                                              "May",
+                                              "June",
+                                              "July",
+                                              "August",
+                                              "September",
+                                              "October",
+                                              "November",
+                                              "December"};
         assert_specifier_accepts_valid_content(
                 "B{January,February,March,April,May,June,July,August,September,October,November,"
                 "December}",
-                months
-        );
+                months);
 
-        std::vector<std::string> const abbreviated_months{
-                "Jan",
-                "Feb",
-                "Mar",
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec"
-        };
-        assert_specifier_accepts_valid_content(
-                "B{Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec}",
-                abbreviated_months
-        );
+        std::vector<std::string> const abbreviated_months{"Jan",
+                                                          "Feb",
+                                                          "Mar",
+                                                          "Apr",
+                                                          "May",
+                                                          "Jun",
+                                                          "Jul",
+                                                          "Aug",
+                                                          "Sep",
+                                                          "Oct",
+                                                          "Nov",
+                                                          "Dec"};
+        assert_specifier_accepts_valid_content("B{Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec}",
+                                               abbreviated_months);
 
         auto const two_digit_months{generate_padded_numbers_in_range(1, 12, 2, '0')};
         assert_specifier_accepts_valid_content("m", two_digit_months);
@@ -262,22 +241,18 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
                 "07 Wed",
                 "01 Thu",  // Thursday January 1st, 1970
                 "02 Fri",
-                "03 Sat"
-        };
+                "03 Sat"};
         constexpr std::string_view cDayInWeekPattern{R"(\d \A{Sun,Mon,Tue,Wed,Thu,Fri,Sat}a)"};
         auto const day_in_week_pattern_result{
-                TimestampPattern::create(std::string{cDayInWeekPattern})
-        };
+                TimestampPattern::create(std::string{cDayInWeekPattern})};
         REQUIRE_FALSE(day_in_week_pattern_result.has_error());
         for (auto const& day_in_week_timestamp : abbreviated_day_in_week_timestamps) {
             std::string generated_pattern;
             auto const timestamp{fmt::format("{}a", day_in_week_timestamp)};
-            auto const result{parse_timestamp(
-                    timestamp,
-                    day_in_week_pattern_result.value(),
-                    false,
-                    generated_pattern
-            )};
+            auto const result{parse_timestamp(timestamp,
+                                              day_in_week_pattern_result.value(),
+                                              false,
+                                              generated_pattern)};
             REQUIRE_FALSE(result.has_error());
             REQUIRE(result.value().second == cDayInWeekPattern);
         }
@@ -289,11 +264,9 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
         assert_specifier_accepts_valid_content("k", space_padded_hours);
 
         auto const twelve_hour_clock_two_digit_hours{
-                generate_padded_numbers_in_range(1, 12, 2, '0')
-        };
+                generate_padded_numbers_in_range(1, 12, 2, '0')};
         auto const twelve_hour_clock_zero_padded_hours{
-                generate_padded_numbers_in_range(1, 12, 2, ' ')
-        };
+                generate_padded_numbers_in_range(1, 12, 2, ' ')};
         constexpr std::array cPartsOfDay{std::string_view{"AM"}, std::string_view{"PM"}};
         for (auto const part_of_day : cPartsOfDay) {
             std::string generated_pattern;
@@ -304,21 +277,17 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
                 REQUIRE_FALSE(timestamp_pattern_result.has_error());
                 for (auto const& hour : hours) {
                     auto const timestamp{fmt::format("{} {}a", hour, part_of_day)};
-                    auto const result{parse_timestamp(
-                            timestamp,
-                            timestamp_pattern_result.value(),
-                            false,
-                            generated_pattern
-                    )};
+                    auto const result{parse_timestamp(timestamp,
+                                                      timestamp_pattern_result.value(),
+                                                      false,
+                                                      generated_pattern)};
                     REQUIRE_FALSE(result.has_error());
                     REQUIRE(result.value().second == pattern);
                 }
             };
             assert_twelve_hour_clock_accepts_valid_content('I', twelve_hour_clock_two_digit_hours);
-            assert_twelve_hour_clock_accepts_valid_content(
-                    'l',
-                    twelve_hour_clock_zero_padded_hours
-            );
+            assert_twelve_hour_clock_accepts_valid_content('l',
+                                                           twelve_hour_clock_zero_padded_hours);
         }
 
         auto const two_digit_minutes{generate_padded_numbers_in_range(0, 59, 2, '0')};
@@ -359,51 +328,42 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
 
         constexpr std::array cHoursOffsetPattenrs
                 = {std::string_view{"+{}"}, std::string_view{"-{}"}, std::string_view{"\u2212{}"}};
-        constexpr std::array cHoursMinutesOffsetPatterns
-                = {std::string_view{"+{}{}"},
-                   std::string_view{"-{}{}"},
-                   std::string_view{"\u2212{}{}"},
-                   std::string_view{"+{}:{}"},
-                   std::string_view{"-{}:{}"},
-                   std::string_view{"\u2212{}:{}"}};
+        constexpr std::array cHoursMinutesOffsetPatterns = {std::string_view{"+{}{}"},
+                                                            std::string_view{"-{}{}"},
+                                                            std::string_view{"\u2212{}{}"},
+                                                            std::string_view{"+{}:{}"},
+                                                            std::string_view{"-{}:{}"},
+                                                            std::string_view{"\u2212{}:{}"}};
         for (auto const& hour : two_digit_hours) {
             std::string generated_pattern;
             for (auto const& hour_offset_pattern : cHoursOffsetPattenrs) {
                 auto const hour_offset{
-                        fmt::vformat(hour_offset_pattern, fmt::make_format_args(hour))
-                };
+                        fmt::vformat(hour_offset_pattern, fmt::make_format_args(hour))};
                 auto const hour_offset_specifier{fmt::format("\\z{{{}}}", hour_offset)};
                 auto const timestamp_pattern_result(
-                        TimestampPattern::create(hour_offset_specifier)
-                );
+                        TimestampPattern::create(hour_offset_specifier));
                 REQUIRE_FALSE(timestamp_pattern_result.has_error());
-                auto const result{parse_timestamp(
-                        hour_offset,
-                        timestamp_pattern_result.value(),
-                        false,
-                        generated_pattern
-                )};
+                auto const result{parse_timestamp(hour_offset,
+                                                  timestamp_pattern_result.value(),
+                                                  false,
+                                                  generated_pattern)};
                 REQUIRE_FALSE(result.has_error());
                 REQUIRE(result.value().second == hour_offset_specifier);
             }
             for (auto const& minute : two_digit_minutes) {
                 for (auto const& hour_minute_offset_pattern : cHoursMinutesOffsetPatterns) {
-                    auto const hour_minute_offset{fmt::vformat(
-                            hour_minute_offset_pattern,
-                            fmt::make_format_args(hour, minute)
-                    )};
+                    auto const hour_minute_offset{
+                            fmt::vformat(hour_minute_offset_pattern,
+                                         fmt::make_format_args(hour, minute))};
                     auto const hour_minute_specifier{fmt::format("\\z{{{}}}", hour_minute_offset)};
                     auto const timestamp_pattern_result(
-                            TimestampPattern::create(hour_minute_specifier)
-                    );
+                            TimestampPattern::create(hour_minute_specifier));
                     REQUIRE_FALSE(timestamp_pattern_result.has_error());
 
-                    auto const result{parse_timestamp(
-                            hour_minute_offset,
-                            timestamp_pattern_result.value(),
-                            false,
-                            generated_pattern
-                    )};
+                    auto const result{parse_timestamp(hour_minute_offset,
+                                                      timestamp_pattern_result.value(),
+                                                      false,
+                                                      generated_pattern)};
                     REQUIRE_FALSE(result.has_error());
                     REQUIRE(result.value().second == hour_minute_specifier);
                 }
@@ -415,19 +375,16 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
         std::string generated_pattern;
         auto assert_transformations_are_expected
                 = [&generated_pattern](
-                          std::vector<ExpectedCatSequenceTransformation> const& transformations
-                  ) -> void {
+                          std::vector<ExpectedCatSequenceTransformation> const& transformations)
+                -> void {
             for (auto const& transformation : transformations) {
                 auto const timestamp_pattern_result{
-                        TimestampPattern::create(transformation.cat_sequence)
-                };
+                        TimestampPattern::create(transformation.cat_sequence)};
                 REQUIRE_FALSE(timestamp_pattern_result.has_error());
-                auto const result{parse_timestamp(
-                        transformation.timestamp,
-                        timestamp_pattern_result.value(),
-                        false,
-                        generated_pattern
-                )};
+                auto const result{parse_timestamp(transformation.timestamp,
+                                                  timestamp_pattern_result.value(),
+                                                  false,
+                                                  generated_pattern)};
                 REQUIRE_FALSE(result.has_error());
                 REQUIRE(transformation.transformed_pattern == result.value().second);
             }
@@ -450,8 +407,7 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
                 {" UTC+04Z", R"(\Z)", R"( UTC\z{+04}Z)"},
                 {"+04Z", R"(\Z)", R"(\z{+04}Z)"},
                 {" +04Z", R"(\Z)", R"( \z{+04}Z)"},
-                {" Z", R"(\Z)", R"( Z)"}
-        };
+                {" Z", R"(\Z)", R"( Z)"}};
         assert_transformations_are_expected(timezone_transformations);
 
         std::vector<ExpectedCatSequenceTransformation> const fractional_second_transformations{
@@ -461,28 +417,24 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
                 {"12", R"(\?)", R"(\T)"},
                 {"1234", R"(\?)", R"(\T)"},
                 {"1234567", R"(\?)", R"(\T)"},
-                {"12345678", R"(\?)", R"(\T)"}
-        };
+                {"12345678", R"(\?)", R"(\T)"}};
         assert_transformations_are_expected(fractional_second_transformations);
 
         std::vector<ExpectedCatSequenceTransformation> const
-                unknown_epoch_precision_transformations{
-                        {"1763651316", R"(\P)", R"(\E)"},
-                        {"1763651316642", R"(\P)", R"(\L)"},
-                        {"1763651316642111", R"(\P)", R"(\C)"},
-                        {"1763651316642111123", R"(\P)", R"(\N)"},
-                        {"-1763651316", R"(\P)", R"(\E)"},
-                        {"-1763651316642", R"(\P)", R"(\L)"},
-                        {"-1763651316642111", R"(\P)", R"(\C)"},
-                        {"-1763651316642111123", R"(\P)", R"(\N)"}
-                };
+                unknown_epoch_precision_transformations{{"1763651316", R"(\P)", R"(\E)"},
+                                                        {"1763651316642", R"(\P)", R"(\L)"},
+                                                        {"1763651316642111", R"(\P)", R"(\C)"},
+                                                        {"1763651316642111123", R"(\P)", R"(\N)"},
+                                                        {"-1763651316", R"(\P)", R"(\E)"},
+                                                        {"-1763651316642", R"(\P)", R"(\L)"},
+                                                        {"-1763651316642111", R"(\P)", R"(\C)"},
+                                                        {"-1763651316642111123", R"(\P)", R"(\N)"}};
         assert_transformations_are_expected(unknown_epoch_precision_transformations);
 
         std::vector<ExpectedCatSequenceTransformation> const one_of_literal_transformations{
                 {"A", R"(\O{A})", "A"},
                 {"AB", R"(\O{BA}\O{AB})", "AB"},
-                {"F", R"(\O{ABCDEFGHIJKLMNOP})", "F"}
-        };
+                {"F", R"(\O{ABCDEFGHIJKLMNOP})", "F"}};
         assert_transformations_are_expected(one_of_literal_transformations);
 
         std::vector<ExpectedCatSequenceTransformation> const generic_second_transformations{
@@ -490,8 +442,7 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
                 {"01", R"(\s)", R"(\S)"},
                 {"58", R"(\s)", R"(\S)"},
                 {"59", R"(\s)", R"(\S)"},
-                {"60", R"(\s)", R"(\J)"}
-        };
+                {"60", R"(\s)", R"(\J)"}};
         assert_transformations_are_expected(generic_second_transformations);
     }
 
@@ -499,14 +450,12 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
         auto const default_date_time_patterns_result{get_default_date_time_timestamp_patterns()};
         REQUIRE_FALSE(default_date_time_patterns_result.has_error());
         auto const default_numeric_timestamp_patterns_result{
-                get_default_numeric_timestamp_patterns()
-        };
+                get_default_numeric_timestamp_patterns()};
         REQUIRE_FALSE(default_numeric_timestamp_patterns_result.has_error());
         auto const all_default_timestamp_patterns_result{get_all_default_timestamp_patterns()};
         REQUIRE_FALSE(all_default_timestamp_patterns_result.has_error());
         auto const all_default_quoted_timestamp_patterns_result{
-                get_all_default_quoted_timestamp_patterns()
-        };
+                get_all_default_quoted_timestamp_patterns()};
         REQUIRE_FALSE(all_default_quoted_timestamp_patterns_result.has_error());
     }
 
@@ -612,8 +561,9 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
                 {"1895-11-20T21:55:46,010", R"(\Y-\m-\dT\H:\M:\S,\3)", -2'338'769'053'990'000'000},
                 {"2016-12-31T23:59:59,999Z", R"(\Y-\m-\dT\H:\M:\S,\3Z)", 1'483'228'799'999'000'000},
                 {"2016-12-31T23:59:60,999Z", R"(\Y-\m-\dT\H:\M:\J,\3Z)", 1'483'228'799'999'000'000},
-                {"2017-01-01T00:00:00,999Z", R"(\Y-\m-\dT\H:\M:\S,\3Z)", 1'483'228'800'999'000'000}
-        };
+                {"2017-01-01T00:00:00,999Z",
+                 R"(\Y-\m-\dT\H:\M:\S,\3Z)",
+                 1'483'228'800'999'000'000}};
 
         auto default_patterns_result{get_all_default_timestamp_patterns()};
         REQUIRE_FALSE(default_patterns_result.has_error());
@@ -627,41 +577,31 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
             REQUIRE_FALSE(timestamp_pattern_result.has_error());
             auto const expected_quoted_pattern{fmt::format(R"("{}")", expected_result.pattern)};
             auto const quoted_timestamp_pattern_result{
-                    TimestampPattern::create(expected_quoted_pattern)
-            };
+                    TimestampPattern::create(expected_quoted_pattern)};
             REQUIRE_FALSE(quoted_timestamp_pattern_result.has_error());
             auto const quoted_timestamp{fmt::format(R"("{}")", expected_result.timestamp)};
 
-            auto const [quoted_content, quoted_pattern] = GENERATE(
-                    std::make_pair(false, false),
-                    std::make_pair(false, true),
-                    std::make_pair(true, true)
-            );
+            auto const [quoted_content, quoted_pattern] = GENERATE(std::make_pair(false, false),
+                                                                   std::make_pair(false, true),
+                                                                   std::make_pair(true, true));
             auto const& timestamp{quoted_content ? quoted_timestamp : expected_result.timestamp};
-            auto const& expected_marshalled_timestamp{
-                    quoted_pattern ? quoted_timestamp : expected_result.timestamp
-            };
-            auto const& pattern{
-                    quoted_pattern ? quoted_timestamp_pattern_result.value()
-                                   : timestamp_pattern_result.value()
-            };
-            auto const& pattern_str{
-                    quoted_pattern ? expected_quoted_pattern : expected_result.pattern
-            };
+            auto const& expected_marshalled_timestamp{quoted_pattern ? quoted_timestamp
+                                                                     : expected_result.timestamp};
+            auto const& pattern{quoted_pattern ? quoted_timestamp_pattern_result.value()
+                                               : timestamp_pattern_result.value()};
+            auto const& pattern_str{quoted_pattern ? expected_quoted_pattern
+                                                   : expected_result.pattern};
             auto const& pattern_list{quoted_pattern ? default_quoted_patterns : default_patterns};
             auto const result{
-                    parse_timestamp(timestamp, pattern, quoted_content, generated_pattern)
-            };
+                    parse_timestamp(timestamp, pattern, quoted_content, generated_pattern)};
             REQUIRE_FALSE(result.has_error());
             REQUIRE(expected_result.epoch_timestamp == result.value().first);
             REQUIRE(pattern_str == result.value().second);
 
-            auto const searched_result{search_known_timestamp_patterns(
-                    timestamp,
-                    pattern_list,
-                    quoted_content,
-                    generated_pattern
-            )};
+            auto const searched_result{search_known_timestamp_patterns(timestamp,
+                                                                       pattern_list,
+                                                                       quoted_content,
+                                                                       generated_pattern)};
             REQUIRE(searched_result.has_value());
             // NOLINTBEGIN(bugprone-unchecked-optional-access)
             REQUIRE(expected_result.epoch_timestamp == searched_result.value().first);
@@ -669,11 +609,9 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
             // NOLINTEND(bugprone-unchecked-optional-access)
 
             std::string marshalled_timestamp;
-            auto const marshal_result{marshal_timestamp(
-                    expected_result.epoch_timestamp,
-                    pattern,
-                    marshalled_timestamp
-            )};
+            auto const marshal_result{marshal_timestamp(expected_result.epoch_timestamp,
+                                                        pattern,
+                                                        marshalled_timestamp)};
             REQUIRE_FALSE(marshal_result.has_error());
             REQUIRE(expected_marshalled_timestamp == marshalled_timestamp);
         }
@@ -690,22 +628,18 @@ TEST_CASE("timestamp_parser_parse_timestamp", "[clp-s][timestamp-parser]") {
         for (auto const& expected_result : expected_parsing_results) {
             auto const timestamp_pattern_result{TimestampPattern::create(expected_result.pattern)};
             REQUIRE_FALSE(timestamp_pattern_result.has_error());
-            auto const parse_result{parse_timestamp(
-                    expected_result.timestamp,
-                    timestamp_pattern_result.value(),
-                    true,
-                    generated_pattern
-            )};
+            auto const parse_result{parse_timestamp(expected_result.timestamp,
+                                                    timestamp_pattern_result.value(),
+                                                    true,
+                                                    generated_pattern)};
             REQUIRE_FALSE(parse_result.has_error());
             REQUIRE(expected_result.epoch_timestamp == parse_result.value().first);
             REQUIRE(expected_result.pattern == parse_result.value().second);
 
             std::string marshalled_timestamp;
-            auto const marshal_result{marshal_timestamp(
-                    expected_result.epoch_timestamp,
-                    timestamp_pattern_result.value(),
-                    marshalled_timestamp
-            )};
+            auto const marshal_result{marshal_timestamp(expected_result.epoch_timestamp,
+                                                        timestamp_pattern_result.value(),
+                                                        marshalled_timestamp)};
             REQUIRE_FALSE(marshal_result.has_error());
             REQUIRE(expected_result.timestamp == marshalled_timestamp);
         }

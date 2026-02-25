@@ -96,11 +96,9 @@ public:
      * @param extraction_len
      * @return ErrorCode_Unsupported
      */
-    [[nodiscard]] auto get_decompressed_stream_region(
-            size_t decompressed_stream_pos,
-            char* extraction_buf,
-            size_t extraction_len
-    ) -> ErrorCode override;
+    [[nodiscard]] auto get_decompressed_stream_region(size_t decompressed_stream_pos,
+                                                      char* extraction_buf,
+                                                      size_t extraction_len) -> ErrorCode override;
 };
 }  // namespace clp::streaming_compression::lzma
 #endif  // CLP_STREAMING_COMPRESSION_LZMA_DECOMPRESSOR_HPP

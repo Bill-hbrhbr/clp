@@ -25,8 +25,7 @@ namespace clp::ffi::ir_stream::search {
  */
 [[nodiscard]] auto schema_tree_node_type_value_pair_to_literal_type(
         SchemaTree::Node::Type node_type,
-        std::optional<Value> const& value
-) -> clp_s::search::ast::LiteralType;
+        std::optional<Value> const& value) -> clp_s::search::ast::LiteralType;
 
 /**
  * Evaluates a filter expression against the specified <`literal_type`, `value`> pair.
@@ -49,8 +48,7 @@ namespace clp::ffi::ir_stream::search {
         clp_s::search::ast::FilterExpr const* filter,
         clp_s::search::ast::LiteralType literal_type,
         std::optional<Value> const& value,
-        bool case_sensitive_match
-) -> ystdlib::error_handling::Result<bool>;
+        bool case_sensitive_match) -> ystdlib::error_handling::Result<bool>;
 }  // namespace clp::ffi::ir_stream::search
 
 #endif  // CLP_FFI_IR_STREAM_SEARCH_UTILS_HPP

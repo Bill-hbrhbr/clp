@@ -8,12 +8,10 @@
 using std::string;
 
 namespace clp {
-QueryToken::QueryToken(
-        string const& query_string,
-        size_t const begin_pos,
-        size_t const end_pos,
-        bool const is_var
-)
+QueryToken::QueryToken(string const& query_string,
+                       size_t const begin_pos,
+                       size_t const end_pos,
+                       bool const is_var)
         : m_current_possible_type_ix(0) {
     m_begin_pos = begin_pos;
     m_end_pos = end_pos;
@@ -38,9 +36,8 @@ QueryToken::QueryToken(
             }
         }
 
-        m_contains_wildcards
-                = (m_has_prefix_greedy_wildcard || m_has_suffix_greedy_wildcard
-                   || m_has_greedy_wildcard_in_middle);
+        m_contains_wildcards = (m_has_prefix_greedy_wildcard || m_has_suffix_greedy_wildcard
+                                || m_has_greedy_wildcard_in_middle);
 
         if (false == is_var) {
             m_cannot_convert_to_non_dict_var = true;
@@ -50,15 +47,13 @@ QueryToken::QueryToken(
                 m_type = Type::Ambiguous;
                 m_possible_types.push_back(Type::Logtype);
                 if (EncodedVariableInterpreter::wildcard_string_could_be_representable_integer_var(
-                            m_value
-                    ))
+                            m_value))
                 {
                     m_possible_types.push_back(Type::IntVar);
                     m_cannot_convert_to_non_dict_var = false;
                 }
                 if (EncodedVariableInterpreter::wildcard_string_could_be_representable_float_var(
-                            m_value
-                    ))
+                            m_value))
                 {
                     m_possible_types.push_back(Type::FloatVar);
                     m_cannot_convert_to_non_dict_var = false;
@@ -78,12 +73,10 @@ QueryToken::QueryToken(
             bool converts_to_non_dict_var = false;
             if (EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                         value_without_wildcards,
-                        encoded_var
-                )
+                        encoded_var)
                 || EncodedVariableInterpreter::convert_string_to_representable_float_var(
                         value_without_wildcards,
-                        encoded_var
-                ))
+                        encoded_var))
             {
                 converts_to_non_dict_var = true;
             }

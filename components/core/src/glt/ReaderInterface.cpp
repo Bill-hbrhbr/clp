@@ -3,12 +3,10 @@
 using std::string;
 
 namespace glt {
-ErrorCode ReaderInterface::try_read_to_delimiter(
-        char delim,
-        bool keep_delimiter,
-        bool append,
-        std::string& str
-) {
+ErrorCode ReaderInterface::try_read_to_delimiter(char delim,
+                                                 bool keep_delimiter,
+                                                 bool append,
+                                                 std::string& str) {
     if (false == append) {
         str.clear();
     }

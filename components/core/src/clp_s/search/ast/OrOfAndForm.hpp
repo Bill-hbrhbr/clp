@@ -53,13 +53,11 @@ private:
      * @param end
      * @param prefix
      */
-    static void insert_all_combinations(
-            std::shared_ptr<Expression> const& new_or_expr,
-            std::shared_ptr<Expression> const& base_and_expr,
-            ExpressionVector::iterator cur,
-            ExpressionVector::iterator end,
-            ExpressionList& prefix
-    );
+    static void insert_all_combinations(std::shared_ptr<Expression> const& new_or_expr,
+                                        std::shared_ptr<Expression> const& base_and_expr,
+                                        ExpressionVector::iterator cur,
+                                        ExpressionVector::iterator end,
+                                        ExpressionList& prefix);
 };
 }  // namespace clp_s::search::ast
 

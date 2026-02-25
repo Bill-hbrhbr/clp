@@ -49,11 +49,8 @@ auto generate_utf8_byte_sequence(uint32_t code_point, size_t num_continuation_by
     while (encoded_bytes.size() < num_continuation_bytes) {
         auto const least_significant_byte{static_cast<uint8_t>(code_point)};
         encoded_bytes.push_back(
-                static_cast<char>(
-                        (least_significant_byte & ~clp::cUtf8ContinuationByteMask)
-                        | clp::cUtf8ContinuationByteHeader
-                )
-        );
+                static_cast<char>((least_significant_byte & ~clp::cUtf8ContinuationByteMask)
+                                  | clp::cUtf8ContinuationByteHeader));
         code_point >>= clp::cUtf8NumContinuationByteCodePointBits;
     }
 
@@ -69,12 +66,8 @@ auto generate_utf8_byte_sequence(uint32_t code_point, size_t num_continuation_by
         lead_byte_code_point_mask = static_cast<uint8_t>(~clp::cFourByteUtf8CharHeaderMask);
         lead_byte_header = clp::cFourByteUtf8CharHeader;
     }
-    encoded_bytes.push_back(
-            static_cast<char>(
-                    (static_cast<uint8_t>(code_point) & lead_byte_code_point_mask)
-                    | lead_byte_header
-            )
-    );
+    encoded_bytes.push_back(static_cast<char>(
+            (static_cast<uint8_t>(code_point) & lead_byte_code_point_mask) | lead_byte_header));
 
     return {encoded_bytes.rbegin(), encoded_bytes.rend()};
 }
@@ -112,8 +105,7 @@ TEST_CASE("escape_utf8_string_basic", "[utf8_utils]") {
             "\xE4\xB8\xAD",  // https://en.wiktionary.org/wiki/%E4%B8%AD
             "\x1F",
             "\xC2\xA2",  // ¢
-            "\\"
-    };
+            "\\"};
     test_str.clear();
     for (auto const& str : valid_utf8) {
         test_str.append(str);
@@ -125,11 +117,9 @@ TEST_CASE("escape_utf8_string_basic", "[utf8_utils]") {
 TEST_CASE("escape_utf8_string_with_invalid_continuation", "[utf8_utils]") {
     std::string test_str;
 
-    auto const valid_utf8_byte_sequence = GENERATE(
-            generate_utf8_byte_sequence(0x80, 1),
-            generate_utf8_byte_sequence(0x800, 2),
-            generate_utf8_byte_sequence(0x1'0000, 3)
-    );
+    auto const valid_utf8_byte_sequence = GENERATE(generate_utf8_byte_sequence(0x80, 1),
+                                                   generate_utf8_byte_sequence(0x800, 2),
+                                                   generate_utf8_byte_sequence(0x1'0000, 3));
 
     // Test incomplete continuation bytes
     auto const begin_it{valid_utf8_byte_sequence.cbegin()};

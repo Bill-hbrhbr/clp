@@ -101,12 +101,10 @@ public:
      * @param timestamp_end_pos
      * @return true if parsed successfully, false otherwise
      */
-    bool parse_timestamp(
-            std::string_view line,
-            epochtime_t& timestamp,
-            size_t& timestamp_begin_pos,
-            size_t& timestamp_end_pos
-    ) const;
+    bool parse_timestamp(std::string_view line,
+                         epochtime_t& timestamp,
+                         size_t& timestamp_begin_pos,
+                         size_t& timestamp_end_pos) const;
 
     /**
      * Inserts the timestamp into the given message using this pattern

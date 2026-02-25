@@ -30,8 +30,8 @@ struct VarInfo {
  * @return A `MockVariableDictionary` initialized with the given entries.
  */
 auto make_var_dict(
-        std::vector<std::pair<clp::variable_dictionary_id_t, std::string>> const& entries
-) -> MockVariableDictionary;
+        std::vector<std::pair<clp::variable_dictionary_id_t, std::string>> const& entries)
+        -> MockVariableDictionary;
 
 /**
  * @param entries Vector of logtypes, where each logtype is represented by a vector of tokens. Each
@@ -39,8 +39,8 @@ auto make_var_dict(
  * @return A `MockLogTypeDictionary` initialized with the given entries.
  */
 auto make_logtype_dict(
-        std::vector<std::vector<std::variant<std::string_view, char>>> const& entries
-) -> MockLogTypeDictionary;
+        std::vector<std::vector<std::variant<std::string_view, char>>> const& entries)
+        -> MockLogTypeDictionary;
 
 /**
  * Generates a logtype string from a vector of tokens.
@@ -59,8 +59,7 @@ auto make_logtype_dict(
  * @return A `string` representing the expected encoded logtype.
  */
 auto generate_expected_logtype_string(
-        std::vector<std::variant<std::string_view, char>> const& tokens
-) -> std::string;
+        std::vector<std::variant<std::string_view, char>> const& tokens) -> std::string;
 
 /**
  * Checks that a `SubQuery` at a given index matches the expected properties.
@@ -77,12 +76,10 @@ auto generate_expected_logtype_string(
  * @param vars_info Object describing expected variable properties.
  * @param logtype_ids Expected set of possible logtype IDs.
  */
-auto check_sub_query(
-        size_t id,
-        std::vector<clp::SubQuery> const& sub_queries,
-        bool wildcard_match_required,
-        std::vector<VarInfo> const& vars_info,
-        std::unordered_set<clp::logtype_dictionary_id_t> const& logtype_ids
-) -> void;
+auto check_sub_query(size_t id,
+                     std::vector<clp::SubQuery> const& sub_queries,
+                     bool wildcard_match_required,
+                     std::vector<VarInfo> const& vars_info,
+                     std::unordered_set<clp::logtype_dictionary_id_t> const& logtype_ids) -> void;
 
 #endif  // SEARCH_TEST_UTILS_HPP

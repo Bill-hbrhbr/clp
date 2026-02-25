@@ -23,14 +23,12 @@ public:
     };
 
     // Constructors
-    MySQLIndexStorage(
-            std::string const& host,
-            int port,
-            std::string const& username,
-            std::string const& password,
-            std::string const& database_name,
-            std::string const& table_prefix
-    )
+    MySQLIndexStorage(std::string const& host,
+                      int port,
+                      std::string const& username,
+                      std::string const& password,
+                      std::string const& database_name,
+                      std::string const& table_prefix)
             : m_is_open(false),
               m_is_init(false),
               m_host(host),

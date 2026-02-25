@@ -110,11 +110,9 @@ public:
 };
 
 template <typename DictionaryIdType, typename EntryType>
-void DictionaryWriter<DictionaryIdType, EntryType>::open(
-        std::string const& dictionary_path,
-        int compression_level,
-        DictionaryIdType max_id
-) {
+void DictionaryWriter<DictionaryIdType, EntryType>::open(std::string const& dictionary_path,
+                                                         int compression_level,
+                                                         DictionaryIdType max_id) {
     if (m_is_open) {
         throw OperationFailed(ErrorCodeNotReady, __FILENAME__, __LINE__);
     }

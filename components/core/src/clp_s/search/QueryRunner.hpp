@@ -43,12 +43,10 @@ namespace clp_s::search {
  */
 class QueryRunner : public FilterClass {
 public:
-    QueryRunner(
-            std::shared_ptr<SchemaMatch> const& match,
-            std::shared_ptr<ast::Expression> const& expr,
-            std::shared_ptr<ArchiveReader> const& archive_reader,
-            bool ignore_case
-    )
+    QueryRunner(std::shared_ptr<SchemaMatch> const& match,
+                std::shared_ptr<ast::Expression> const& expr,
+                std::shared_ptr<ArchiveReader> const& archive_reader,
+                bool ignore_case)
             : m_archive_reader(archive_reader),
               m_expr(expr),
               m_match(match),
@@ -145,10 +143,9 @@ private:
     ast::literal_type_bitmask_t m_wildcard_type_mask{0};
     std::unordered_set<int32_t> m_metadata_columns;
 
-    std::
-            stack<std::pair<ExpressionType, ast::OpList::iterator>,
-                  std::vector<std::pair<ExpressionType, ast::OpList::iterator>>>
-                    m_expression_state;
+    std::stack<std::pair<ExpressionType, ast::OpList::iterator>,
+               std::vector<std::pair<ExpressionType, ast::OpList::iterator>>>
+            m_expression_state;
 
     simdjson::ondemand::parser m_array_parser;
     std::string m_array_search_string;
@@ -194,11 +191,9 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_int_filter(
-            ast::FilterOperation op,
-            int32_t column_id,
-            std::shared_ptr<ast::Literal> const& operand
-    ) -> bool;
+    auto evaluate_int_filter(ast::FilterOperation op,
+                             int32_t column_id,
+                             std::shared_ptr<ast::Literal> const& operand) -> bool;
 
     /**
      * Evaluates a int filter expression
@@ -217,11 +212,9 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_float_filter(
-            ast::FilterOperation op,
-            int32_t column_id,
-            std::shared_ptr<ast::Literal> const& operand
-    ) -> bool;
+    auto evaluate_float_filter(ast::FilterOperation op,
+                               int32_t column_id,
+                               std::shared_ptr<ast::Literal> const& operand) -> bool;
 
     /**
      * Evaluates the core of a float filter expression
@@ -240,11 +233,10 @@ private:
      * @param readers
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_clp_string_filter(
-            ast::FilterOperation op,
-            clp::Query* q,
-            std::vector<ClpStringColumnReader*> const& readers
-    ) const -> bool;
+    auto evaluate_clp_string_filter(ast::FilterOperation op,
+                                    clp::Query* q,
+                                    std::vector<ClpStringColumnReader*> const& readers) const
+            -> bool;
 
     /**
      * Evaluates a var string filter expression
@@ -253,11 +245,9 @@ private:
      * @param matching_vars
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_var_string_filter(
-            ast::FilterOperation op,
-            std::vector<VariableStringColumnReader*> const& readers,
-            std::unordered_set<int64_t>* matching_vars
-    ) const -> bool;
+    auto evaluate_var_string_filter(ast::FilterOperation op,
+                                    std::vector<VariableStringColumnReader*> const& readers,
+                                    std::unordered_set<int64_t>* matching_vars) const -> bool;
 
     /**
      * Evaluates a epoch date string filter expression
@@ -266,11 +256,9 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_epoch_date_filter(
-            ast::FilterOperation op,
-            DeprecatedDateStringColumnReader* reader,
-            std::shared_ptr<ast::Literal>& operand
-    ) -> bool;
+    auto evaluate_epoch_date_filter(ast::FilterOperation op,
+                                    DeprecatedDateStringColumnReader* reader,
+                                    std::shared_ptr<ast::Literal>& operand) -> bool;
 
     /**
      * Evaluates a timestamp filter.
@@ -279,11 +267,9 @@ private:
      * @param operand
      * @return Whether the filter evaluates to true.
      */
-    auto evaluate_timestamp_filter(
-            ast::FilterOperation op,
-            TimestampColumnReader* reader,
-            std::shared_ptr<ast::Literal>& operand
-    ) -> bool;
+    auto evaluate_timestamp_filter(ast::FilterOperation op,
+                                   TimestampColumnReader* reader,
+                                   std::shared_ptr<ast::Literal>& operand) -> bool;
 
     /**
      * Evaluates an array filter expression
@@ -293,12 +279,10 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_array_filter(
-            ast::FilterOperation op,
-            ast::DescriptorList const& unresolved_tokens,
-            std::string& value,
-            std::shared_ptr<ast::Literal> const& operand
-    ) -> bool;
+    auto evaluate_array_filter(ast::FilterOperation op,
+                               ast::DescriptorList const& unresolved_tokens,
+                               std::string& value,
+                               std::shared_ptr<ast::Literal> const& operand) -> bool;
 
     /**
      * Evaluates a filter expression on a single value for precise array search.
@@ -309,13 +293,12 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    inline auto evaluate_array_filter_value(
-            simdjson::ondemand::value& item,
-            ast::FilterOperation op,
-            ast::DescriptorList const& unresolved_tokens,
-            size_t cur_idx,
-            std::shared_ptr<ast::Literal> const& operand
-    ) const -> bool;
+    inline auto evaluate_array_filter_value(simdjson::ondemand::value& item,
+                                            ast::FilterOperation op,
+                                            ast::DescriptorList const& unresolved_tokens,
+                                            size_t cur_idx,
+                                            std::shared_ptr<ast::Literal> const& operand) const
+            -> bool;
 
     /**
      * Evaluates a filter expression on an array (top level or nested) for precise array search.
@@ -326,13 +309,11 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_array_filter_array(
-            simdjson::ondemand::array& array,
-            ast::FilterOperation op,
-            ast::DescriptorList const& unresolved_tokens,
-            size_t cur_idx,
-            std::shared_ptr<ast::Literal> const& operand
-    ) const -> bool;
+    auto evaluate_array_filter_array(simdjson::ondemand::array& array,
+                                     ast::FilterOperation op,
+                                     ast::DescriptorList const& unresolved_tokens,
+                                     size_t cur_idx,
+                                     std::shared_ptr<ast::Literal> const& operand) const -> bool;
 
     /**
      * Evaluates a filter expression on an object inside of an array for precise array search.
@@ -343,13 +324,11 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_array_filter_object(
-            simdjson::ondemand::object& object,
-            ast::FilterOperation op,
-            ast::DescriptorList const& unresolved_tokens,
-            size_t cur_idx,
-            std::shared_ptr<ast::Literal> const& operand
-    ) const -> bool;
+    auto evaluate_array_filter_object(simdjson::ondemand::object& object,
+                                      ast::FilterOperation op,
+                                      ast::DescriptorList const& unresolved_tokens,
+                                      size_t cur_idx,
+                                      std::shared_ptr<ast::Literal> const& operand) const -> bool;
 
     /**
      * Evaluates a wildcard array filter expression
@@ -358,11 +337,9 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_wildcard_array_filter(
-            ast::FilterOperation op,
-            std::string& value,
-            std::shared_ptr<ast::Literal> const& operand
-    ) -> bool;
+    auto evaluate_wildcard_array_filter(ast::FilterOperation op,
+                                        std::string& value,
+                                        std::shared_ptr<ast::Literal> const& operand) -> bool;
 
     /**
      * The implementation of evaluate_wildcard_array_filter
@@ -371,11 +348,9 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_wildcard_array_filter(
-            simdjson::ondemand::array& array,
-            ast::FilterOperation op,
-            std::shared_ptr<ast::Literal> const& operand
-    ) const -> bool;
+    auto evaluate_wildcard_array_filter(simdjson::ondemand::array& array,
+                                        ast::FilterOperation op,
+                                        std::shared_ptr<ast::Literal> const& operand) const -> bool;
 
     /**
      * The implementation of evaluate_wildcard_array_filter
@@ -384,11 +359,9 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_wildcard_array_filter(
-            simdjson::ondemand::object& object,
-            ast::FilterOperation op,
-            std::shared_ptr<ast::Literal> const& operand
-    ) const -> bool;
+    auto evaluate_wildcard_array_filter(simdjson::ondemand::object& object,
+                                        ast::FilterOperation op,
+                                        std::shared_ptr<ast::Literal> const& operand) const -> bool;
 
     /**
      * Evaluates a bool filter expression
@@ -397,11 +370,9 @@ private:
      * @param operand
      * @return true if the expression evaluates to true, false otherwise
      */
-    auto evaluate_bool_filter(
-            ast::FilterOperation op,
-            int32_t column_id,
-            std::shared_ptr<ast::Literal> const& operand
-    ) -> bool;
+    auto evaluate_bool_filter(ast::FilterOperation op,
+                              int32_t column_id,
+                              std::shared_ptr<ast::Literal> const& operand) -> bool;
 
     /**
      * Populates the string queries

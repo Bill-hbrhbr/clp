@@ -40,11 +40,9 @@ public:
      * @param creator_id
      * @param creation_idx
      */
-    ArchiveMetadata(
-            archive_format_version_t archive_format_version,
-            std::string creator_id,
-            uint64_t creation_idx
-    );
+    ArchiveMetadata(archive_format_version_t archive_format_version,
+                    std::string creator_id,
+                    uint64_t creation_idx);
 
     // Methods
     /**
@@ -106,15 +104,13 @@ public:
      */
     void write_to_file(FileWriter& file_writer) const;
 
-    MSGPACK_DEFINE_MAP(
-            MSGPACK_NVP("archive_format_version", m_archive_format_version),
-            MSGPACK_NVP("creator_id", m_creator_id),
-            MSGPACK_NVP("creation_idx", m_creation_idx),
-            MSGPACK_NVP("begin_timestamp", m_begin_timestamp),
-            MSGPACK_NVP("end_timestamp", m_end_timestamp),
-            MSGPACK_NVP("uncompressed_size", m_uncompressed_size),
-            MSGPACK_NVP("compressed_size", m_compressed_size)
-    );
+    MSGPACK_DEFINE_MAP(MSGPACK_NVP("archive_format_version", m_archive_format_version),
+                       MSGPACK_NVP("creator_id", m_creator_id),
+                       MSGPACK_NVP("creation_idx", m_creation_idx),
+                       MSGPACK_NVP("begin_timestamp", m_begin_timestamp),
+                       MSGPACK_NVP("end_timestamp", m_end_timestamp),
+                       MSGPACK_NVP("uncompressed_size", m_uncompressed_size),
+                       MSGPACK_NVP("compressed_size", m_compressed_size));
 
 private:
     // Variables

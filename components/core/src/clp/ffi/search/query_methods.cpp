@@ -30,13 +30,11 @@ static auto TokenGetEndPos = [](auto const& token) { return token.get_end_pos();
  * @param contains_decimal_digit Returns whether the string contains a decimal digit
  * @param contains_wildcard Returns whether the string contains a wildcard
  */
-static void find_delimiter(
-        string_view value,
-        size_t& pos,
-        bool& contains_alphabet,
-        bool& contains_decimal_digit,
-        bool& contains_wildcard
-);
+static void find_delimiter(string_view value,
+                           size_t& pos,
+                           bool& contains_alphabet,
+                           bool& contains_decimal_digit,
+                           bool& contains_wildcard);
 /**
  * Finds the next wildcard or non-delimiter in the given string, starting from the given position
  * @param value
@@ -57,31 +55,23 @@ static bool find_wildcard_or_non_delimiter(string_view value, size_t& pos, bool&
  * wildcards
  */
 template <typename encoded_variable_t>
-static void tokenize_query(
-        string_view wildcard_query,
-        vector<
-                variant<ExactVariableToken<encoded_variable_t>,
-                        CompositeWildcardToken<encoded_variable_t>>
-        >& tokens,
-        vector<size_t>& composite_wildcard_token_indexes
-);
+static void tokenize_query(string_view wildcard_query,
+                           vector<variant<ExactVariableToken<encoded_variable_t>,
+                                          CompositeWildcardToken<encoded_variable_t>>>& tokens,
+                           vector<size_t>& composite_wildcard_token_indexes);
 
 template <typename encoded_variable_t>
-void
-generate_subqueries(string_view wildcard_query, vector<Subquery<encoded_variable_t>>& sub_queries) {
+void generate_subqueries(string_view wildcard_query,
+                         vector<Subquery<encoded_variable_t>>& sub_queries) {
     if (wildcard_query.empty()) {
-        throw QueryMethodFailed(
-                ErrorCode_BadParam,
-                __FILENAME__,
-                __LINE__,
-                "wildcard_query cannot be empty"
-        );
+        throw QueryMethodFailed(ErrorCode_BadParam,
+                                __FILENAME__,
+                                __LINE__,
+                                "wildcard_query cannot be empty");
     }
 
-    vector<
-            variant<ExactVariableToken<encoded_variable_t>,
-                    CompositeWildcardToken<encoded_variable_t>>
-    >
+    vector<variant<ExactVariableToken<encoded_variable_t>,
+                   CompositeWildcardToken<encoded_variable_t>>>
             tokens;
     vector<size_t> composite_wildcard_token_indexes;
     tokenize_query(wildcard_query, tokens, composite_wildcard_token_indexes);
@@ -107,36 +97,29 @@ generate_subqueries(string_view wildcard_query, vector<Subquery<encoded_variable
         size_t constant_begin_pos = 0;
         for (auto const& token : tokens) {
             auto begin_pos = std::visit(TokenGetBeginPos, token);
-            ir::append_constant_to_logtype(
-                    wildcard_query.substr(constant_begin_pos, begin_pos - constant_begin_pos),
-                    escape_handler,
-                    logtype_query
-            );
+            ir::append_constant_to_logtype(wildcard_query.substr(constant_begin_pos,
+                                                                 begin_pos - constant_begin_pos),
+                                           escape_handler,
+                                           logtype_query);
 
-            std::visit(
-                    overloaded{
-                            [&logtype_query, &query_vars](  // clang-format off
+            std::visit(overloaded{[&logtype_query, &query_vars](  // clang-format off
                                     ExactVariableToken<encoded_variable_t> const& token
                             ) {  // clang-format on
-                                token.add_to_logtype_query(logtype_query);
-                                query_vars.emplace_back(token);
-                            },
-                            [&logtype_query, &query_vars](  // clang-format off
+                                      token.add_to_logtype_query(logtype_query);
+                                      query_vars.emplace_back(token);
+                                  },
+                                  [&logtype_query, &query_vars](  // clang-format off
                                     CompositeWildcardToken<encoded_variable_t> const& token
                             ) {  // clang-format on
-                                token.add_to_query(logtype_query, query_vars);
-                            }
-                    },
-                    token
-            );
+                                      token.add_to_query(logtype_query, query_vars);
+                                  }},
+                       token);
 
             constant_begin_pos = std::visit(TokenGetEndPos, token);
         }
-        ir::append_constant_to_logtype(
-                wildcard_query.substr(constant_begin_pos),
-                escape_handler,
-                logtype_query
-        );
+        ir::append_constant_to_logtype(wildcard_query.substr(constant_begin_pos),
+                                       escape_handler,
+                                       logtype_query);
 
         // Save sub-query if it's unique
         bool sub_query_exists = false;
@@ -163,14 +146,10 @@ generate_subqueries(string_view wildcard_query, vector<Subquery<encoded_variable
 }
 
 template <typename encoded_variable_t>
-void tokenize_query(
-        string_view wildcard_query,
-        vector<
-                variant<ExactVariableToken<encoded_variable_t>,
-                        CompositeWildcardToken<encoded_variable_t>>
-        >& tokens,
-        vector<size_t>& composite_wildcard_token_indexes
-) {
+void tokenize_query(string_view wildcard_query,
+                    vector<variant<ExactVariableToken<encoded_variable_t>,
+                                   CompositeWildcardToken<encoded_variable_t>>>& tokens,
+                    vector<size_t>& composite_wildcard_token_indexes) {
     // Tokenize query using delimiters to get definite variables and tokens containing wildcards
     // (potential variables)
     size_t end_pos = 0;
@@ -185,23 +164,19 @@ void tokenize_query(
         bool contains_decimal_digit = false;
         bool contains_alphabet = false;
         end_pos = begin_pos;
-        find_delimiter(
-                wildcard_query,
-                end_pos,
-                contains_alphabet,
-                contains_decimal_digit,
-                contains_wildcard
-        );
+        find_delimiter(wildcard_query,
+                       end_pos,
+                       contains_alphabet,
+                       contains_decimal_digit,
+                       contains_wildcard);
 
         if (contains_wildcard) {
             // Only consider tokens which contain more than just a wildcard
             if (end_pos - begin_pos > 1) {
-                tokens.emplace_back(
-                        std::in_place_type<CompositeWildcardToken<encoded_variable_t>>,
-                        wildcard_query,
-                        begin_pos,
-                        end_pos
-                );
+                tokens.emplace_back(std::in_place_type<CompositeWildcardToken<encoded_variable_t>>,
+                                    wildcard_query,
+                                    begin_pos,
+                                    end_pos);
                 composite_wildcard_token_indexes.push_back(tokens.size() - 1);
             }
         } else {
@@ -214,24 +189,20 @@ void tokenize_query(
                 || (begin_pos > 0 && '=' == wildcard_query[begin_pos - 1] && contains_alphabet)
                 || ir::could_be_multi_digit_hex_value(variable))
             {
-                tokens.emplace_back(
-                        std::in_place_type<ExactVariableToken<encoded_variable_t>>,
-                        wildcard_query,
-                        begin_pos,
-                        end_pos
-                );
+                tokens.emplace_back(std::in_place_type<ExactVariableToken<encoded_variable_t>>,
+                                    wildcard_query,
+                                    begin_pos,
+                                    end_pos);
             }
         }
     }
 }
 
-static void find_delimiter(
-        string_view value,
-        size_t& pos,
-        bool& contains_alphabet,
-        bool& contains_decimal_digit,
-        bool& contains_wildcard
-) {
+static void find_delimiter(string_view value,
+                           size_t& pos,
+                           bool& contains_alphabet,
+                           bool& contains_decimal_digit,
+                           bool& contains_wildcard) {
     bool is_escaped = false;
     for (; pos < value.length(); ++pos) {
         auto c = value[pos];
@@ -263,8 +234,9 @@ static void find_delimiter(
     }
 }
 
-static bool
-find_wildcard_or_non_delimiter(string_view value, size_t& pos, bool& contains_wildcard) {
+static bool find_wildcard_or_non_delimiter(string_view value,
+                                           size_t& pos,
+                                           bool& contains_wildcard) {
     bool is_escaped = false;
     contains_wildcard = false;
     for (; pos < value.length(); ++pos) {
@@ -297,26 +269,18 @@ find_wildcard_or_non_delimiter(string_view value, size_t& pos, bool& contains_wi
 // supported
 template void generate_subqueries<eight_byte_encoded_variable_t>(
         string_view wildcard_query,
-        vector<Subquery<eight_byte_encoded_variable_t>>& sub_queries
-);
+        vector<Subquery<eight_byte_encoded_variable_t>>& sub_queries);
 template void generate_subqueries<four_byte_encoded_variable_t>(
         string_view wildcard_query,
-        vector<Subquery<four_byte_encoded_variable_t>>& sub_queries
-);
+        vector<Subquery<four_byte_encoded_variable_t>>& sub_queries);
 template void tokenize_query<eight_byte_encoded_variable_t>(
         string_view wildcard_query,
-        vector<
-                variant<ExactVariableToken<eight_byte_encoded_variable_t>,
-                        CompositeWildcardToken<eight_byte_encoded_variable_t>>
-        >& tokens,
-        vector<size_t>& composite_wildcard_token_indexes
-);
+        vector<variant<ExactVariableToken<eight_byte_encoded_variable_t>,
+                       CompositeWildcardToken<eight_byte_encoded_variable_t>>>& tokens,
+        vector<size_t>& composite_wildcard_token_indexes);
 template void tokenize_query<four_byte_encoded_variable_t>(
         string_view wildcard_query,
-        vector<
-                variant<ExactVariableToken<four_byte_encoded_variable_t>,
-                        CompositeWildcardToken<four_byte_encoded_variable_t>>
-        >& tokens,
-        vector<size_t>& composite_wildcard_token_indexes
-);
+        vector<variant<ExactVariableToken<four_byte_encoded_variable_t>,
+                       CompositeWildcardToken<four_byte_encoded_variable_t>>>& tokens,
+        vector<size_t>& composite_wildcard_token_indexes);
 }  // namespace clp::ffi::search

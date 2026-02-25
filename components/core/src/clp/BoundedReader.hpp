@@ -70,12 +70,11 @@ public:
      * will not respect the bound.
      * @return ErrorCode_Unsupported
      */
-    [[nodiscard]] auto try_read_to_delimiter(
-            [[maybe_unused]] char delim,
-            [[maybe_unused]] bool keep_delimiter,
-            [[maybe_unused]] bool append,
-            [[maybe_unused]] std::string& str
-    ) -> ErrorCode override {
+    [[nodiscard]] auto try_read_to_delimiter([[maybe_unused]] char delim,
+                                             [[maybe_unused]] bool keep_delimiter,
+                                             [[maybe_unused]] bool append,
+                                             [[maybe_unused]] std::string& str)
+            -> ErrorCode override {
         return ErrorCode_Unsupported;
     }
 

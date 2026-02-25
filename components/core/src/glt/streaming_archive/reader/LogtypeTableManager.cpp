@@ -35,8 +35,7 @@ void LogtypeTableManager::load_variables_segment() {
     if (boost_error_code) {
         SPDLOG_ERROR(
                 "streaming_archive::reader::Segment: Unable to obtain file size for segment: {}",
-                column_file.c_str()
-        );
+                column_file.c_str());
         SPDLOG_ERROR("streaming_archive::reader::Segment: {}", boost_error_code.message().c_str());
         throw ErrorCode_Failure;
     }
@@ -54,8 +53,7 @@ void LogtypeTableManager::load_variables_segment() {
         SPDLOG_ERROR(
                 "streaming_archive::reader:Segment: Unable to memory map the compressed segment "
                 "with path: {}",
-                column_file.c_str()
-        );
+                column_file.c_str());
         throw ErrorCode_Failure;
     }
 }
@@ -74,8 +72,7 @@ void LogtypeTableManager::load_metadata() {
     if (boost_error_code) {
         SPDLOG_ERROR(
                 "streaming_archive::reader::Segment: Unable to obtain file size for segment: {}",
-                metadata_path.c_str()
-        );
+                metadata_path.c_str());
         SPDLOG_ERROR("streaming_archive::reader::Segment: {}", boost_error_code.message().c_str());
         throw ErrorCode_Failure;
     }
@@ -94,8 +91,7 @@ void LogtypeTableManager::load_metadata() {
         SPDLOG_ERROR(
                 "streaming_archive::reader:Segment: Unable to memory map the compressed segment "
                 "with path: {}",
-                metadata_path.c_str()
-        );
+                metadata_path.c_str());
         throw ErrorCode_Failure;
     }
 #if USE_PASSTHROUGH_COMPRESSION
@@ -156,16 +152,12 @@ void LogtypeTableManager::load_metadata() {
             metadata_decompressor.exact_read((char*)&logtype_id, sizeof(logtype_dictionary_id_t));
             // combined table id
             size_t combined_table_ix;
-            metadata_decompressor.exact_read(
-                    (char*)&combined_table_ix,
-                    sizeof(combined_table_id_t)
-            );
+            metadata_decompressor.exact_read((char*)&combined_table_ix,
+                                             sizeof(combined_table_id_t));
             // row and columns
             metadata_decompressor.exact_read((char*)&combined_table_obj.num_rows, sizeof(size_t));
-            metadata_decompressor.exact_read(
-                    (char*)&combined_table_obj.num_columns,
-                    sizeof(size_t)
-            );
+            metadata_decompressor.exact_read((char*)&combined_table_obj.num_columns,
+                                             sizeof(size_t));
             // beginning offset
             size_t begin_offset;
             metadata_decompressor.exact_read((char*)&begin_offset, sizeof(size_t));

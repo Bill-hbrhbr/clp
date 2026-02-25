@@ -49,11 +49,10 @@ private:
  * @param serializer The method to use for serializing the JSON object.
  * @return The serialized data.
  */
-std::vector<uint8_t> serialize(
-        GroupTags const& tags,
-        ConstRecordIterator& record_it,
-        std::vector<uint8_t>(serializer)(nlohmann::json const& j) = nlohmann::json::to_msgpack
-);
+std::vector<uint8_t> serialize(GroupTags const& tags,
+                               ConstRecordIterator& record_it,
+                               std::vector<uint8_t>(serializer)(nlohmann::json const& j)
+                               = nlohmann::json::to_msgpack);
 }  // namespace reducer
 
 #endif  // REDUCER_DESERIALIZEDRECORDGROUP_HPP

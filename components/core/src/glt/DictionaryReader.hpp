@@ -36,10 +36,8 @@ public:
 
     // Constructors
     DictionaryReader() : m_is_open(false), m_num_segments_read_from_index(0) {
-        static_assert(
-                std::is_base_of<DictionaryEntry<DictionaryIdType>, EntryType>::value,
-                "EntryType must be DictionaryEntry or a derivative."
-        );
+        static_assert(std::is_base_of<DictionaryEntry<DictionaryIdType>, EntryType>::value,
+                      "EntryType must be DictionaryEntry or a derivative.");
     }
 
     // Methods
@@ -84,19 +82,17 @@ public:
      * @param ignore_case
      * @return nullptr if an exact match is not found, the entry otherwise
      */
-    EntryType const*
-    get_entry_matching_value(std::string const& search_string, bool ignore_case) const;
+    EntryType const* get_entry_matching_value(std::string const& search_string,
+                                              bool ignore_case) const;
     /**
      * Gets the entries that match a given wildcard string
      * @param wildcard_string
      * @param ignore_case
      * @param entries Set in which to store found entries
      */
-    void get_entries_matching_wildcard_string(
-            std::string const& wildcard_string,
-            bool ignore_case,
-            std::unordered_set<EntryType const*>& entries
-    ) const;
+    void get_entries_matching_wildcard_string(std::string const& wildcard_string,
+                                              bool ignore_case,
+                                              std::unordered_set<EntryType const*>& entries) const;
 
 protected:
     // Methods
@@ -123,25 +119,21 @@ protected:
 };
 
 template <typename DictionaryIdType, typename EntryType>
-void DictionaryReader<DictionaryIdType, EntryType>::open(
-        std::string const& dictionary_path,
-        std::string const& segment_index_path
-) {
+void DictionaryReader<DictionaryIdType, EntryType>::open(std::string const& dictionary_path,
+                                                         std::string const& segment_index_path) {
     if (m_is_open) {
         throw OperationFailed(ErrorCode_NotReady, __FILENAME__, __LINE__);
     }
 
     constexpr size_t cDecompressorFileReadBufferCapacity = 64 * 1024;  // 64 KiB
 
-    open_dictionary_for_reading(
-            dictionary_path,
-            segment_index_path,
-            cDecompressorFileReadBufferCapacity,
-            m_dictionary_file_reader,
-            m_dictionary_decompressor,
-            m_segment_index_file_reader,
-            m_segment_index_decompressor
-    );
+    open_dictionary_for_reading(dictionary_path,
+                                segment_index_path,
+                                cDecompressorFileReadBufferCapacity,
+                                m_dictionary_file_reader,
+                                m_dictionary_decompressor,
+                                m_segment_index_file_reader,
+                                m_segment_index_decompressor);
 
     m_is_open = true;
 }
@@ -206,8 +198,8 @@ void DictionaryReader<DictionaryIdType, EntryType>::read_new_entries() {
 }
 
 template <typename DictionaryIdType, typename EntryType>
-EntryType const&
-DictionaryReader<DictionaryIdType, EntryType>::get_entry(DictionaryIdType id) const {
+EntryType const& DictionaryReader<DictionaryIdType, EntryType>::get_entry(
+        DictionaryIdType id) const {
     if (false == m_is_open) {
         throw OperationFailed(ErrorCode_NotInit, __FILENAME__, __LINE__);
     }
@@ -219,8 +211,8 @@ DictionaryReader<DictionaryIdType, EntryType>::get_entry(DictionaryIdType id) co
 }
 
 template <typename DictionaryIdType, typename EntryType>
-std::string const&
-DictionaryReader<DictionaryIdType, EntryType>::get_value(DictionaryIdType id) const {
+std::string const& DictionaryReader<DictionaryIdType, EntryType>::get_value(
+        DictionaryIdType id) const {
     if (id >= m_entries.size()) {
         throw OperationFailed(ErrorCode_Corrupt, __FILENAME__, __LINE__);
     }
@@ -230,8 +222,7 @@ DictionaryReader<DictionaryIdType, EntryType>::get_value(DictionaryIdType id) co
 template <typename DictionaryIdType, typename EntryType>
 EntryType const* DictionaryReader<DictionaryIdType, EntryType>::get_entry_matching_value(
         std::string const& search_string,
-        bool ignore_case
-) const {
+        bool ignore_case) const {
     if (false == ignore_case) {
         for (auto const& entry : m_entries) {
             if (entry.get_value() == search_string) {
@@ -254,14 +245,11 @@ template <typename DictionaryIdType, typename EntryType>
 void DictionaryReader<DictionaryIdType, EntryType>::get_entries_matching_wildcard_string(
         std::string const& wildcard_string,
         bool ignore_case,
-        std::unordered_set<EntryType const*>& entries
-) const {
+        std::unordered_set<EntryType const*>& entries) const {
     for (auto const& entry : m_entries) {
-        if (clp::string_utils::wildcard_match_unsafe(
-                    entry.get_value(),
-                    wildcard_string,
-                    false == ignore_case
-            ))
+        if (clp::string_utils::wildcard_match_unsafe(entry.get_value(),
+                                                     wildcard_string,
+                                                     false == ignore_case))
         {
             entries.insert(&entry);
         }

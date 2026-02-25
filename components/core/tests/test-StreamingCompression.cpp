@@ -35,24 +35,20 @@ using ystdlib::containers::Array;
 namespace {
 constexpr string_view cCompressedFilePath{"test_streaming_compressed_file.bin"};
 constexpr size_t cBufferSize{128L * 1024 * 1024};  // 128 MiB
-constexpr auto cCompressionChunkSizes = std::to_array<size_t>(
-        {0,
-         cBufferSize / 100,
-         cBufferSize / 50,
-         cBufferSize / 25,
-         cBufferSize / 10,
-         cBufferSize / 5,
-         cBufferSize / 2,
-         cBufferSize}
-);
+constexpr auto cCompressionChunkSizes = std::to_array<size_t>({0,
+                                                               cBufferSize / 100,
+                                                               cBufferSize / 50,
+                                                               cBufferSize / 25,
+                                                               cBufferSize / 10,
+                                                               cBufferSize / 5,
+                                                               cBufferSize / 2,
+                                                               cBufferSize});
 
 auto compress(std::unique_ptr<Compressor> compressor, char const* src) -> void;
 
-auto decompress_and_compare(
-        std::unique_ptr<Decompressor> decompressor,
-        Array<char> const& uncompressed_buffer,
-        Array<char>& decompressed_buffer
-) -> void;
+auto decompress_and_compare(std::unique_ptr<Decompressor> decompressor,
+                            Array<char> const& uncompressed_buffer,
+                            Array<char>& decompressed_buffer) -> void;
 
 auto compress(std::unique_ptr<Compressor> compressor, char const* src) -> void {
     FileWriter file_writer;
@@ -65,11 +61,9 @@ auto compress(std::unique_ptr<Compressor> compressor, char const* src) -> void {
     file_writer.close();
 }
 
-auto decompress_and_compare(
-        std::unique_ptr<Decompressor> decompressor,
-        Array<char> const& uncompressed_buffer,
-        Array<char>& decompressed_buffer
-) -> void {
+auto decompress_and_compare(std::unique_ptr<Decompressor> decompressor,
+                            Array<char> const& uncompressed_buffer,
+                            Array<char>& decompressed_buffer) -> void {
     auto result{clp::ReadOnlyMemoryMappedFile::create(string(cCompressedFilePath))};
     REQUIRE_FALSE(result.has_error());
     auto const memory_mapped_compressed_file{std::move(result.value())};
@@ -81,30 +75,20 @@ auto decompress_and_compare(
     for (auto const chunk_size : cCompressionChunkSizes) {
         // Clear the buffer to ensure that we are not comparing values from a previous test
         std::ranges::fill(decompressed_buffer.begin(), decompressed_buffer.end(), 0);
-        REQUIRE(
-                (ErrorCode_Success
-                 == decompressor->get_decompressed_stream_region(
-                         num_uncompressed_bytes,
-                         decompressed_buffer.data(),
-                         chunk_size
-                 ))
-        );
-        REQUIRE(std::equal(
-                uncompressed_buffer.begin(),
-                uncompressed_buffer.begin() + chunk_size,
-                decompressed_buffer.begin()
-        ));
+        REQUIRE((ErrorCode_Success
+                 == decompressor->get_decompressed_stream_region(num_uncompressed_bytes,
+                                                                 decompressed_buffer.data(),
+                                                                 chunk_size)));
+        REQUIRE(std::equal(uncompressed_buffer.begin(),
+                           uncompressed_buffer.begin() + chunk_size,
+                           decompressed_buffer.begin()));
         num_uncompressed_bytes += chunk_size;
     }
 
-    REQUIRE(
-            (std::accumulate(
-                     cCompressionChunkSizes.cbegin(),
-                     cCompressionChunkSizes.cend(),
-                     size_t{0}
-             )
-             == num_uncompressed_bytes)
-    );
+    REQUIRE((std::accumulate(cCompressionChunkSizes.cbegin(),
+                             cCompressionChunkSizes.cend(),
+                             size_t{0})
+             == num_uncompressed_bytes));
 }
 }  // namespace
 

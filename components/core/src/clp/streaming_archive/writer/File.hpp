@@ -86,13 +86,11 @@ public:
      * @param var_ids
      * @param num_uncompressed_bytes
      */
-    void write_encoded_msg(
-            epochtime_t timestamp,
-            logtype_dictionary_id_t logtype_id,
-            std::vector<encoded_variable_t> const& encoded_vars,
-            std::vector<variable_dictionary_id_t> const& var_ids,
-            size_t num_uncompressed_bytes
-    );
+    void write_encoded_msg(epochtime_t timestamp,
+                           logtype_dictionary_id_t logtype_id,
+                           std::vector<encoded_variable_t> const& encoded_vars,
+                           std::vector<variable_dictionary_id_t> const& var_ids,
+                           size_t num_uncompressed_bytes);
 
     /**
      * Changes timestamp pattern in use at current message in file
@@ -219,12 +217,10 @@ private:
      * @param segment_logtypes_uncompressed_pos
      * @param segment_variables_uncompressed_pos
      */
-    void set_segment_metadata(
-            segment_id_t segment_id,
-            uint64_t segment_timestamps_uncompressed_pos,
-            uint64_t segment_logtypes_uncompressed_pos,
-            uint64_t segment_variables_uncompressed_pos
-    );
+    void set_segment_metadata(segment_id_t segment_id,
+                              uint64_t segment_timestamps_uncompressed_pos,
+                              uint64_t segment_logtypes_uncompressed_pos,
+                              uint64_t segment_variables_uncompressed_pos);
 
     // Variables
     // Metadata

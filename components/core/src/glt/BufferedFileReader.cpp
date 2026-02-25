@@ -86,12 +86,11 @@ void BufferedFileReader::open(string const& path) {
     auto const error_code = try_open(path);
     if (ErrorCode_Success != error_code) {
         if (ErrorCode_FileNotFound == error_code) {
-            throw OperationFailed(
-                    error_code,
-                    __FILENAME__,
-                    __LINE__,
-                    "File not found: " + boost::filesystem::weakly_canonical(path).string()
-            );
+            throw OperationFailed(error_code,
+                                  __FILENAME__,
+                                  __LINE__,
+                                  "File not found: "
+                                          + boost::filesystem::weakly_canonical(path).string());
         }
         throw OperationFailed(error_code, __FILENAME__, __LINE__);
     }
@@ -265,9 +264,10 @@ auto BufferedFileReader::try_read(char* buf, size_t num_bytes_to_read, size_t& n
     return ErrorCode_Success;
 }
 
-auto
-BufferedFileReader::try_read_to_delimiter(char delim, bool keep_delimiter, bool append, string& str)
-        -> ErrorCode {
+auto BufferedFileReader::try_read_to_delimiter(char delim,
+                                               bool keep_delimiter,
+                                               bool append,
+                                               string& str) -> ErrorCode {
     if (-1 == m_fd) {
         return ErrorCode_NotInit;
     }
@@ -278,13 +278,11 @@ BufferedFileReader::try_read_to_delimiter(char delim, bool keep_delimiter, bool 
     size_t total_num_bytes_read{0};
     while (true) {
         size_t num_bytes_read{0};
-        if (auto ret_code = m_buffer_reader->try_read_to_delimiter(
-                    delim,
-                    keep_delimiter,
-                    str,
-                    found_delim,
-                    num_bytes_read
-            );
+        if (auto ret_code = m_buffer_reader->try_read_to_delimiter(delim,
+                                                                   keep_delimiter,
+                                                                   str,
+                                                                   found_delim,
+                                                                   num_bytes_read);
             ret_code != ErrorCode_Success && ret_code != ErrorCode_EndOfFile)
         {
             return ret_code;
@@ -318,10 +316,8 @@ auto BufferedFileReader::refill_reader_buffer(size_t num_bytes_to_refill) -> Err
     size_t next_buffer_pos{0};
     auto next_buffer_begin_pos = m_buffer_begin_pos;
     if (m_checkpoint_pos.has_value()) {
-        num_bytes_to_read = int_round_up_to_multiple(
-                buffer_end_pos + num_bytes_to_refill,
-                m_base_buffer_size
-        );
+        num_bytes_to_read = int_round_up_to_multiple(buffer_end_pos + num_bytes_to_refill,
+                                                     m_base_buffer_size);
         // Grow the buffer if necessary
         if (num_bytes_to_read > available_buffer_space) {
             m_buffer.resize(data_size + num_bytes_to_read);

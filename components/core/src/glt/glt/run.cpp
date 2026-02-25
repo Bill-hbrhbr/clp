@@ -18,8 +18,8 @@ using std::unordered_set;
 using std::vector;
 
 namespace glt::glt {
-static bool
-obtain_input_paths(CommandLineArguments const& command_line_args, vector<string>& input_paths) {
+static bool obtain_input_paths(CommandLineArguments const& command_line_args,
+                               vector<string>& input_paths) {
     input_paths = command_line_args.get_input_paths();
     // Read input paths from file if necessary
     if (false == command_line_args.get_path_list_path().empty()) {
@@ -63,8 +63,7 @@ int run(int argc, char const* argv[]) {
             return -1;
         }
         boost::filesystem::path path_prefix_to_remove(
-                command_line_args.get_path_prefix_to_remove()
-        );
+                command_line_args.get_path_prefix_to_remove());
 
         // Validate input paths exist
         if (false == validate_paths_exist(input_paths)) {
@@ -76,12 +75,10 @@ int run(int argc, char const* argv[]) {
         vector<string> empty_directory_paths;
         for (auto const& input_path : input_paths) {
             if (false
-                == find_all_files_and_empty_directories(
-                        path_prefix_to_remove,
-                        input_path,
-                        files_to_compress,
-                        empty_directory_paths
-                ))
+                == find_all_files_and_empty_directories(path_prefix_to_remove,
+                                                        input_path,
+                                                        files_to_compress,
+                                                        empty_directory_paths))
             {
                 return -1;
             }
@@ -98,32 +95,26 @@ int run(int argc, char const* argv[]) {
 
         bool compression_successful;
         try {
-            compression_successful = compress(
-                    command_line_args,
-                    files_to_compress,
-                    empty_directory_paths,
-                    grouped_files_to_compress,
-                    command_line_args.get_target_encoded_file_size()
-            );
+            compression_successful = compress(command_line_args,
+                                              files_to_compress,
+                                              empty_directory_paths,
+                                              grouped_files_to_compress,
+                                              command_line_args.get_target_encoded_file_size());
         } catch (TraceableException& e) {
             ErrorCode error_code = e.get_error_code();
             if (ErrorCode_errno == error_code) {
-                SPDLOG_ERROR(
-                        "Compression failed: {}:{} {}, errno={}",
-                        e.get_filename(),
-                        e.get_line_number(),
-                        e.what(),
-                        errno
-                );
+                SPDLOG_ERROR("Compression failed: {}:{} {}, errno={}",
+                             e.get_filename(),
+                             e.get_line_number(),
+                             e.what(),
+                             errno);
                 compression_successful = false;
             } else {
-                SPDLOG_ERROR(
-                        "Compression failed: {}:{} {}, error_code={}",
-                        e.get_filename(),
-                        e.get_line_number(),
-                        e.what(),
-                        error_code
-                );
+                SPDLOG_ERROR("Compression failed: {}:{} {}, error_code={}",
+                             e.get_filename(),
+                             e.get_line_number(),
+                             e.what(),
+                             error_code);
                 compression_successful = false;
             }
         } catch (std::exception& e) {

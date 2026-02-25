@@ -33,10 +33,8 @@ void ZstdCompressor::open(FileWriter& file_writer, int const compression_level) 
     // Setup compression stream
     auto init_result = ZSTD_initCStream(m_compression_stream, compression_level);
     if (ZSTD_isError(init_result)) {
-        SPDLOG_ERROR(
-                "ZstdCompressor: ZSTD_initCStream() error: {}",
-                ZSTD_getErrorName(init_result)
-        );
+        SPDLOG_ERROR("ZstdCompressor: ZSTD_initCStream() error: {}",
+                     ZSTD_getErrorName(init_result));
         throw OperationFailed(ErrorCodeFailure, __FILENAME__, __LINE__);
     }
 
@@ -70,24 +68,19 @@ void ZstdCompressor::write(char const* data, size_t data_length) {
     ZSTD_inBuffer uncompressed_stream_block = {data, data_length, 0};
     while (uncompressed_stream_block.pos < uncompressed_stream_block.size) {
         m_compressed_stream_block.pos = 0;
-        auto error = ZSTD_compressStream(
-                m_compression_stream,
-                &m_compressed_stream_block,
-                &uncompressed_stream_block
-        );
+        auto error = ZSTD_compressStream(m_compression_stream,
+                                         &m_compressed_stream_block,
+                                         &uncompressed_stream_block);
         if (ZSTD_isError(error)) {
-            SPDLOG_ERROR(
-                    "ZstdCompressor: ZSTD_compressStream() error: {}",
-                    ZSTD_getErrorName(error)
-            );
+            SPDLOG_ERROR("ZstdCompressor: ZSTD_compressStream() error: {}",
+                         ZSTD_getErrorName(error));
             throw OperationFailed(ErrorCodeFailure, __FILENAME__, __LINE__);
         }
         if (m_compressed_stream_block.pos) {
             // Write to disk only if there is data in the compressed stream block buffer
             m_compressed_stream_file_writer->write(
                     reinterpret_cast<char const*>(m_compressed_stream_block.dst),
-                    m_compressed_stream_block.pos
-            );
+                    m_compressed_stream_block.pos);
         }
     }
 
@@ -105,16 +98,13 @@ void ZstdCompressor::flush() {
     if (end_stream_result) {
         // Note: Output buffer is large enough that it is guaranteed to have enough room to be able
         // to Flush the entire buffer, so this can only be an error
-        SPDLOG_ERROR(
-                "ZstdCompressor: ZSTD_endStream() error: {}",
-                ZSTD_getErrorName(end_stream_result)
-        );
+        SPDLOG_ERROR("ZstdCompressor: ZSTD_endStream() error: {}",
+                     ZSTD_getErrorName(end_stream_result));
         throw OperationFailed(ErrorCodeFailure, __FILENAME__, __LINE__);
     }
     m_compressed_stream_file_writer->write(
             reinterpret_cast<char const*>(m_compressed_stream_block.dst),
-            m_compressed_stream_block.pos
-    );
+            m_compressed_stream_block.pos);
 
     m_compression_stream_contains_data = false;
 }

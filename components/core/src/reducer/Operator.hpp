@@ -21,12 +21,10 @@ class Operator {
 public:
     virtual ~Operator() = default;
 
-    virtual void
-    push_intra_stage_record_group(GroupTags const& tags, ConstRecordIterator& record_it)
-            = 0;
-    virtual void
-    push_inter_stage_record_group(GroupTags const& tags, ConstRecordIterator& record_it)
-            = 0;
+    virtual void push_intra_stage_record_group(GroupTags const& tags,
+                                               ConstRecordIterator& record_it) = 0;
+    virtual void push_inter_stage_record_group(GroupTags const& tags,
+                                               ConstRecordIterator& record_it) = 0;
 
     void set_next_stage(std::shared_ptr<Operator> next_operator) {
         m_next_stage = std::move(next_operator);
@@ -38,8 +36,7 @@ public:
     virtual std::unique_ptr<RecordGroupIterator> get_stored_result_iterator() = 0;
 
     virtual std::unique_ptr<RecordGroupIterator> get_stored_result_iterator(
-            [[maybe_unused]] std::set<GroupTags> const& filtered_tags
-    ) {
+            [[maybe_unused]] std::set<GroupTags> const& filtered_tags) {
         // TODO: By default operators don't have to support filtering their output. We should
         // implement an iterator that wraps RecordGroupIterators and performs the filtering when the
         // underlying operator doesn't.

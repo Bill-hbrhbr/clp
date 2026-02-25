@@ -49,10 +49,8 @@ ErrorCode read_list_of_paths(std::string const& list_path, std::vector<std::stri
  * @param schema_file_path
  * @param lexer_ptr
  */
-void load_lexer_from_file(
-        std::string const& schema_file_path,
-        log_surgeon::lexers::ByteLexer& lexer_ptr
-);
+void load_lexer_from_file(std::string const& schema_file_path,
+                          log_surgeon::lexers::ByteLexer& lexer_ptr);
 }  // namespace clp
 
 #endif  // CLP_UTILS_HPP

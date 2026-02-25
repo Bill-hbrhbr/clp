@@ -57,14 +57,12 @@ public:
     };
 
     // Constructors
-    GlobalMySQLMetadataDB(
-            std::string const& host,
-            int port,
-            std::string const& username,
-            std::string const& password,
-            std::string const& database_name,
-            std::string const& table_prefix
-    )
+    GlobalMySQLMetadataDB(std::string const& host,
+                          int port,
+                          std::string const& username,
+                          std::string const& password,
+                          std::string const& database_name,
+                          std::string const& table_prefix)
             : m_host(host),
               m_port(port),
               m_username(username),
@@ -76,23 +74,19 @@ public:
     void open() override;
     void close() override;
 
-    void
-    add_archive(std::string const& id, streaming_archive::ArchiveMetadata const& metadata) override;
-    void update_archive_metadata(
-            std::string const& archive_id,
-            streaming_archive::ArchiveMetadata const& metadata
-    ) override;
+    void add_archive(std::string const& id,
+                     streaming_archive::ArchiveMetadata const& metadata) override;
+    void update_archive_metadata(std::string const& archive_id,
+                                 streaming_archive::ArchiveMetadata const& metadata) override;
     void update_metadata_for_files(
             std::string const& archive_id,
-            std::vector<streaming_archive::writer::File*> const& files
-    ) override;
+            std::vector<streaming_archive::writer::File*> const& files) override;
 
     GlobalMetadataDB::ArchiveIterator* get_archive_iterator() override;
     GlobalMetadataDB::ArchiveIterator*
     get_archive_iterator_for_time_window(epochtime_t begin_ts, epochtime_t end_ts) override;
     GlobalMetadataDB::ArchiveIterator* get_archive_iterator_for_file_path(
-            std::string const& file_path
-    ) override;
+            std::string const& file_path) override;
 
 private:
     // Variables

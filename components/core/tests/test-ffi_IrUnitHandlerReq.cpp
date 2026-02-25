@@ -29,9 +29,8 @@ constexpr std::string_view cTestSchemaTreeNodeKeyName{"test_key"};
 class TrivialIrUnitHandler {
 public:
     // Implements `clp::ffi::ir_stream::IrUnitHandlerReq`
-    [[nodiscard]] auto
-    handle_log_event(KeyValuePairLogEvent&& log_event, [[maybe_unused]] size_t log_event_idx)
-            -> IRErrorCode {
+    [[nodiscard]] auto handle_log_event(KeyValuePairLogEvent&& log_event,
+                                        [[maybe_unused]] size_t log_event_idx) -> IRErrorCode {
         m_log_event.emplace(std::move(log_event));
         return IRErrorCode::IRErrorCode_Success;
     }
@@ -45,8 +44,7 @@ public:
     [[nodiscard]] auto handle_schema_tree_node_insertion(
             [[maybe_unused]] bool is_auto_generated,
             SchemaTree::NodeLocator schema_tree_node_locator,
-            [[maybe_unused]] std::shared_ptr<SchemaTree const> const& schema_tree
-    ) -> IRErrorCode {
+            [[maybe_unused]] std::shared_ptr<SchemaTree const> const& schema_tree) -> IRErrorCode {
         m_schema_tree_node_locator.emplace(schema_tree_node_locator);
         return IRErrorCode::IRErrorCode_Success;
     }
@@ -91,58 +89,41 @@ class TriviallyInheritedIrUnitHandler : public TrivialIrUnitHandler {};
 auto test_ir_unit_handler_req(clp::ffi::ir_stream::IrUnitHandlerReq auto& handler) -> void;
 
 auto test_ir_unit_handler_req(clp::ffi::ir_stream::IrUnitHandlerReq auto& handler) -> void {
-    auto test_log_event_result{KeyValuePairLogEvent::create(
-            std::make_shared<SchemaTree>(),
-            std::make_shared<SchemaTree>(),
-            {},
-            {},
-            cTestUtcOffset
-    )};
-    REQUIRE(
-            (false == test_log_event_result.has_error()
+    auto test_log_event_result{KeyValuePairLogEvent::create(std::make_shared<SchemaTree>(),
+                                                            std::make_shared<SchemaTree>(),
+                                                            {},
+                                                            {},
+                                                            cTestUtcOffset)};
+    REQUIRE((false == test_log_event_result.has_error()
              && IRErrorCode::IRErrorCode_Success
-                        == handler.handle_log_event(std::move(test_log_event_result.value()), 0))
-    );
-    REQUIRE(
-            (IRErrorCode::IRErrorCode_Success
-             == handler.handle_utc_offset_change(
-                     cTestUtcOffset,
-                     cTestUtcOffset + cTestUtcOffsetDelta
-             ))
-    );
-    REQUIRE(
-            (IRErrorCode::IRErrorCode_Success
+                        == handler.handle_log_event(std::move(test_log_event_result.value()), 0)));
+    REQUIRE((IRErrorCode::IRErrorCode_Success
+             == handler.handle_utc_offset_change(cTestUtcOffset,
+                                                 cTestUtcOffset + cTestUtcOffsetDelta)));
+    REQUIRE((IRErrorCode::IRErrorCode_Success
              == handler.handle_schema_tree_node_insertion(
                      true,
                      {SchemaTree::cRootId, cTestSchemaTreeNodeKeyName, SchemaTree::Node::Type::Obj},
-                     nullptr
-             ))
-    );
+                     nullptr)));
     REQUIRE((IRErrorCode::IRErrorCode_Success == handler.handle_end_of_stream()));
 }
 }  // namespace
 
-TEMPLATE_TEST_CASE(
-        "test_ir_unit_handler_req_basic",
-        "[ffi][ir_stream]",
-        TrivialIrUnitHandler,
-        TriviallyInheritedIrUnitHandler
-) {
+TEMPLATE_TEST_CASE("test_ir_unit_handler_req_basic",
+                   "[ffi][ir_stream]",
+                   TrivialIrUnitHandler,
+                   TriviallyInheritedIrUnitHandler) {
     TestType handler;
     REQUIRE_FALSE(handler.is_complete());
     test_ir_unit_handler_req(handler);
 
     REQUIRE((handler.get_utc_offset_delta() == cTestUtcOffsetDelta));
     auto const& optional_log_event{handler.get_log_event()};
-    REQUIRE(
-            (optional_log_event.has_value()
+    REQUIRE((optional_log_event.has_value()
              && optional_log_event.value().get_utc_offset() == cTestUtcOffset
-             && optional_log_event.value().get_user_gen_node_id_value_pairs().empty())
-    );
+             && optional_log_event.value().get_user_gen_node_id_value_pairs().empty()));
     auto const& optional_schema_tree_locator{handler.get_schema_tree_node_locator()};
-    REQUIRE(
-            (optional_schema_tree_locator.has_value()
-             && optional_schema_tree_locator.value().get_key_name() == cTestSchemaTreeNodeKeyName)
-    );
+    REQUIRE((optional_schema_tree_locator.has_value()
+             && optional_schema_tree_locator.value().get_key_name() == cTestSchemaTreeNodeKeyName));
     REQUIRE(handler.is_complete());
 }

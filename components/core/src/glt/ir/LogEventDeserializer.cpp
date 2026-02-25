@@ -74,13 +74,11 @@ auto LogEventDeserializer<encoded_variable_t>::deserialize_log_event()
     std::vector<std::string> dict_vars;
     std::vector<encoded_variable_t> encoded_vars;
 
-    auto ir_error_code = ffi::ir_stream::deserialize_log_event(
-            m_reader,
-            logtype,
-            encoded_vars,
-            dict_vars,
-            timestamp_or_timestamp_delta
-    );
+    auto ir_error_code = ffi::ir_stream::deserialize_log_event(m_reader,
+                                                               logtype,
+                                                               encoded_vars,
+                                                               dict_vars,
+                                                               timestamp_or_timestamp_delta);
     if (ffi::ir_stream::IRErrorCode_Success != ir_error_code) {
         switch (ir_error_code) {
             case ffi::ir_stream::IRErrorCode_Eof:

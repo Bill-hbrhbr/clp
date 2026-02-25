@@ -88,11 +88,10 @@ private:
  * @param[in] config The translator config predefined by the user.
  * @return clp::regex_utils::ErrorCode
  */
-using StateTransitionFuncSig
-        = auto(TranslatorState& state,
-               string_view::const_iterator& it,
-               string& wildcard_str,
-               RegexToWildcardTranslatorConfig const& config) -> ErrorCode;
+using StateTransitionFuncSig = auto(TranslatorState& state,
+                                    string_view::const_iterator& it,
+                                    string& wildcard_str,
+                                    RegexToWildcardTranslatorConfig const& config) -> ErrorCode;
 
 /**
  * Treats each character literally and directly append it to the wildcard string, unless it is a
@@ -169,12 +168,11 @@ auto append_char_to_wildcard(char ch, string& wildcard_str) -> void;
  */
 [[nodiscard]] auto is_same_char_opposite_case(char ch0, char ch1) -> bool;
 
-auto normal_state_transition(
-        TranslatorState& state,
-        string_view::const_iterator& it,
-        string& wildcard_str,
-        [[maybe_unused]] RegexToWildcardTranslatorConfig const& config
-) -> ErrorCode {
+auto normal_state_transition(TranslatorState& state,
+                             string_view::const_iterator& it,
+                             string& wildcard_str,
+                             [[maybe_unused]] RegexToWildcardTranslatorConfig const& config)
+        -> ErrorCode {
     auto const ch{*it};
     switch (ch) {
         case '.':
@@ -209,12 +207,11 @@ auto normal_state_transition(
     return ErrorCodeEnum::Success;
 }
 
-auto dot_state_transition(
-        TranslatorState& state,
-        string_view::const_iterator& it,
-        string& wildcard_str,
-        [[maybe_unused]] RegexToWildcardTranslatorConfig const& config
-) -> ErrorCode {
+auto dot_state_transition(TranslatorState& state,
+                          string_view::const_iterator& it,
+                          string& wildcard_str,
+                          [[maybe_unused]] RegexToWildcardTranslatorConfig const& config)
+        -> ErrorCode {
     switch (*it) {
         case cZeroOrMoreCharsWildcard:
             wildcard_str += cZeroOrMoreCharsWildcard;
@@ -232,12 +229,11 @@ auto dot_state_transition(
     return ErrorCodeEnum::Success;
 }
 
-auto escaped_state_transition(
-        TranslatorState& state,
-        string_view::const_iterator& it,
-        string& wildcard_str,
-        [[maybe_unused]] RegexToWildcardTranslatorConfig const& config
-) -> ErrorCode {
+auto escaped_state_transition(TranslatorState& state,
+                              string_view::const_iterator& it,
+                              string& wildcard_str,
+                              [[maybe_unused]] RegexToWildcardTranslatorConfig const& config)
+        -> ErrorCode {
     auto const ch{*it};
     if (false == cRegexEscapeSeqMetaCharsLut.at(ch)) {
         return ErrorCodeEnum::IllegalEscapeSequence;
@@ -247,12 +243,10 @@ auto escaped_state_transition(
     return ErrorCodeEnum::Success;
 }
 
-auto charset_state_transition(
-        TranslatorState& state,
-        string_view::const_iterator& it,
-        string& wildcard_str,
-        RegexToWildcardTranslatorConfig const& config
-) -> ErrorCode {
+auto charset_state_transition(TranslatorState& state,
+                              string_view::const_iterator& it,
+                              string& wildcard_str,
+                              RegexToWildcardTranslatorConfig const& config) -> ErrorCode {
     auto const charset_begin_it_opt{state.get_charset_begin_it()};
     if (false == charset_begin_it_opt.has_value()) {
         return ErrorCodeEnum::IllegalState;
@@ -302,30 +296,26 @@ auto charset_escaped_state_transition(
         TranslatorState& state,
         [[maybe_unused]] string_view::const_iterator& it,
         [[maybe_unused]] string& wildcard_str,
-        [[maybe_unused]] RegexToWildcardTranslatorConfig const& config
-) -> ErrorCode {
+        [[maybe_unused]] RegexToWildcardTranslatorConfig const& config) -> ErrorCode {
     state.set_next_state(TranslatorState::RegexPatternState::Charset);
     return ErrorCodeEnum::Success;
 }
 
-auto end_state_transition(
-        [[maybe_unused]] TranslatorState& state,
-        string_view::const_iterator& it,
-        [[maybe_unused]] string& wildcard_str,
-        [[maybe_unused]] RegexToWildcardTranslatorConfig const& config
-) -> ErrorCode {
+auto end_state_transition([[maybe_unused]] TranslatorState& state,
+                          string_view::const_iterator& it,
+                          [[maybe_unused]] string& wildcard_str,
+                          [[maybe_unused]] RegexToWildcardTranslatorConfig const& config)
+        -> ErrorCode {
     if (cRegexEndAnchor != *it) {
         return ErrorCodeEnum::IllegalDollarSign;
     }
     return ErrorCodeEnum::Success;
 }
 
-auto final_state_cleanup(
-        TranslatorState& state,
-        [[maybe_unused]] string_view::const_iterator& it,
-        string& wildcard_str,
-        RegexToWildcardTranslatorConfig const& config
-) -> ErrorCode {
+auto final_state_cleanup(TranslatorState& state,
+                         [[maybe_unused]] string_view::const_iterator& it,
+                         string& wildcard_str,
+                         RegexToWildcardTranslatorConfig const& config) -> ErrorCode {
     switch (state.get_state()) {
         case TranslatorState::RegexPatternState::Dot:
             // The last character is a single `.`, without the possibility of becoming a
@@ -363,10 +353,9 @@ auto is_same_char_opposite_case(char ch0, char ch1) -> bool {
 }  // namespace
 
 auto regex_to_wildcard(string_view regex_str) -> ystdlib::error_handling::Result<string> {
-    return regex_to_wildcard(
-            regex_str,
-            {/*case_insensitive_wildcard=*/false, /*add_prefix_suffix_wildcards=*/false}
-    );
+    return regex_to_wildcard(regex_str,
+                             {/*case_insensitive_wildcard=*/false,
+                              /*add_prefix_suffix_wildcards=*/false});
 }
 
 auto regex_to_wildcard(string_view regex_str, RegexToWildcardTranslatorConfig const& config)

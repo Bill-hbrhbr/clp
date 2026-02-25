@@ -42,13 +42,12 @@ public:
      * - std::errc::invalid_argument if any of the given schema tree pointers are null.
      * - Forwards `validate_node_id_value_pairs`'s return values.
      */
-    [[nodiscard]] static auto create(
-            std::shared_ptr<SchemaTree const> auto_gen_keys_schema_tree,
-            std::shared_ptr<SchemaTree const> user_gen_keys_schema_tree,
-            NodeIdValuePairs auto_gen_node_id_value_pairs,
-            NodeIdValuePairs user_gen_node_id_value_pairs,
-            UtcOffset utc_offset
-    ) -> ystdlib::error_handling::Result<KeyValuePairLogEvent>;
+    [[nodiscard]] static auto create(std::shared_ptr<SchemaTree const> auto_gen_keys_schema_tree,
+                                     std::shared_ptr<SchemaTree const> user_gen_keys_schema_tree,
+                                     NodeIdValuePairs auto_gen_node_id_value_pairs,
+                                     NodeIdValuePairs user_gen_node_id_value_pairs,
+                                     UtcOffset utc_offset)
+            -> ystdlib::error_handling::Result<KeyValuePairLogEvent>;
 
     // Disable copy constructor and assignment operator
     KeyValuePairLogEvent(KeyValuePairLogEvent const&) = delete;
@@ -115,13 +114,11 @@ public:
 
 private:
     // Constructor
-    KeyValuePairLogEvent(
-            std::shared_ptr<SchemaTree const> auto_gen_keys_schema_tree,
-            std::shared_ptr<SchemaTree const> user_gen_keys_schema_tree,
-            NodeIdValuePairs auto_gen_node_id_value_pairs,
-            NodeIdValuePairs user_gen_node_id_value_pairs,
-            UtcOffset utc_offset
-    )
+    KeyValuePairLogEvent(std::shared_ptr<SchemaTree const> auto_gen_keys_schema_tree,
+                         std::shared_ptr<SchemaTree const> user_gen_keys_schema_tree,
+                         NodeIdValuePairs auto_gen_node_id_value_pairs,
+                         NodeIdValuePairs user_gen_node_id_value_pairs,
+                         UtcOffset utc_offset)
             : m_auto_gen_keys_schema_tree{std::move(auto_gen_keys_schema_tree)},
               m_user_gen_keys_schema_tree{std::move(user_gen_keys_schema_tree)},
               m_auto_gen_node_id_value_pairs{std::move(auto_gen_node_id_value_pairs)},

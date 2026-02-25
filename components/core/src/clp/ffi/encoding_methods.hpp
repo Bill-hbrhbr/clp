@@ -14,12 +14,10 @@ namespace clp::ffi {
 class EncodingException : public TraceableException {
 public:
     // Constructors
-    EncodingException(
-            ErrorCode error_code,
-            char const* const filename,
-            int line_number,
-            std::string message
-    )
+    EncodingException(ErrorCode error_code,
+                      char const* const filename,
+                      int line_number,
+                      std::string message)
             : TraceableException(error_code, filename, line_number),
               m_message(std::move(message)) {}
 
@@ -73,8 +71,7 @@ bool encode_float_string(std::string_view str, encoded_variable_t& encoded_var);
  * @return The float using the eight-byte encoding
  */
 ir::eight_byte_encoded_variable_t encode_four_byte_float_as_eight_byte(
-        ir::four_byte_encoded_variable_t four_byte_encoded_var
-);
+        ir::four_byte_encoded_variable_t four_byte_encoded_var);
 
 /**
  * Encodes a float value with the given properties into an encoded variable.
@@ -89,14 +86,11 @@ ir::eight_byte_encoded_variable_t encode_four_byte_float_as_eight_byte(
 template <typename encoded_variable_t>
 encoded_variable_t encode_float_properties(
         bool is_negative,
-        std::conditional_t<
-                std::is_same_v<encoded_variable_t, ir::four_byte_encoded_variable_t>,
-                uint32_t,
-                uint64_t
-        > digits,
+        std::conditional_t<std::is_same_v<encoded_variable_t, ir::four_byte_encoded_variable_t>,
+                           uint32_t,
+                           uint64_t> digits,
         size_t num_digits,
-        size_t decimal_point_pos
-);
+        size_t decimal_point_pos);
 
 /**
  * Decodes an encoded float variable into its properties
@@ -111,14 +105,11 @@ template <typename encoded_variable_t>
 void decode_float_properties(
         encoded_variable_t encoded_var,
         bool& is_negative,
-        std::conditional_t<
-                std::is_same_v<encoded_variable_t, ir::four_byte_encoded_variable_t>,
-                uint32_t,
-                uint64_t
-        >& digits,
+        std::conditional_t<std::is_same_v<encoded_variable_t, ir::four_byte_encoded_variable_t>,
+                           uint32_t,
+                           uint64_t>& digits,
         uint8_t& num_digits,
-        uint8_t& decimal_point_pos
-);
+        uint8_t& decimal_point_pos);
 
 /**
  * Decodes the given encoded float variable into a string
@@ -145,8 +136,7 @@ bool encode_integer_string(std::string_view str, encoded_variable_t& encoded_var
  * @return The integer using the eight-byte encoding
  */
 ir::eight_byte_encoded_variable_t encode_four_byte_integer_as_eight_byte(
-        ir::four_byte_encoded_variable_t four_byte_encoded_var
-);
+        ir::four_byte_encoded_variable_t four_byte_encoded_var);
 
 /**
  * Decodes the given encoded integer variable into a string
@@ -174,19 +164,15 @@ std::string decode_integer_var(encoded_variable_t encoded_var);
  * @param dictionary_variable_handler
  * @return true on success, false otherwise
  */
-template <
-        typename encoded_variable_t,
-        typename ConstantHandler,
-        typename EncodedVariableHandler,
-        typename DictionaryVariableHandler
->
-bool encode_message_generically(
-        std::string_view message,
-        std::string& logtype,
-        ConstantHandler constant_handler,
-        EncodedVariableHandler encoded_variable_handler,
-        DictionaryVariableHandler dictionary_variable_handler
-);
+template <typename encoded_variable_t,
+          typename ConstantHandler,
+          typename EncodedVariableHandler,
+          typename DictionaryVariableHandler>
+bool encode_message_generically(std::string_view message,
+                                std::string& logtype,
+                                ConstantHandler constant_handler,
+                                EncodedVariableHandler encoded_variable_handler,
+                                DictionaryVariableHandler dictionary_variable_handler);
 
 /**
  * Encodes the given message. The simplistic interface is to make it efficient to transfer data
@@ -200,12 +186,10 @@ bool encode_message_generically(
  * @return false if the message contains variable placeholders, true otherwise
  */
 template <typename encoded_variable_t>
-bool encode_message(
-        std::string_view message,
-        std::string& logtype,
-        std::vector<encoded_variable_t>& encoded_vars,
-        std::vector<int32_t>& dictionary_var_bounds
-);
+bool encode_message(std::string_view message,
+                    std::string& logtype,
+                    std::vector<encoded_variable_t>& encoded_vars,
+                    std::vector<int32_t>& dictionary_var_bounds);
 
 /**
  * Decodes the message from the given logtype, encoded variables, and dictionary variables. The
@@ -223,14 +207,12 @@ bool encode_message(
  * @return The decoded message
  */
 template <typename encoded_variable_t>
-std::string decode_message(
-        std::string_view logtype,
-        encoded_variable_t* encoded_vars,
-        size_t encoded_vars_length,
-        std::string_view all_dictionary_vars,
-        int32_t const* dictionary_var_end_offsets,
-        size_t dictionary_var_end_offsets_length
-);
+std::string decode_message(std::string_view logtype,
+                           encoded_variable_t* encoded_vars,
+                           size_t encoded_vars_length,
+                           std::string_view all_dictionary_vars,
+                           int32_t const* dictionary_var_end_offsets,
+                           size_t dictionary_var_end_offsets_length);
 
 /**
  * Checks if any encoded variable matches the given wildcard query
@@ -246,12 +228,10 @@ std::string decode_message(
  * @return true if a match was found, false otherwise
  */
 template <ir::VariablePlaceholder var_placeholder, typename encoded_variable_t>
-bool wildcard_query_matches_any_encoded_var(
-        std::string_view wildcard_query,
-        std::string_view logtype,
-        encoded_variable_t* encoded_vars,
-        size_t encoded_vars_length
-);
+bool wildcard_query_matches_any_encoded_var(std::string_view wildcard_query,
+                                            std::string_view logtype,
+                                            encoded_variable_t* encoded_vars,
+                                            size_t encoded_vars_length);
 
 /**
  * Checks whether the given wildcard strings match the given encoded variables (from a message).
@@ -274,13 +254,11 @@ bool wildcard_query_matches_any_encoded_var(
  * @return Whether the wildcard strings match the encoded variables
  */
 template <typename encoded_variable_t>
-bool wildcard_match_encoded_vars(
-        std::string_view logtype,
-        encoded_variable_t* encoded_vars,
-        size_t encoded_vars_length,
-        std::string_view wildcard_var_placeholders,
-        std::vector<std::string_view> const& wildcard_var_queries
-);
+bool wildcard_match_encoded_vars(std::string_view logtype,
+                                 encoded_variable_t* encoded_vars,
+                                 size_t encoded_vars_length,
+                                 std::string_view wildcard_var_placeholders,
+                                 std::vector<std::string_view> const& wildcard_var_queries);
 }  // namespace clp::ffi
 
 #include "encoding_methods.inc"

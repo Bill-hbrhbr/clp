@@ -27,12 +27,10 @@ static void inplace_set_intersection(SetType const& a, SetType& b) {
 
 namespace glt {
 namespace {
-bool matches_var(
-        std::vector<encoded_variable_t> const& logtype_vars,
-        std::vector<QueryVar> const& query_vars,
-        size_t l,
-        size_t r
-) {
+bool matches_var(std::vector<encoded_variable_t> const& logtype_vars,
+                 std::vector<QueryVar> const& query_vars,
+                 size_t l,
+                 size_t r) {
     if (logtype_vars.size() < query_vars.size()) {
         // Not enough variables to satisfy query
         return false;
@@ -68,20 +66,16 @@ QueryVar::QueryVar(encoded_variable_t precise_non_dict_var) {
     m_var_dict_entry = nullptr;
 }
 
-QueryVar::QueryVar(
-        encoded_variable_t precise_dict_var,
-        VariableDictionaryEntry const* var_dict_entry
-) {
+QueryVar::QueryVar(encoded_variable_t precise_dict_var,
+                   VariableDictionaryEntry const* var_dict_entry) {
     m_precise_var = precise_dict_var;
     m_is_precise_var = true;
     m_is_dict_var = true;
     m_var_dict_entry = var_dict_entry;
 }
 
-QueryVar::QueryVar(
-        unordered_set<encoded_variable_t> const& possible_dict_vars,
-        unordered_set<VariableDictionaryEntry const*> const& possible_var_dict_entries
-) {
+QueryVar::QueryVar(unordered_set<encoded_variable_t> const& possible_dict_vars,
+                   unordered_set<VariableDictionaryEntry const*> const& possible_var_dict_entries) {
     m_is_dict_var = true;
     if (possible_dict_vars.size() == 1) {
         // A single possible variable is the same as a precise variable
@@ -114,10 +108,8 @@ void QueryVar::remove_segments_that_dont_contain_dict_var(set<segment_id_t>& seg
         set<segment_id_t> ids_of_segments_containing_query_var;
         for (auto entry : m_possible_var_dict_entries) {
             auto& ids_of_segments_containing_var = entry->get_ids_of_segments_containing_entry();
-            ids_of_segments_containing_query_var.insert(
-                    ids_of_segments_containing_var.cbegin(),
-                    ids_of_segments_containing_var.cend()
-            );
+            ids_of_segments_containing_query_var.insert(ids_of_segments_containing_var.cbegin(),
+                                                        ids_of_segments_containing_var.cend());
         }
         inplace_set_intersection(ids_of_segments_containing_query_var, segment_ids);
     }
@@ -127,23 +119,19 @@ void SubQuery::add_non_dict_var(encoded_variable_t precise_non_dict_var) {
     m_vars.emplace_back(precise_non_dict_var);
 }
 
-void SubQuery::add_dict_var(
-        encoded_variable_t precise_dict_var,
-        VariableDictionaryEntry const* var_dict_entry
-) {
+void SubQuery::add_dict_var(encoded_variable_t precise_dict_var,
+                            VariableDictionaryEntry const* var_dict_entry) {
     m_vars.emplace_back(precise_dict_var, var_dict_entry);
 }
 
 void SubQuery::add_imprecise_dict_var(
         unordered_set<encoded_variable_t> const& possible_dict_vars,
-        unordered_set<VariableDictionaryEntry const*> const& possible_var_dict_entries
-) {
+        unordered_set<VariableDictionaryEntry const*> const& possible_var_dict_entries) {
     m_vars.emplace_back(possible_dict_vars, possible_var_dict_entries);
 }
 
 void SubQuery::set_possible_logtypes(
-        unordered_set<LogTypeDictionaryEntry const*> const& logtype_entries
-) {
+        unordered_set<LogTypeDictionaryEntry const*> const& logtype_entries) {
     m_possible_logtype_ids.clear();
     for (auto entry : logtype_entries) {
         m_possible_logtype_ids.insert(entry->get_id());
@@ -160,10 +148,8 @@ void SubQuery::calculate_ids_of_matching_segments() {
     m_ids_of_matching_segments.clear();
     for (auto entry : m_possible_logtype_entries) {
         auto& ids_of_segments_containing_logtype = entry->get_ids_of_segments_containing_entry();
-        m_ids_of_matching_segments.insert(
-                ids_of_segments_containing_logtype.cbegin(),
-                ids_of_segments_containing_logtype.cend()
-        );
+        m_ids_of_matching_segments.insert(ids_of_segments_containing_logtype.cbegin(),
+                                          ids_of_segments_containing_logtype.cend());
     }
 
     // Intersect with IDs of segments containing variables
@@ -186,13 +172,11 @@ bool SubQuery::matches_vars(std::vector<encoded_variable_t> const& vars) const {
     return matches_var(vars, m_vars, 0, 0);
 }
 
-Query::Query(
-        epochtime_t search_begin_timestamp,
-        epochtime_t search_end_timestamp,
-        bool ignore_case,
-        std::string search_string,
-        std::vector<SubQuery> sub_queries
-)
+Query::Query(epochtime_t search_begin_timestamp,
+             epochtime_t search_end_timestamp,
+             bool ignore_case,
+             std::string search_string,
+             std::vector<SubQuery> sub_queries)
         : m_search_begin_timestamp{search_begin_timestamp},
           m_search_end_timestamp{search_end_timestamp},
           m_ignore_case{ignore_case},

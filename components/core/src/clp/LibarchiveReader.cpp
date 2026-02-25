@@ -6,8 +6,8 @@
 #include "spdlog_with_specializations.hpp"
 
 namespace clp {
-ErrorCode
-LibarchiveReader::try_open(ReaderInterface& reader, std::string const& path_if_compressed_file) {
+ErrorCode LibarchiveReader::try_open(ReaderInterface& reader,
+                                     std::string const& path_if_compressed_file) {
     // Create and initialize internal libarchive
     m_archive = archive_read_new();
     if (nullptr == m_archive) {
@@ -16,10 +16,8 @@ LibarchiveReader::try_open(ReaderInterface& reader, std::string const& path_if_c
 
     auto return_value = archive_read_support_filter_all(m_archive);
     if (ARCHIVE_OK != return_value) {
-        SPDLOG_DEBUG(
-                "Failed to enable all filters for libarchive - {}",
-                archive_error_string(m_archive)
-        );
+        SPDLOG_DEBUG("Failed to enable all filters for libarchive - {}",
+                     archive_error_string(m_archive));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 
@@ -27,31 +25,25 @@ LibarchiveReader::try_open(ReaderInterface& reader, std::string const& path_if_c
     // intent as well)
     return_value = archive_read_support_format_all(m_archive);
     if (ARCHIVE_OK != return_value) {
-        SPDLOG_DEBUG(
-                "Failed to enable all formats for libarchive - {}",
-                archive_error_string(m_archive)
-        );
+        SPDLOG_DEBUG("Failed to enable all formats for libarchive - {}",
+                     archive_error_string(m_archive));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
     return_value = archive_read_support_format_raw(m_archive);
     if (ARCHIVE_OK != return_value) {
-        SPDLOG_DEBUG(
-                "Failed to enable raw format for libarchive - {}",
-                archive_error_string(m_archive)
-        );
+        SPDLOG_DEBUG("Failed to enable raw format for libarchive - {}",
+                     archive_error_string(m_archive));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 
     m_reader = &reader;
     m_filename_if_compressed = path_if_compressed_file;
 
-    return_value = archive_read_open(
-            m_archive,
-            this,
-            libarchive_open_callback,
-            libarchive_read_callback,
-            libarchive_close_callback
-    );
+    return_value = archive_read_open(m_archive,
+                                     this,
+                                     libarchive_open_callback,
+                                     libarchive_read_callback,
+                                     libarchive_close_callback);
     if (ARCHIVE_OK != return_value) {
         SPDLOG_DEBUG("Failed to open libarchive - {}", archive_error_string(m_archive));
         release_resources();
@@ -138,11 +130,9 @@ int LibarchiveReader::libarchive_close_callback(struct archive* archive, void* c
     return ARCHIVE_OK;
 }
 
-la_ssize_t LibarchiveReader::libarchive_read_callback(
-        struct archive* archive,
-        void* client_data,
-        void const** buffer
-) {
+la_ssize_t LibarchiveReader::libarchive_read_callback(struct archive* archive,
+                                                      void* client_data,
+                                                      void const** buffer) {
     auto& libarchive_reader = *reinterpret_cast<LibarchiveReader*>(client_data);
 
     size_t num_bytes_read = 0;

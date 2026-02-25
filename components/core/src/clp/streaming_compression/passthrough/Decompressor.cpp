@@ -18,10 +18,8 @@ auto Decompressor::try_read(char* buf, size_t num_bytes_to_read, size_t& num_byt
                 return ErrorCode_EndOfFile;
             }
 
-            num_bytes_read = std::min(
-                    num_bytes_to_read,
-                    m_compressed_data_buf_len - m_decompressed_stream_pos
-            );
+            num_bytes_read = std::min(num_bytes_to_read,
+                                      m_compressed_data_buf_len - m_decompressed_stream_pos);
             memcpy(buf, &m_compressed_data_buf[m_decompressed_stream_pos], num_bytes_read);
             break;
         case InputType::ReaderInterface: {
@@ -115,11 +113,9 @@ auto Decompressor::close() -> void {
     m_input_type = InputType::NotInitialized;
 }
 
-auto Decompressor::get_decompressed_stream_region(
-        size_t decompressed_stream_pos,
-        char* extraction_buf,
-        size_t extraction_len
-) -> ErrorCode {
+auto Decompressor::get_decompressed_stream_region(size_t decompressed_stream_pos,
+                                                  char* extraction_buf,
+                                                  size_t extraction_len) -> ErrorCode {
     auto error_code = try_seek_from_begin(decompressed_stream_pos);
     if (ErrorCode_Success != error_code) {
         return error_code;

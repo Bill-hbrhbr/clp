@@ -44,8 +44,8 @@ public:
      * @param format_id
      * @return The string encoding for the given epoch and format ID.
      */
-    [[nodiscard]] auto
-    get_deprecated_timestamp_string_encoding(epochtime_t epoch, uint64_t format_id) const
+    [[nodiscard]] auto get_deprecated_timestamp_string_encoding(epochtime_t epoch,
+                                                                uint64_t format_id) const
             -> std::string;
 
     /**
@@ -57,11 +57,9 @@ public:
      * @throws OperationFailed if the format indicated by `format_id` cannot be interpreted as a
      * `clp_s::timestamp_parser::TimestampPattern`.
      */
-    void append_timestamp_to_buffer(
-            epochtime_t timestamp,
-            uint64_t format_id,
-            std::string& buffer
-    ) const;
+    void append_timestamp_to_buffer(epochtime_t timestamp,
+                                    uint64_t format_id,
+                                    std::string& buffer) const;
 
     /**
      * Gets iterators for the column to range mappings

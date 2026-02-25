@@ -47,19 +47,14 @@ public:
             std::vector<std::pair<std::string, clp_s::search::ast::literal_type_bitmask_t>> const&
                     projections,
             bool case_sensitive_match,
-            bool allow_duplicate_projected_columns = false
-    ) -> ystdlib::error_handling::Result<QueryHandler> {
-        return QueryHandler{
-                new_projected_schema_tree_node_callback,
-                YSTDLIB_ERROR_HANDLING_TRYX(
-                        QueryHandlerImpl::create(
-                                std::move(query),
-                                projections,
-                                case_sensitive_match,
-                                allow_duplicate_projected_columns
-                        )
-                )
-        };
+            bool allow_duplicate_projected_columns = false)
+            -> ystdlib::error_handling::Result<QueryHandler> {
+        return QueryHandler{new_projected_schema_tree_node_callback,
+                            YSTDLIB_ERROR_HANDLING_TRYX(
+                                    QueryHandlerImpl::create(std::move(query),
+                                                             projections,
+                                                             case_sensitive_match,
+                                                             allow_duplicate_projected_columns))};
     }
 
     // Delete copy constructor and assignment operator
@@ -85,14 +80,12 @@ public:
     [[nodiscard]] auto update_partially_resolved_columns(
             bool is_auto_generated,
             SchemaTree::NodeLocator const& node_locator,
-            SchemaTree::Node::id_t node_id
-    ) -> ystdlib::error_handling::Result<void> {
+            SchemaTree::Node::id_t node_id) -> ystdlib::error_handling::Result<void> {
         return m_query_handler_impl.update_partially_resolved_columns(
                 is_auto_generated,
                 node_locator,
                 node_id,
-                m_new_projected_schema_tree_node_callback
-        );
+                m_new_projected_schema_tree_node_callback);
     }
 
     /**
@@ -111,8 +104,7 @@ private:
     // Constructor
     explicit QueryHandler(
             NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback,
-            QueryHandlerImpl query_handler_impl
-    )
+            QueryHandlerImpl query_handler_impl)
             : m_new_projected_schema_tree_node_callback{new_projected_schema_tree_node_callback},
               m_query_handler_impl{std::move(query_handler_impl)} {}
 

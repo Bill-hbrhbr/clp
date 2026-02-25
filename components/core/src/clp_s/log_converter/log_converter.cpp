@@ -25,8 +25,8 @@ namespace {
  * @param reader The open reader which may have experienced a CURL error.
  * @return Whether a CURL error has occurred on the reader.
  */
-[[nodiscard]] auto
-check_and_log_curl_error(clp_s::Path const& path, clp::ReaderInterface const* reader) -> bool;
+[[nodiscard]] auto check_and_log_curl_error(clp_s::Path const& path,
+                                            clp::ReaderInterface const* reader) -> bool;
 
 /**
  * Converts all files according to the command line arguments.
@@ -44,12 +44,10 @@ auto check_and_log_curl_error(clp_s::Path const& path, clp::ReaderInterface cons
         rc.has_value() && CURLcode::CURLE_OK != rc.value())
     {
         auto const curl_error_message = network_reader->get_curl_error_msg();
-        SPDLOG_ERROR(
-                "Encountered curl error while converting {} - Code: {} - Message: {}",
-                path.path,
-                static_cast<int64_t>(rc.value()),
-                curl_error_message.value_or("Unknown error.")
-        );
+        SPDLOG_ERROR("Encountered curl error while converting {} - Code: {} - Message: {}",
+                     path.path,
+                     static_cast<int64_t>(rc.value()),
+                     curl_error_message.value_or("Unknown error."));
         return true;
     }
     return false;
@@ -62,11 +60,9 @@ auto convert_files(CommandLineArguments const& command_line_arguments) -> bool {
     if (false == std::filesystem::create_directory(command_line_arguments.get_output_dir(), ec)
         && ec)
     {
-        SPDLOG_ERROR(
-                "Can not create output directory {} - {}",
-                command_line_arguments.get_output_dir(),
-                ec.message()
-        );
+        SPDLOG_ERROR("Can not create output directory {} - {}",
+                     command_line_arguments.get_output_dir(),
+                     ec.message());
         return false;
     }
 
@@ -92,19 +88,16 @@ auto convert_files(CommandLineArguments const& command_line_arguments) -> bool {
             }
         }
 
-        auto const convert_result{log_converter.convert_file(
-                path,
-                nested_readers.back().get(),
-                command_line_arguments.get_output_dir()
-        )};
+        auto const convert_result{
+                log_converter.convert_file(path,
+                                           nested_readers.back().get(),
+                                           command_line_arguments.get_output_dir())};
         if (convert_result.has_error()) {
             auto const& error{convert_result.error()};
-            SPDLOG_ERROR(
-                    "Failed to convert input {} to structured representation: {} - {}",
-                    path.path,
-                    error.category().name(),
-                    error.message()
-            );
+            SPDLOG_ERROR("Failed to convert input {} to structured representation: {} - {}",
+                         path.path,
+                         error.category().name(),
+                         error.message());
             return false;
         }
     }

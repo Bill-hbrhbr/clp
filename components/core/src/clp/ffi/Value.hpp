@@ -25,13 +25,12 @@ using value_bool_t = bool;
 /**
  * Tuple of all primitive value types.
  */
-using PrimitiveValueTypes = std::
-        tuple<value_int_t,
-              value_float_t,
-              value_bool_t,
-              std::string,
-              FourByteEncodedTextAst,
-              EightByteEncodedTextAst>;
+using PrimitiveValueTypes = std::tuple<value_int_t,
+                                       value_float_t,
+                                       value_bool_t,
+                                       std::string,
+                                       FourByteEncodedTextAst,
+                                       EightByteEncodedTextAst>;
 
 /**
  * Variant for all primitive value types.
@@ -112,12 +111,10 @@ public:
     // Types
     class OperationFailed : public TraceableException {
     public:
-        OperationFailed(
-                ErrorCode error_code,
-                char const* const filename,
-                int line_number,
-                std::string message
-        )
+        OperationFailed(ErrorCode error_code,
+                        char const* const filename,
+                        int line_number,
+                        std::string message)
                 : TraceableException{error_code, filename, line_number},
                   m_message{std::move(message)} {}
 
@@ -168,12 +165,10 @@ public:
     template <PrimitiveValueType T>
     [[nodiscard]] auto get_immutable_view() const -> ImmutableViewType<T> {
         if (false == is<T>()) {
-            throw OperationFailed(
-                    clp::ErrorCode_BadParam,
-                    __FILE__,
-                    __LINE__,
-                    "The underlying value does not match the given type."
-            );
+            throw OperationFailed(clp::ErrorCode_BadParam,
+                                  __FILE__,
+                                  __LINE__,
+                                  "The underlying value does not match the given type.");
         }
         return std::get<T>(m_value);
     }

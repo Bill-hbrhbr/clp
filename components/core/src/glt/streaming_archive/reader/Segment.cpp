@@ -37,11 +37,9 @@ ErrorCode Segment::try_open(string const& segment_dir_path, segment_id_t segment
     boost::system::error_code boost_error_code;
     size_t segment_file_size = boost::filesystem::file_size(segment_path, boost_error_code);
     if (boost_error_code) {
-        SPDLOG_ERROR(
-                "streaming_archive::reader::Segment: Unable to obtain file size for segment: "
-                "{}",
-                segment_path.c_str()
-        );
+        SPDLOG_ERROR("streaming_archive::reader::Segment: Unable to obtain file size for segment: "
+                     "{}",
+                     segment_path.c_str());
         SPDLOG_ERROR("streaming_archive::reader::Segment: {}", boost_error_code.message().c_str());
         return ErrorCode_Failure;
     }
@@ -49,11 +47,9 @@ ErrorCode Segment::try_open(string const& segment_dir_path, segment_id_t segment
     // Sanity check: previously used memory mapped file should be closed before opening a new
     // one
     if (m_memory_mapped_segment_file.is_open()) {
-        SPDLOG_WARN(
-                "streaming_archive::reader::Segment: Previous segment should be closed before "
-                "opening new one: {}",
-                segment_path.c_str()
-        );
+        SPDLOG_WARN("streaming_archive::reader::Segment: Previous segment should be closed before "
+                    "opening new one: {}",
+                    segment_path.c_str());
         m_memory_mapped_segment_file.close();
     }
     // Create read only memory mapped file
@@ -65,11 +61,9 @@ ErrorCode Segment::try_open(string const& segment_dir_path, segment_id_t segment
     memory_map_params.hint = m_memory_mapped_segment_file.data();
     m_memory_mapped_segment_file.open(memory_map_params);
     if (!m_memory_mapped_segment_file.is_open()) {
-        SPDLOG_ERROR(
-                "streaming_archive::reader:Segment: Unable to memory map the compressed "
-                "segment with path: {}",
-                segment_path.c_str()
-        );
+        SPDLOG_ERROR("streaming_archive::reader:Segment: Unable to memory map the compressed "
+                     "segment with path: {}",
+                     segment_path.c_str());
         return ErrorCode_Failure;
     }
 
@@ -87,21 +81,18 @@ void Segment::close() {
     }
 }
 
-ErrorCode
-Segment::try_read(uint64_t decompressed_stream_pos, char* extraction_buf, uint64_t extraction_len) {
+ErrorCode Segment::try_read(uint64_t decompressed_stream_pos,
+                            char* extraction_buf,
+                            uint64_t extraction_len) {
     // We always assume the passed in buffer is already pre-allocated, but we check anyway as a
     // precaution
     if (nullptr == extraction_buf) {
-        SPDLOG_ERROR(
-                "streaming_archive::reader::Segment: Extraction buffer not allocated during"
-                " decompression"
-        );
+        SPDLOG_ERROR("streaming_archive::reader::Segment: Extraction buffer not allocated during"
+                     " decompression");
         return ErrorCode_BadParam;
     }
-    return m_decompressor.get_decompressed_stream_region(
-            decompressed_stream_pos,
-            extraction_buf,
-            extraction_len
-    );
+    return m_decompressor.get_decompressed_stream_region(decompressed_stream_pos,
+                                                         extraction_buf,
+                                                         extraction_len);
 }
 }  // namespace glt::streaming_archive::reader

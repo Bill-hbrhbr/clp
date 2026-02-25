@@ -19,11 +19,9 @@ epochtime_t File::get_end_ts() const {
     return m_end_ts;
 }
 
-ErrorCode File::open_me(
-        LogTypeDictionaryReader const& archive_logtype_dict,
-        MetadataDB::FileIterator const& file_metadata_ix,
-        SegmentManager& segment_manager
-) {
+ErrorCode File::open_me(LogTypeDictionaryReader const& archive_logtype_dict,
+                        MetadataDB::FileIterator const& file_metadata_ix,
+                        SegmentManager& segment_manager) {
     m_archive_logtype_dict = &archive_logtype_dict;
 
     // Populate metadata from database document
@@ -63,11 +61,9 @@ ErrorCode File::open_me(
         timestamp_format.assign(encoded_timestamp_patterns, begin_pos, end_pos - begin_pos);
         begin_pos = end_pos + 1;
 
-        m_timestamp_patterns.emplace_back(
-                std::piecewise_construct,
-                std::forward_as_tuple(msg_num),
-                forward_as_tuple(num_spaces_before_ts, timestamp_format)
-        );
+        m_timestamp_patterns.emplace_back(std::piecewise_construct,
+                                          std::forward_as_tuple(msg_num),
+                                          forward_as_tuple(num_spaces_before_ts, timestamp_format));
     }
 
     m_begin_message_ix = file_metadata_ix.get_begin_message_ix();
@@ -94,12 +90,10 @@ ErrorCode File::open_me(
         }
 
         num_bytes_to_read = m_num_messages * sizeof(epochtime_t);
-        error_code = segment_manager.try_read(
-                m_segment_id,
-                m_segment_timestamps_decompressed_stream_pos,
-                reinterpret_cast<char*>(m_segment_timestamps.get()),
-                num_bytes_to_read
-        );
+        error_code = segment_manager.try_read(m_segment_id,
+                                              m_segment_timestamps_decompressed_stream_pos,
+                                              reinterpret_cast<char*>(m_segment_timestamps.get()),
+                                              num_bytes_to_read);
         if (ErrorCode_Success != error_code) {
             close_me();
             return error_code;
@@ -107,12 +101,10 @@ ErrorCode File::open_me(
         m_timestamps = m_segment_timestamps.get();
 
         num_bytes_to_read = m_num_messages * sizeof(logtype_dictionary_id_t);
-        error_code = segment_manager.try_read(
-                m_segment_id,
-                m_segment_logtypes_decompressed_stream_pos,
-                reinterpret_cast<char*>(m_segment_logtypes.get()),
-                num_bytes_to_read
-        );
+        error_code = segment_manager.try_read(m_segment_id,
+                                              m_segment_logtypes_decompressed_stream_pos,
+                                              reinterpret_cast<char*>(m_segment_logtypes.get()),
+                                              num_bytes_to_read);
         if (ErrorCode_Success != error_code) {
             close_me();
             return error_code;
@@ -127,12 +119,10 @@ ErrorCode File::open_me(
             m_num_segment_vars = m_num_variables;
         }
         num_bytes_to_read = m_num_variables * sizeof(encoded_variable_t);
-        error_code = segment_manager.try_read(
-                m_segment_id,
-                m_segment_variables_decompressed_stream_pos,
-                reinterpret_cast<char*>(m_segment_variables.get()),
-                num_bytes_to_read
-        );
+        error_code = segment_manager.try_read(m_segment_id,
+                                              m_segment_variables_decompressed_stream_pos,
+                                              reinterpret_cast<char*>(m_segment_variables.get()),
+                                              num_bytes_to_read);
         if (ErrorCode_Success != error_code) {
             close_me();
             return error_code;
@@ -200,11 +190,9 @@ void File::increment_current_ts_pattern_ix() {
     ++m_current_ts_pattern_ix;
 }
 
-bool File::find_message_in_time_range(
-        epochtime_t search_begin_timestamp,
-        epochtime_t search_end_timestamp,
-        Message& msg
-) {
+bool File::find_message_in_time_range(epochtime_t search_begin_timestamp,
+                                      epochtime_t search_end_timestamp,
+                                      Message& msg) {
     bool found_msg = false;
     while (m_msgs_ix < m_num_messages && !found_msg) {
         // Get logtype

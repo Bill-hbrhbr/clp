@@ -47,9 +47,9 @@ public:
      * - std::errc::protocol_error if the stream's metadata couldn't be serialized.
      * - std::errc::protocol_not_supported if the given user-defined metadata is not a JSON object.
      */
-    [[nodiscard]] static auto create(
-            std::optional<nlohmann::json> optional_user_defined_metadata = std::nullopt
-    ) -> ystdlib::error_handling::Result<Serializer<encoded_variable_t>>;
+    [[nodiscard]] static auto create(std::optional<nlohmann::json> optional_user_defined_metadata
+                                     = std::nullopt)
+            -> ystdlib::error_handling::Result<Serializer<encoded_variable_t>>;
 
     // Disable copy constructor/assignment operator
     Serializer(Serializer const&) = delete;
@@ -93,10 +93,9 @@ public:
      * @param user_gen_kv_pairs_map
      * @return Whether serialization succeeded.
      */
-    [[nodiscard]] auto serialize_msgpack_map(
-            msgpack::object_map const& auto_gen_kv_pairs_map,
-            msgpack::object_map const& user_gen_kv_pairs_map
-    ) -> bool;
+    [[nodiscard]] auto serialize_msgpack_map(msgpack::object_map const& auto_gen_kv_pairs_map,
+                                             msgpack::object_map const& user_gen_kv_pairs_map)
+            -> bool;
 
 private:
     // Constructors

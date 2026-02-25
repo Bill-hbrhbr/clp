@@ -24,10 +24,8 @@ bool MultiLogtypeTablesManager::check_variable_column(logtype_dictionary_id_t lo
     return false;
 }
 
-epochtime_t MultiLogtypeTablesManager::get_timestamp_at_offset(
-        logtype_dictionary_id_t logtype_id,
-        size_t offset
-) {
+epochtime_t MultiLogtypeTablesManager::get_timestamp_at_offset(logtype_dictionary_id_t logtype_id,
+                                                               size_t offset) {
     if (m_logtype_tables.find(logtype_id) != m_logtype_tables.end()) {
         return m_logtype_tables[logtype_id].get_timestamp_at_offset(offset);
     } else if (m_combined_tables.find(logtype_id) != m_combined_tables.end()) {
@@ -47,10 +45,8 @@ void MultiLogtypeTablesManager::load_variable_columns(logtype_dictionary_id_t lo
             throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
         }
         auto const& logtype_metadata = m_logtype_table_metadata.at(logtype_id);
-        m_logtype_tables[logtype_id].open_and_load_all(
-                m_memory_mapped_segment_file.data(),
-                logtype_metadata
-        );
+        m_logtype_tables[logtype_id].open_and_load_all(m_memory_mapped_segment_file.data(),
+                                                       logtype_metadata);
 
     } else if (m_combined_tables_metadata.find(logtype_id) != m_combined_tables_metadata.end()) {
         if (m_combined_tables.find(logtype_id) != m_combined_tables.end()) {
@@ -73,8 +69,9 @@ void MultiLogtypeTablesManager::load_all_tables(combined_table_id_t combined_tab
             if (m_combined_tables_metadata.find(logtype_id) == m_combined_tables_metadata.end()) {
                 SPDLOG_ERROR("logtype id {} doesn't exist in either form of table");
             }
-            combined_table_tracker
-                    .emplace(logtype_id, logtype_info.num_columns, logtype_info.num_rows);
+            combined_table_tracker.emplace(logtype_id,
+                                           logtype_info.num_columns,
+                                           logtype_info.num_rows);
         }
     }
 
@@ -93,20 +90,16 @@ void MultiLogtypeTablesManager::load_all_tables(combined_table_id_t combined_tab
     for (auto const& logtype_table : combined_table_tracker) {
         auto const& logtype_id = logtype_table.get_id();
         assert(m_combined_tables.find(logtype_id) == m_combined_tables.end());
-        m_combined_tables[logtype_id].open_and_read_once_only(
-                logtype_id,
-                combined_table_id,
-                combined_table_decompressor,
-                m_combined_tables_metadata
-        );
+        m_combined_tables[logtype_id].open_and_read_once_only(logtype_id,
+                                                              combined_table_id,
+                                                              combined_table_decompressor,
+                                                              m_combined_tables_metadata);
     }
 }
 
-void MultiLogtypeTablesManager::get_variable_row_at_offset(
-        logtype_dictionary_id_t logtype_id,
-        size_t offset,
-        Message& msg
-) {
+void MultiLogtypeTablesManager::get_variable_row_at_offset(logtype_dictionary_id_t logtype_id,
+                                                           size_t offset,
+                                                           Message& msg) {
     if (m_logtype_tables.find(logtype_id) != m_logtype_tables.end()) {
         m_logtype_tables[logtype_id].get_message_at_offset(offset, msg);
     } else if (m_combined_tables.find(logtype_id) != m_combined_tables.end()) {

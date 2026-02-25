@@ -13,8 +13,7 @@ void VariableDictionaryEntry::write_to_file(streaming_compression::Compressor& c
 }
 
 ErrorCode VariableDictionaryEntry::try_read_from_file(
-        streaming_compression::Decompressor& decompressor
-) {
+        streaming_compression::Decompressor& decompressor) {
     ErrorCode error_code;
 
     error_code = decompressor.try_read_numeric_value<variable_dictionary_id_t>(m_id);

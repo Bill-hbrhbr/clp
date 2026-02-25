@@ -40,19 +40,15 @@ public:
     public:
         // Constructors
         OperationFailed(ErrorCode error_code, char const* const filename, int line_number)
-                : OperationFailed(
-                          error_code,
-                          filename,
-                          line_number,
-                          "BufferedFileReader operation failed"
-                  ) {}
+                : OperationFailed(error_code,
+                                  filename,
+                                  line_number,
+                                  "BufferedFileReader operation failed") {}
 
-        OperationFailed(
-                ErrorCode error_code,
-                char const* const filename,
-                int line_number,
-                std::string message
-        )
+        OperationFailed(ErrorCode error_code,
+                        char const* const filename,
+                        int line_number,
+                        std::string message)
                 : TraceableException(error_code, filename, line_number),
                   m_message(std::move(message)) {}
 
@@ -206,9 +202,10 @@ public:
      * @return Same as BufferReader::try_read_to_delimiter if it fails
      * @return ErrorCode_Success on success
      */
-    [[nodiscard]] auto
-    try_read_to_delimiter(char delim, bool keep_delimiter, bool append, std::string& str)
-            -> ErrorCode override;
+    [[nodiscard]] auto try_read_to_delimiter(char delim,
+                                             bool keep_delimiter,
+                                             bool append,
+                                             std::string& str) -> ErrorCode override;
 
 private:
     // Methods

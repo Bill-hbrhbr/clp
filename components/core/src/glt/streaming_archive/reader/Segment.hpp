@@ -48,8 +48,9 @@ public:
      * @return ErrorCode_Failure if decompression failed
      * @return ErrorCode_Success on success
      */
-    ErrorCode
-    try_read(uint64_t decompressed_stream_pos, char* extraction_buf, uint64_t extraction_len);
+    ErrorCode try_read(uint64_t decompressed_stream_pos,
+                       char* extraction_buf,
+                       uint64_t extraction_len);
 
 private:
     std::string m_segment_path;

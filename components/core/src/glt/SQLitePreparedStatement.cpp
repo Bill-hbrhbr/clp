@@ -6,25 +6,19 @@
 using std::string;
 
 namespace glt {
-SQLitePreparedStatement::SQLitePreparedStatement(
-        char const* statement,
-        size_t statement_length,
-        sqlite3* db_handle
-) {
-    auto return_value = sqlite3_prepare_v2(
-            db_handle,
-            statement,
-            statement_length,
-            &m_statement_handle,
-            nullptr
-    );
+SQLitePreparedStatement::SQLitePreparedStatement(char const* statement,
+                                                 size_t statement_length,
+                                                 sqlite3* db_handle) {
+    auto return_value = sqlite3_prepare_v2(db_handle,
+                                           statement,
+                                           statement_length,
+                                           &m_statement_handle,
+                                           nullptr);
     if (SQLITE_OK != return_value) {
-        SPDLOG_ERROR(
-                "SQLitePreparedStatement: Failed to prepare statement '{:.{}}' - {}",
-                statement,
-                statement_length,
-                sqlite3_errmsg(db_handle)
-        );
+        SPDLOG_ERROR("SQLitePreparedStatement: Failed to prepare statement '{:.{}}' - {}",
+                     statement,
+                     statement_length,
+                     sqlite3_errmsg(db_handle));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
     m_db_handle = db_handle;
@@ -48,8 +42,7 @@ SQLitePreparedStatement::SQLitePreparedStatement(SQLitePreparedStatement&& rhs) 
 }
 
 SQLitePreparedStatement& SQLitePreparedStatement::operator=(
-        SQLitePreparedStatement&& rhs
-) noexcept {
+        SQLitePreparedStatement&& rhs) noexcept {
     if (this != &rhs) {
         if (nullptr != m_statement_handle) {
             sqlite3_finalize(m_statement_handle);
@@ -70,10 +63,8 @@ SQLitePreparedStatement& SQLitePreparedStatement::operator=(
 void SQLitePreparedStatement::bind_int(int parameter_index, int value) {
     auto return_value = sqlite3_bind_int(m_statement_handle, parameter_index, value);
     if (SQLITE_OK != return_value) {
-        SPDLOG_ERROR(
-                "SQLitePreparedStatement: Failed to bind int to statement - {}",
-                sqlite3_errmsg(m_db_handle)
-        );
+        SPDLOG_ERROR("SQLitePreparedStatement: Failed to bind int to statement - {}",
+                     sqlite3_errmsg(m_db_handle));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 }
@@ -90,10 +81,8 @@ void SQLitePreparedStatement::bind_int(string const& parameter_name, int value) 
 void SQLitePreparedStatement::bind_int64(int parameter_index, int64_t value) {
     auto return_value = sqlite3_bind_int64(m_statement_handle, parameter_index, value);
     if (SQLITE_OK != return_value) {
-        SPDLOG_ERROR(
-                "SQLitePreparedStatement: Failed to bind int64 to statement - {}",
-                sqlite3_errmsg(m_db_handle)
-        );
+        SPDLOG_ERROR("SQLitePreparedStatement: Failed to bind int64 to statement - {}",
+                     sqlite3_errmsg(m_db_handle));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 }
@@ -107,32 +96,24 @@ void SQLitePreparedStatement::bind_int64(string const& parameter_name, int64_t v
     bind_int64(parameter_index, value);
 }
 
-void SQLitePreparedStatement::bind_text(
-        int parameter_index,
-        std::string const& value,
-        bool copy_parameter
-) {
-    auto return_value = sqlite3_bind_text(
-            m_statement_handle,
-            parameter_index,
-            value.c_str(),
-            value.length(),
-            copy_parameter ? SQLITE_TRANSIENT : SQLITE_STATIC
-    );
+void SQLitePreparedStatement::bind_text(int parameter_index,
+                                        std::string const& value,
+                                        bool copy_parameter) {
+    auto return_value = sqlite3_bind_text(m_statement_handle,
+                                          parameter_index,
+                                          value.c_str(),
+                                          value.length(),
+                                          copy_parameter ? SQLITE_TRANSIENT : SQLITE_STATIC);
     if (SQLITE_OK != return_value) {
-        SPDLOG_ERROR(
-                "SQLitePreparedStatement: Failed to bind text to statement - {}",
-                sqlite3_errmsg(m_db_handle)
-        );
+        SPDLOG_ERROR("SQLitePreparedStatement: Failed to bind text to statement - {}",
+                     sqlite3_errmsg(m_db_handle));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 }
 
-void SQLitePreparedStatement::bind_text(
-        string const& parameter_name,
-        string const& value,
-        bool copy_parameter
-) {
+void SQLitePreparedStatement::bind_text(string const& parameter_name,
+                                        string const& value,
+                                        bool copy_parameter) {
     int parameter_index = sqlite3_bind_parameter_index(m_statement_handle, parameter_name.c_str());
     if (0 == parameter_index) {
         throw OperationFailed(ErrorCode_BadParam, __FILENAME__, __LINE__);
@@ -185,7 +166,6 @@ void SQLitePreparedStatement::column_string(int parameter_index, std::string& va
 
     value.assign(
             reinterpret_cast<char const*>(sqlite3_column_text(m_statement_handle, parameter_index)),
-            sqlite3_column_bytes(m_statement_handle, parameter_index)
-    );
+            sqlite3_column_bytes(m_statement_handle, parameter_index));
 }
 }  // namespace glt

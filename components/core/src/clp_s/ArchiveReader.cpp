@@ -40,8 +40,7 @@ void ArchiveReader::open(Path const& archive_path, NetworkAuthOption const& netw
 void ArchiveReader::read_metadata() {
     constexpr size_t cDecompressorFileReadBufferCapacity = 64 * 1024;  // 64 KiB
     auto table_metadata_reader = m_archive_reader_adaptor->checkout_reader_for_section(
-            constants::cArchiveTableMetadataFile
-    );
+            constants::cArchiveTableMetadataFile);
     m_table_metadata_decompressor.open(*table_metadata_reader, cDecompressorFileReadBufferCapacity);
 
     m_stream_reader.read_metadata(m_table_metadata_decompressor);
@@ -140,26 +139,23 @@ void ArchiveReader::open_packed_streams() {
     m_stream_reader.open_packed_streams(m_archive_reader_adaptor);
 }
 
-SchemaReader& ArchiveReader::read_schema_table(
-        int32_t schema_id,
-        bool should_extract_timestamp,
-        bool should_marshal_records
-) {
+SchemaReader& ArchiveReader::read_schema_table(int32_t schema_id,
+                                               bool should_extract_timestamp,
+                                               bool should_marshal_records) {
     if (m_id_to_schema_metadata.count(schema_id) == 0) {
         throw OperationFailed(ErrorCodeFileNotFound, __FILENAME__, __LINE__);
     }
 
-    initialize_schema_reader(
-            m_schema_reader,
-            schema_id,
-            should_extract_timestamp,
-            should_marshal_records
-    );
+    initialize_schema_reader(m_schema_reader,
+                             schema_id,
+                             should_extract_timestamp,
+                             should_marshal_records);
 
     auto& schema_metadata = m_id_to_schema_metadata[schema_id];
     auto stream_buffer = read_stream(schema_metadata.stream_id, true);
-    m_schema_reader
-            .load(stream_buffer, schema_metadata.stream_offset, schema_metadata.uncompressed_size);
+    m_schema_reader.load(stream_buffer,
+                         schema_metadata.stream_offset,
+                         schema_metadata.uncompressed_size);
     return m_schema_reader;
 }
 
@@ -171,11 +167,9 @@ std::vector<std::shared_ptr<SchemaReader>> ArchiveReader::read_all_tables() {
         initialize_schema_reader(*schema_reader, schema_id, true, true);
         auto& schema_metadata = m_id_to_schema_metadata[schema_id];
         auto stream_buffer = read_stream(schema_metadata.stream_id, false);
-        schema_reader->load(
-                stream_buffer,
-                schema_metadata.stream_offset,
-                schema_metadata.uncompressed_size
-        );
+        schema_reader->load(stream_buffer,
+                            schema_metadata.stream_offset,
+                            schema_metadata.uncompressed_size);
         readers.push_back(std::move(schema_reader));
     }
     return readers;
@@ -234,12 +228,10 @@ BaseColumnReader* ArchiveReader::append_reader_column(SchemaReader& reader, int3
     return column_reader;
 }
 
-void ArchiveReader::append_unordered_reader_columns(
-        SchemaReader& reader,
-        int32_t mst_subtree_root_node_id,
-        std::span<int32_t> schema_ids,
-        bool should_marshal_records
-) {
+void ArchiveReader::append_unordered_reader_columns(SchemaReader& reader,
+                                                    int32_t mst_subtree_root_node_id,
+                                                    std::span<int32_t> schema_ids,
+                                                    bool should_marshal_records) {
     size_t object_begin_pos = reader.get_column_size();
     for (int32_t column_id : schema_ids) {
         if (Schema::schema_entry_is_unordered_object(column_id)) {
@@ -296,21 +288,17 @@ void ArchiveReader::append_unordered_reader_columns(
     }
 }
 
-void ArchiveReader::initialize_schema_reader(
-        SchemaReader& reader,
-        int32_t schema_id,
-        bool should_extract_timestamp,
-        bool should_marshal_records
-) {
+void ArchiveReader::initialize_schema_reader(SchemaReader& reader,
+                                             int32_t schema_id,
+                                             bool should_extract_timestamp,
+                                             bool should_marshal_records) {
     auto& schema = (*m_schema_map)[schema_id];
-    reader.reset(
-            m_schema_tree,
-            m_projection,
-            schema_id,
-            schema.get_ordered_schema_view(),
-            m_id_to_schema_metadata[schema_id].num_messages,
-            should_marshal_records
-    );
+    reader.reset(m_schema_tree,
+                 m_projection,
+                 schema_id,
+                 schema.get_ordered_schema_view(),
+                 m_id_to_schema_metadata[schema_id].num_messages,
+                 should_marshal_records);
     auto timestamp_column_ids
             = get_timestamp_dictionary()->get_authoritative_timestamp_column_ids();
     for (size_t i = 0; i < schema.size(); ++i) {
@@ -322,14 +310,11 @@ void ArchiveReader::initialize_schema_reader(
             auto mst_subtree_root_node_id = m_schema_tree->find_matching_subtree_root_in_subtree(
                     -1,
                     SchemaReader::get_first_column_in_span(sub_schema),
-                    Schema::get_unordered_object_type(column_id)
-            );
-            append_unordered_reader_columns(
-                    reader,
-                    mst_subtree_root_node_id,
-                    sub_schema,
-                    should_marshal_records
-            );
+                    Schema::get_unordered_object_type(column_id));
+            append_unordered_reader_columns(reader,
+                                            mst_subtree_root_node_id,
+                                            sub_schema,
+                                            should_marshal_records);
             i += length;
             continue;
         }
@@ -337,12 +322,10 @@ void ArchiveReader::initialize_schema_reader(
             // Length one unordered object that doesn't have a tag. This is only allowed when the
             // column id is the root of the unordered object, so we can pass it directly to
             // append_unordered_reader_columns.
-            append_unordered_reader_columns(
-                    reader,
-                    column_id,
-                    std::span<int32_t>(),
-                    should_marshal_records
-            );
+            append_unordered_reader_columns(reader,
+                                            column_id,
+                                            std::span<int32_t>(),
+                                            should_marshal_records);
             continue;
         }
         BaseColumnReader* column_reader = append_reader_column(reader, column_id);

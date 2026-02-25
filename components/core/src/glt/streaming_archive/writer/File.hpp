@@ -81,13 +81,11 @@ public:
      * @param num_uncompressed_bytes
      * @param num_vars
      */
-    void write_encoded_msg(
-            epochtime_t timestamp,
-            logtype_dictionary_id_t logtype_id,
-            size_t offset,
-            size_t num_uncompressed_bytes,
-            size_t num_vars
-    );
+    void write_encoded_msg(epochtime_t timestamp,
+                           logtype_dictionary_id_t logtype_id,
+                           size_t offset,
+                           size_t num_uncompressed_bytes,
+                           size_t num_vars);
 
     /**
      * Changes timestamp pattern in use at current message in file
@@ -180,11 +178,9 @@ private:
      * @param segment_timestamps_uncompressed_pos
      * @param segment_offset_uncompressed_pos
      */
-    void set_segment_metadata(
-            segment_id_t segment_id,
-            uint64_t segment_timestamps_uncompressed_pos,
-            uint64_t segment_offset_uncompressed_pos
-    );
+    void set_segment_metadata(segment_id_t segment_id,
+                              uint64_t segment_timestamps_uncompressed_pos,
+                              uint64_t segment_offset_uncompressed_pos);
 
     // Variables
     // Metadata

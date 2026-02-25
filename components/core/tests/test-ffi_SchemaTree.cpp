@@ -14,11 +14,9 @@ namespace {
  * @param expected_id
  * @return Whether the node was inserted successfully with the expected ID.
  */
-[[nodiscard]] auto insert_node(
-        SchemaTree& schema_tree,
-        SchemaTree::NodeLocator const& locator,
-        SchemaTree::Node::id_t expected_id
-) -> bool;
+[[nodiscard]] auto insert_node(SchemaTree& schema_tree,
+                               SchemaTree::NodeLocator const& locator,
+                               SchemaTree::Node::id_t expected_id) -> bool;
 
 /**
  * @param schema_tree
@@ -27,26 +25,20 @@ namespace {
  * @return Whether an ID could be found for a non root node matching the locator, the ID matches the
  * expected ID, the corresponding node is not the root, and it matches the locator.
  */
-[[nodiscard]] auto check_non_root_node(
-        SchemaTree const& schema_tree,
-        SchemaTree::NodeLocator const& locator,
-        SchemaTree::Node::id_t expected_id
-) -> bool;
+[[nodiscard]] auto check_non_root_node(SchemaTree const& schema_tree,
+                                       SchemaTree::NodeLocator const& locator,
+                                       SchemaTree::Node::id_t expected_id) -> bool;
 
-auto insert_node(
-        SchemaTree& schema_tree,
-        SchemaTree::NodeLocator const& locator,
-        SchemaTree::Node::id_t expected_id
-) -> bool {
+auto insert_node(SchemaTree& schema_tree,
+                 SchemaTree::NodeLocator const& locator,
+                 SchemaTree::Node::id_t expected_id) -> bool {
     return false == schema_tree.has_node(locator)
            && expected_id == schema_tree.insert_node(locator);
 }
 
-auto check_non_root_node(
-        SchemaTree const& schema_tree,
-        SchemaTree::NodeLocator const& locator,
-        SchemaTree::Node::id_t expected_id
-) -> bool {
+auto check_non_root_node(SchemaTree const& schema_tree,
+                         SchemaTree::NodeLocator const& locator,
+                         SchemaTree::Node::id_t expected_id) -> bool {
     auto const node_id{schema_tree.try_get_node_id(locator)};
     if (false == node_id.has_value() || node_id.value() != expected_id) {
         // The node's ID doesn't match.
@@ -103,8 +95,7 @@ TEST_CASE("ffi_schema_tree", "[ffi]") {
             {3, "d", SchemaTree::Node::Type::Int},
             {3, "d", SchemaTree::Node::Type::Bool},
             {4, "d", SchemaTree::Node::Type::UnstructuredArray},
-            {4, "d", SchemaTree::Node::Type::Str}
-    };
+            {4, "d", SchemaTree::Node::Type::Str}};
 
     auto const snapshot_idx{static_cast<SchemaTree::Node::id_t>(locators.size() / 2)};
 

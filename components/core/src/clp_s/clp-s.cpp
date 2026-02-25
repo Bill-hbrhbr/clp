@@ -71,12 +71,10 @@ void decompress_archive(clp_s::JsonConstructorOption const& json_constructor_opt
  * @param reducer_socket_fd
  * @return Whether the search succeeded
  */
-bool search_archive(
-        CommandLineArguments const& command_line_arguments,
-        std::shared_ptr<clp_s::ArchiveReader> const& archive_reader,
-        std::shared_ptr<ast::Expression> expr,
-        int reducer_socket_fd
-);
+bool search_archive(CommandLineArguments const& command_line_arguments,
+                    std::shared_ptr<clp_s::ArchiveReader> const& archive_reader,
+                    std::shared_ptr<ast::Expression> expr,
+                    int reducer_socket_fd);
 
 bool compress(CommandLineArguments const& command_line_arguments) {
     auto archives_dir = std::filesystem::path(command_line_arguments.get_archives_dir());
@@ -85,11 +83,9 @@ bool compress(CommandLineArguments const& command_line_arguments) {
     try {
         std::filesystem::create_directory(archives_dir.string());
     } catch (std::exception& e) {
-        SPDLOG_ERROR(
-                "Failed to create archives directory {} - {}",
-                archives_dir.string(),
-                e.what()
-        );
+        SPDLOG_ERROR("Failed to create archives directory {} - {}",
+                     archives_dir.string(),
+                     e.what());
         return false;
     }
 
@@ -122,29 +118,24 @@ void decompress_archive(clp_s::JsonConstructorOption const& json_constructor_opt
     constructor.store();
 }
 
-bool search_archive(
-        CommandLineArguments const& command_line_arguments,
-        std::shared_ptr<clp_s::ArchiveReader> const& archive_reader,
-        std::shared_ptr<ast::Expression> expr,
-        int reducer_socket_fd
-) {
+bool search_archive(CommandLineArguments const& command_line_arguments,
+                    std::shared_ptr<clp_s::ArchiveReader> const& archive_reader,
+                    std::shared_ptr<ast::Expression> expr,
+                    int reducer_socket_fd) {
     auto const& query = command_line_arguments.get_query();
 
     auto timestamp_dict = archive_reader->get_timestamp_dictionary();
     AddTimestampConditions add_timestamp_conditions(
             timestamp_dict->get_authoritative_timestamp_tokenized_column(),
             command_line_arguments.get_search_begin_ts(),
-            command_line_arguments.get_search_end_ts()
-    );
+            command_line_arguments.get_search_end_ts());
     if (expr = add_timestamp_conditions.run(expr); std::dynamic_pointer_cast<ast::EmptyExpr>(expr))
     {
-        SPDLOG_ERROR(
-                "Query '{}' specified timestamp filters tge {} tle {}, but no authoritative "
-                "timestamp column was found for this archive",
-                query,
-                command_line_arguments.get_search_begin_ts().value_or(cEpochTimeMin),
-                command_line_arguments.get_search_end_ts().value_or(cEpochTimeMax)
-        );
+        SPDLOG_ERROR("Query '{}' specified timestamp filters tge {} tle {}, but no authoritative "
+                     "timestamp column was found for this archive",
+                     query,
+                     command_line_arguments.get_search_begin_ts().value_or(cEpochTimeMin),
+                     command_line_arguments.get_search_end_ts().value_or(cEpochTimeMax));
         return false;
     }
 
@@ -168,8 +159,7 @@ bool search_archive(
 
     EvaluateRangeIndexFilters metadata_filter_pass{
             archive_reader->get_range_index(),
-            false == command_line_arguments.get_ignore_case()
-    };
+            false == command_line_arguments.get_ignore_case()};
     if (expr = metadata_filter_pass.run(expr); std::dynamic_pointer_cast<ast::EmptyExpr>(expr)) {
         SPDLOG_INFO("No matching metadata ranges for query '{}'", query);
         return true;
@@ -185,47 +175,38 @@ bool search_archive(
 
     if (archive_reader->has_deprecated_timestamp_format()) {
         ast::SetTimestampLiteralPrecision date_precision_pass{
-                ast::TimestampLiteral::Precision::Milliseconds
-        };
+                ast::TimestampLiteral::Precision::Milliseconds};
         expr = date_precision_pass.run(expr);
     }
 
     // Narrow against schemas
-    auto match_pass = std::make_shared<SchemaMatch>(
-            archive_reader->get_schema_tree(),
-            archive_reader->get_schema_map()
-    );
+    auto match_pass = std::make_shared<SchemaMatch>(archive_reader->get_schema_tree(),
+                                                    archive_reader->get_schema_map());
     if (expr = match_pass->run(expr); std::dynamic_pointer_cast<ast::EmptyExpr>(expr)) {
         SPDLOG_INFO("No matching schemas for query '{}'", query);
         return true;
     }
 
     // Populate projection
-    auto projection = std::make_shared<Projection>(
-            command_line_arguments.get_projection_columns().empty()
-                    ? ProjectionMode::ReturnAllColumns
-                    : ProjectionMode::ReturnSelectedColumns
-    );
+    auto projection
+            = std::make_shared<Projection>(command_line_arguments.get_projection_columns().empty()
+                                                   ? ProjectionMode::ReturnAllColumns
+                                                   : ProjectionMode::ReturnSelectedColumns);
     try {
         for (auto const& column : command_line_arguments.get_projection_columns()) {
             std::vector<std::string> descriptor_tokens;
             std::string descriptor_namespace;
             if (false
-                == clp_s::search::ast::tokenize_column_descriptor(
-                        column,
-                        descriptor_tokens,
-                        descriptor_namespace
-                ))
+                == clp_s::search::ast::tokenize_column_descriptor(column,
+                                                                  descriptor_tokens,
+                                                                  descriptor_namespace))
             {
                 SPDLOG_ERROR("Can not tokenize invalid column: \"{}\"", column);
                 return false;
             }
             projection->add_column(
-                    ast::ColumnDescriptor::create_from_escaped_tokens(
-                            descriptor_tokens,
-                            descriptor_namespace
-                    )
-            );
+                    ast::ColumnDescriptor::create_from_escaped_tokens(descriptor_tokens,
+                                                                      descriptor_namespace));
         }
     } catch (std::exception const& e) {
         SPDLOG_ERROR("{}", e.what());
@@ -240,14 +221,12 @@ bool search_archive(
             case CommandLineArguments::OutputHandlerType::File:
                 output_handler = std::make_unique<clp_s::FileOutputHandler>(
                         command_line_arguments.get_file_output_path(),
-                        true
-                );
+                        true);
                 break;
             case CommandLineArguments::OutputHandlerType::Network:
                 output_handler = std::make_unique<clp_s::NetworkOutputHandler>(
                         command_line_arguments.get_network_dest_host(),
-                        command_line_arguments.get_network_dest_port()
-                );
+                        command_line_arguments.get_network_dest_port());
                 break;
             case CommandLineArguments::OutputHandlerType::Reducer:
                 if (command_line_arguments.do_count_results_aggregation()) {
@@ -255,8 +234,7 @@ bool search_archive(
                 } else if (command_line_arguments.do_count_by_time_aggregation()) {
                     output_handler = std::make_unique<clp_s::CountByTimeOutputHandler>(
                             reducer_socket_fd,
-                            command_line_arguments.get_count_by_time_bucket_size()
-                    );
+                            command_line_arguments.get_count_by_time_bucket_size());
                 } else {
                     SPDLOG_ERROR("Unhandled aggregation type.");
                     return false;
@@ -267,8 +245,7 @@ bool search_archive(
                         command_line_arguments.get_mongodb_uri(),
                         command_line_arguments.get_mongodb_collection(),
                         command_line_arguments.get_batch_size(),
-                        command_line_arguments.get_max_num_results()
-                );
+                        command_line_arguments.get_max_num_results());
                 break;
             case CommandLineArguments::OutputHandlerType::Stdout:
                 output_handler = std::make_unique<clp_s::StandardOutputHandler>();
@@ -283,13 +260,11 @@ bool search_archive(
     }
 
     // output result
-    Output output(
-            match_pass,
-            expr,
-            archive_reader,
-            std::move(output_handler),
-            command_line_arguments.get_ignore_case()
-    );
+    Output output(match_pass,
+                  expr,
+                  archive_reader,
+                  std::move(output_handler),
+                  command_line_arguments.get_ignore_case());
     return output.filter();
 }
 }  // namespace
@@ -336,9 +311,8 @@ int main(int argc, char const* argv[]) {
         option.print_ordered_chunk_stats = command_line_arguments.print_ordered_chunk_stats();
         option.network_auth = command_line_arguments.get_network_auth();
         if (false == command_line_arguments.get_mongodb_uri().empty()) {
-            option.metadata_db
-                    = {command_line_arguments.get_mongodb_uri(),
-                       command_line_arguments.get_mongodb_collection()};
+            option.metadata_db = {command_line_arguments.get_mongodb_uri(),
+                                  command_line_arguments.get_mongodb_collection()};
         }
 
         try {
@@ -367,11 +341,10 @@ int main(int argc, char const* argv[]) {
         if (command_line_arguments.get_output_handler_type()
             == CommandLineArguments::OutputHandlerType::Reducer)
         {
-            reducer_socket_fd = reducer::connect_to_reducer(
-                    command_line_arguments.get_reducer_host(),
-                    command_line_arguments.get_reducer_port(),
-                    command_line_arguments.get_job_id()
-            );
+            reducer_socket_fd
+                    = reducer::connect_to_reducer(command_line_arguments.get_reducer_host(),
+                                                  command_line_arguments.get_reducer_port(),
+                                                  command_line_arguments.get_job_id());
             if (-1 == reducer_socket_fd) {
                 SPDLOG_ERROR("Failed to connect to reducer");
                 return 1;
@@ -381,12 +354,10 @@ int main(int argc, char const* argv[]) {
         auto archive_reader = std::make_shared<clp_s::ArchiveReader>();
         for (auto const& input_path : command_line_arguments.get_input_paths()) {
             if (std::string::npos != input_path.path.find(clp::ir::cIrFileExtension)) {
-                auto const result{clp_s::search_kv_ir_stream(
-                        input_path,
-                        command_line_arguments,
-                        expr->copy(),
-                        reducer_socket_fd
-                )};
+                auto const result{clp_s::search_kv_ir_stream(input_path,
+                                                             command_line_arguments,
+                                                             expr->copy(),
+                                                             reducer_socket_fd)};
                 if (false == result.has_error()) {
                     continue;
                 }
@@ -410,8 +381,7 @@ int main(int argc, char const* argv[]) {
                     // archive.
                     SPDLOG_WARN(
                             "Attempted to search an IR stream using unsupported features. Falling"
-                            " back to searching the input as an archive."
-                    );
+                            " back to searching the input as an archive.");
                 } else if (KvIrSearchError{KvIrSearchErrorEnum::DeserializerCreationFailure}
                            != error)
                 {
@@ -422,8 +392,7 @@ int main(int argc, char const* argv[]) {
                             "Failed to search '{}' as an IR stream, error_category={}, error={}",
                             input_path.path,
                             error.category().name(),
-                            error.message()
-                    );
+                            error.message());
                     return 1;
                 }
             }
@@ -435,12 +404,10 @@ int main(int argc, char const* argv[]) {
                 return 1;
             }
             if (false
-                == search_archive(
-                        command_line_arguments,
-                        archive_reader,
-                        expr->copy(),
-                        reducer_socket_fd
-                ))
+                == search_archive(command_line_arguments,
+                                  archive_reader,
+                                  expr->copy(),
+                                  reducer_socket_fd))
             {
                 return 1;
             }

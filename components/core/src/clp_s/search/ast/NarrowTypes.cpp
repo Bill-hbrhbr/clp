@@ -120,11 +120,11 @@ std::shared_ptr<Expression> NarrowTypes::narrow(std::shared_ptr<Expression> cur)
             // of UUIDs) then we only need to transform one filter expression within the parent
             // OR/AND into an OR with the necessary EXISTS condition. Splitting each filter into an
             // OR could result in a much larger AST than necessary and slow down Schema Matching.
-            auto it = std::find_if(
-                    m_local_exists_descriptors.begin(),
-                    m_local_exists_descriptors.end(),
-                    [exists_column](auto const& rhs) -> bool { return *exists_column == *rhs; }
-            );
+            auto it = std::find_if(m_local_exists_descriptors.begin(),
+                                   m_local_exists_descriptors.end(),
+                                   [exists_column](auto const& rhs) -> bool {
+                                       return *exists_column == *rhs;
+                                   });
             if (m_local_exists_descriptors.end() == it) {
                 m_local_exists_descriptors.push_back(exists_column);
                 auto exists_expr = FilterExpr::create(exists_column, FilterOperation::EXISTS);

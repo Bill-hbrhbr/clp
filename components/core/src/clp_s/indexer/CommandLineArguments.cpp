@@ -8,8 +8,8 @@
 namespace po = boost::program_options;
 
 namespace clp_s::indexer {
-CommandLineArguments::ParsingResult
-CommandLineArguments::parse_arguments(int argc, char const** argv) {
+CommandLineArguments::ParsingResult CommandLineArguments::parse_arguments(int argc,
+                                                                          char const** argv) {
     // Print out basic usage if user doesn't specify any options
     if (1 == argc) {
         print_basic_usage();
@@ -96,10 +96,8 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
         if (clp::GlobalMetadataDBConfig::MetadataDBType::MySQL
             != metadata_db_config.get_metadata_db_type())
         {
-            SPDLOG_ERROR(
-                    "Invalid metadata database type for {}; only supported type is MySQL.",
-                    m_program_name
-            );
+            SPDLOG_ERROR("Invalid metadata database type for {}; only supported type is MySQL.",
+                         m_program_name);
             return ParsingResult::Failure;
         }
         metadata_db_config.read_credentials_from_env_if_needed();

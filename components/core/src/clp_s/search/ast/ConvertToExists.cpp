@@ -71,10 +71,9 @@ std::shared_ptr<Expression> ConvertToExists::convert(std::shared_ptr<Expression>
             auto new_col_null = column->copy();
             if (exists) {
                 m_needs_standard_form = true;
-                new_col->remove_matching_types(
-                        cAllTypes
-                        & ~(LiteralType::ArrayT | LiteralType::ClpStringT | LiteralType::VarStringT)
-                );
+                new_col->remove_matching_types(cAllTypes
+                                               & ~(LiteralType::ArrayT | LiteralType::ClpStringT
+                                                   | LiteralType::VarStringT));
                 new_col_null->remove_matching_types(cAllTypes & ~LiteralType::NullT);
                 std::shared_ptr<Expression> non_null_filter;
                 if (new_col->matches_any(cAllTypes)) {

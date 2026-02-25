@@ -22,12 +22,10 @@ auto split_archive(Archive::UserConfig& archive_user_config, Archive& archive_wr
  * @param last_timestamp_pattern
  * @param archive_writer
  */
-auto split_file(
-        std::string const& path_for_compression,
-        group_id_t group_id,
-        TimestampPattern const* last_timestamp_pattern,
-        Archive& archive_writer
-) -> void;
+auto split_file(std::string const& path_for_compression,
+                group_id_t group_id,
+                TimestampPattern const* last_timestamp_pattern,
+                Archive& archive_writer) -> void;
 
 /**
  * Closes the archive and its current encoded file, then starts a new archive and encoded file
@@ -37,13 +35,11 @@ auto split_file(
  * @param last_timestamp_pattern
  * @param archive_writer
  */
-auto split_file_and_archive(
-        Archive::UserConfig& archive_user_config,
-        std::string const& path_for_compression,
-        group_id_t group_id,
-        TimestampPattern const* last_timestamp_pattern,
-        Archive& archive_writer
-) -> void;
+auto split_file_and_archive(Archive::UserConfig& archive_user_config,
+                            std::string const& path_for_compression,
+                            group_id_t group_id,
+                            TimestampPattern const* last_timestamp_pattern,
+                            Archive& archive_writer) -> void;
 
 /**
  * Closes the encoded file in the given archive and appends it to the segment

@@ -17,12 +17,10 @@ namespace glt::glt {
 class FileDecompressor {
 public:
     // Methods
-    bool decompress_file(
-            streaming_archive::MetadataDB::FileIterator const& file_metadata_ix,
-            std::string const& output_dir,
-            streaming_archive::reader::Archive& archive_reader,
-            std::unordered_map<std::string, std::string>& temp_path_to_final_path
-    );
+    bool decompress_file(streaming_archive::MetadataDB::FileIterator const& file_metadata_ix,
+                         std::string const& output_dir,
+                         streaming_archive::reader::Archive& archive_reader,
+                         std::unordered_map<std::string, std::string>& temp_path_to_final_path);
 
 private:
     // Variables

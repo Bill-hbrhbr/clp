@@ -41,15 +41,13 @@ public:
     void load_logtype_table(
             logtype_dictionary_id_t logtype_id,
             streaming_compression::Decompressor& decompressor,
-            std::unordered_map<logtype_dictionary_id_t, CombinedMetadata> const& metadata
-    );
+            std::unordered_map<logtype_dictionary_id_t, CombinedMetadata> const& metadata);
 
     void open_and_read_once_only(
             logtype_dictionary_id_t logtype_id,
             combined_table_id_t combined_table_id,
             streaming_compression::Decompressor& decompressor,
-            std::unordered_map<logtype_dictionary_id_t, CombinedMetadata> const& metadata
-    );
+            std::unordered_map<logtype_dictionary_id_t, CombinedMetadata> const& metadata);
 
     void close_logtype_table();
 
@@ -64,8 +62,8 @@ public:
     bool is_open() const { return m_is_open; }
 
 private:
-    void
-    load_logtype_table_data(streaming_compression::Decompressor& decompressor, char* read_buffer);
+    void load_logtype_table_data(streaming_compression::Decompressor& decompressor,
+                                 char* read_buffer);
 
     combined_table_id_t m_table_id;
     logtype_dictionary_id_t m_logtype_id;

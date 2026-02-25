@@ -27,21 +27,17 @@ namespace {
  * @param compressed_msg
  * @return true on success, false otherwise
  */
-bool find_matching_message(
-        Query const& query,
-        Archive& archive,
-        SubQuery const*& matching_sub_query,
-        File& compressed_file,
-        Message& compressed_msg
-);
+bool find_matching_message(Query const& query,
+                           Archive& archive,
+                           SubQuery const*& matching_sub_query,
+                           File& compressed_file,
+                           Message& compressed_msg);
 
-bool find_matching_message(
-        Query const& query,
-        Archive& archive,
-        SubQuery const*& matching_sub_query,
-        File& compressed_file,
-        Message& compressed_msg
-) {
+bool find_matching_message(Query const& query,
+                           Archive& archive,
+                           SubQuery const*& matching_sub_query,
+                           File& compressed_file,
+                           Message& compressed_msg) {
     if (query.contains_sub_queries()) {
         matching_sub_query
                 = archive.find_message_matching_query(compressed_file, query, compressed_msg);
@@ -51,12 +47,10 @@ bool find_matching_message(
     } else if ((query.get_search_begin_timestamp() > cEpochTimeMin
                 || query.get_search_end_timestamp() < cEpochTimeMax))
     {
-        bool found_msg = archive.find_message_in_time_range(
-                compressed_file,
-                query.get_search_begin_timestamp(),
-                query.get_search_end_timestamp(),
-                compressed_msg
-        );
+        bool found_msg = archive.find_message_in_time_range(compressed_file,
+                                                            query.get_search_begin_timestamp(),
+                                                            query.get_search_end_timestamp(),
+                                                            compressed_msg);
         if (!found_msg) {
             return false;
         }
@@ -71,21 +65,19 @@ bool find_matching_message(
 }
 }  // namespace
 
-void
-Grep::calculate_sub_queries_relevant_to_file(File const& compressed_file, vector<Query>& queries) {
+void Grep::calculate_sub_queries_relevant_to_file(File const& compressed_file,
+                                                  vector<Query>& queries) {
     for (auto& query : queries) {
         query.make_sub_queries_relevant_to_segment(compressed_file.get_segment_id());
     }
 }
 
-size_t Grep::search_and_output(
-        Query const& query,
-        size_t limit,
-        Archive& archive,
-        File& compressed_file,
-        OutputFunc output_func,
-        void* output_func_arg
-) {
+size_t Grep::search_and_output(Query const& query,
+                               size_t limit,
+                               Archive& archive,
+                               File& compressed_file,
+                               OutputFunc output_func,
+                               void* output_func_arg) {
     size_t num_matches = 0;
 
     Message compressed_msg;
@@ -94,13 +86,11 @@ size_t Grep::search_and_output(
     while (num_matches < limit) {
         // Find matching message
         SubQuery const* matching_sub_query = nullptr;
-        if (find_matching_message(
-                    query,
-                    archive,
-                    matching_sub_query,
-                    compressed_file,
-                    compressed_msg
-            )
+        if (find_matching_message(query,
+                                  archive,
+                                  matching_sub_query,
+                                  compressed_file,
+                                  compressed_msg)
             == false)
         {
             break;
@@ -121,11 +111,9 @@ size_t Grep::search_and_output(
             || (query.contains_sub_queries() == false
                 && query.search_string_matches_all() == false))
         {
-            bool matched = wildcard_match_unsafe(
-                    decompressed_msg,
-                    query.get_search_string(),
-                    query.get_ignore_case() == false
-            );
+            bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                 query.get_search_string(),
+                                                 query.get_ignore_case() == false);
             if (!matched) {
                 continue;
             }
@@ -139,26 +127,22 @@ size_t Grep::search_and_output(
     return num_matches;
 }
 
-bool Grep::search_and_decompress(
-        Query const& query,
-        Archive& archive,
-        File& compressed_file,
-        Message& compressed_msg,
-        string& decompressed_msg
-) {
+bool Grep::search_and_decompress(Query const& query,
+                                 Archive& archive,
+                                 File& compressed_file,
+                                 Message& compressed_msg,
+                                 string& decompressed_msg) {
     string const& orig_file_path = compressed_file.get_orig_path();
 
     bool matched = false;
     while (false == matched) {
         // Find matching message
         SubQuery const* matching_sub_query = nullptr;
-        bool message_found = find_matching_message(
-                query,
-                archive,
-                matching_sub_query,
-                compressed_file,
-                compressed_msg
-        );
+        bool message_found = find_matching_message(query,
+                                                   archive,
+                                                   matching_sub_query,
+                                                   compressed_file,
+                                                   compressed_msg);
         if (false == message_found) {
             return false;
         }
@@ -178,11 +162,9 @@ bool Grep::search_and_decompress(
             || (query.contains_sub_queries() == false
                 && query.search_string_matches_all() == false))
         {
-            matched = wildcard_match_unsafe(
-                    decompressed_msg,
-                    query.get_search_string(),
-                    query.get_ignore_case() == false
-            );
+            matched = wildcard_match_unsafe(decompressed_msg,
+                                            query.get_search_string(),
+                                            query.get_ignore_case() == false);
         } else {
             matched = true;
         }
@@ -200,13 +182,11 @@ size_t Grep::search(Query const& query, size_t limit, Archive& archive, File& co
     while (num_matches < limit) {
         // Find matching message
         SubQuery const* matching_sub_query = nullptr;
-        if (find_matching_message(
-                    query,
-                    archive,
-                    matching_sub_query,
-                    compressed_file,
-                    compressed_msg
-            )
+        if (find_matching_message(query,
+                                  archive,
+                                  matching_sub_query,
+                                  compressed_file,
+                                  compressed_msg)
             == false)
         {
             break;
@@ -227,11 +207,9 @@ size_t Grep::search(Query const& query, size_t limit, Archive& archive, File& co
                 break;
             }
 
-            bool matched = wildcard_match_unsafe(
-                    decompressed_msg,
-                    query.get_search_string(),
-                    query.get_ignore_case() == false
-            );
+            bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                 query.get_search_string(),
+                                                 query.get_ignore_case() == false);
             if (!matched) {
                 continue;
             }

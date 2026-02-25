@@ -98,11 +98,9 @@ void escape_and_append_const_to_logtype(std::string_view constant, std::string& 
  * @param logtype
  */
 template <typename EscapeHandler>
-void append_constant_to_logtype(
-        std::string_view constant,
-        EscapeHandler escape_handler,
-        std::string& logtype
-);
+void append_constant_to_logtype(std::string_view constant,
+                                EscapeHandler escape_handler,
+                                std::string& logtype);
 }  // namespace clp::ir
 
 #include "parsing.inc"

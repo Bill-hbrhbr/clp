@@ -61,13 +61,10 @@ void SingleLogtypeTableManager::close_combined_table() {
 }
 
 void SingleLogtypeTableManager::load_logtype_table_from_combine(
-        logtype_dictionary_id_t logtype_id
-) {
-    m_combined_tables.load_logtype_table(
-            logtype_id,
-            m_combined_table_decompressor,
-            m_combined_tables_metadata
-    );
+        logtype_dictionary_id_t logtype_id) {
+    m_combined_tables.load_logtype_table(logtype_id,
+                                         m_combined_table_decompressor,
+                                         m_combined_tables_metadata);
 }
 
 // rearrange queries to separate them into single table and combined table ones.
@@ -75,8 +72,7 @@ void SingleLogtypeTableManager::load_logtype_table_from_combine(
 void SingleLogtypeTableManager::rearrange_queries(
         std::unordered_map<logtype_dictionary_id_t, LogtypeQueries> const& src_queries,
         std::vector<LogtypeQueries>& single_table_queries,
-        std::map<combined_table_id_t, std::vector<LogtypeQueries>>& combined_table_queries
-) {
+        std::map<combined_table_id_t, std::vector<LogtypeQueries>>& combined_table_queries) {
     // Sort the logtype table in descending order of table_size
     std::priority_queue<LogtypeSizeTracker> single_table_tracker;
     std::map<combined_table_id_t, std::priority_queue<LogtypeSizeTracker>> combined_table_tracker;
@@ -84,15 +80,17 @@ void SingleLogtypeTableManager::rearrange_queries(
         auto logtype_id = iter.first;
         if (m_logtype_table_metadata.count(logtype_id) != 0) {
             auto const& logtype_info = m_logtype_table_metadata[logtype_id];
-            single_table_tracker
-                    .emplace(logtype_id, logtype_info.num_columns, logtype_info.num_rows);
+            single_table_tracker.emplace(logtype_id,
+                                         logtype_info.num_columns,
+                                         logtype_info.num_rows);
         } else {
             if (m_combined_tables_metadata.find(logtype_id) == m_combined_tables_metadata.end()) {
                 SPDLOG_ERROR("logtype id {} doesn't exist in either form of table");
             }
             auto const& logtype_info = m_combined_tables_metadata[logtype_id];
-            combined_table_tracker[logtype_info.combined_table_id]
-                    .emplace(logtype_id, logtype_info.num_columns, logtype_info.num_rows);
+            combined_table_tracker[logtype_info.combined_table_id].emplace(logtype_id,
+                                                                           logtype_info.num_columns,
+                                                                           logtype_info.num_rows);
         }
     }
 

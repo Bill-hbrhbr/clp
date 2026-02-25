@@ -12,14 +12,12 @@
 #include "../src/clp_s/JsonParser.hpp"
 #include "../src/clp_s/TimestampPattern.hpp"
 
-auto compress_archive(
-        std::string const& file_path,
-        std::string const& archive_directory,
-        std::optional<std::string> timestamp_key,
-        bool retain_float_format,
-        bool single_file_archive,
-        bool structurize_arrays
-) -> std::vector<clp_s::ArchiveStats> {
+auto compress_archive(std::string const& file_path,
+                      std::string const& archive_directory,
+                      std::optional<std::string> timestamp_key,
+                      bool retain_float_format,
+                      bool single_file_archive,
+                      bool structurize_arrays) -> std::vector<clp_s::ArchiveStats> {
     constexpr auto cDefaultTargetEncodedSize{8ULL * 1024 * 1024 * 1024};  // 8 GiB
     constexpr auto cDefaultMaxDocumentSize{512ULL * 1024 * 1024};  // 512 MiB
     constexpr auto cDefaultMinTableSize{1ULL * 1024 * 1024};  // 1 MiB
@@ -30,9 +28,8 @@ auto compress_archive(
     REQUIRE((std::filesystem::is_directory(archive_directory)));
 
     clp_s::JsonParserOption parser_option{};
-    parser_option.input_paths.emplace_back(
-            clp_s::Path{.source = clp_s::InputSource::Filesystem, .path = file_path}
-    );
+    parser_option.input_paths.emplace_back(clp_s::Path{.source = clp_s::InputSource::Filesystem,
+                                                       .path = file_path});
     parser_option.archives_dir = archive_directory;
     parser_option.target_encoded_size = cDefaultTargetEncodedSize;
     parser_option.max_document_size = cDefaultMaxDocumentSize;

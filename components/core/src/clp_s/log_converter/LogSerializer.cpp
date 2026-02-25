@@ -31,9 +31,7 @@ auto LogSerializer::create(std::string_view output_dir, std::string_view origina
     metadata.emplace(cOriginalFileMetadataKey, original_file_path);
     auto serializer{YSTDLIB_ERROR_HANDLING_TRYX(
             clp::ffi::ir_stream::Serializer<clp::ir::eight_byte_encoded_variable_t>::create(
-                    metadata
-            )
-    )};
+                    metadata))};
 
     boost::uuids::random_generator uuid_generator;
     std::string const file_name{boost::uuids::to_string(uuid_generator()) + ".clp"};
@@ -51,16 +49,12 @@ auto LogSerializer::create(std::string_view output_dir, std::string_view origina
 auto LogSerializer::add_message(std::string_view timestamp, std::string_view message)
         -> ystdlib::error_handling::Result<void> {
     std::array<msgpack::object_kv, 2ULL> fields{
-            msgpack::object_kv{
-                    .key = msgpack::object{cTimestampKey},
-                    .val = msgpack::object{timestamp}
-            },
-            msgpack::object_kv{.key = msgpack::object{cMessageKey}, .val = msgpack::object{message}}
-    };
-    msgpack::object_map const record{
-            .size = static_cast<uint32_t>(fields.size()),
-            .ptr = fields.data()
-    };
+            msgpack::object_kv{.key = msgpack::object{cTimestampKey},
+                               .val = msgpack::object{timestamp}},
+            msgpack::object_kv{.key = msgpack::object{cMessageKey},
+                               .val = msgpack::object{message}}};
+    msgpack::object_map const record{.size = static_cast<uint32_t>(fields.size()),
+                                     .ptr = fields.data()};
     if (false == m_serializer.serialize_msgpack_map(cEmptyMap, record)) {
         return std::errc::invalid_argument;
     }
@@ -71,10 +65,8 @@ auto LogSerializer::add_message(std::string_view timestamp, std::string_view mes
 }
 
 auto LogSerializer::add_message(std::string_view message) -> ystdlib::error_handling::Result<void> {
-    msgpack::object_kv message_field{
-            .key = msgpack::object{cMessageKey},
-            .val = msgpack::object{message}
-    };
+    msgpack::object_kv message_field{.key = msgpack::object{cMessageKey},
+                                     .val = msgpack::object{message}};
     msgpack::object_map const record{.size = 1U, .ptr = &message_field};
     if (false == m_serializer.serialize_msgpack_map(cEmptyMap, record)) {
         return std::errc::invalid_argument;

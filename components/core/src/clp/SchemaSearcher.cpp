@@ -29,8 +29,7 @@ auto SchemaSearcher::normalize_interpretations(set<QueryInterpretation> const& i
         for (auto const& token : interpretation.get_logtype()) {
             auto const& src_string{std::visit(
                     [](auto const& tok) -> string const& { return tok.get_query_substring(); },
-                    token
-            )};
+                    token)};
             string normalized_string;
             normalized_string.reserve(src_string.size());
             for (auto const c : src_string) {
@@ -40,20 +39,16 @@ auto SchemaSearcher::normalize_interpretations(set<QueryInterpretation> const& i
             }
 
             std::visit(
-                    overloaded{
-                            [&](VariableQueryToken const& variable_token) -> void {
-                                normalized_interpretation.append_variable_token(
-                                        variable_token.get_variable_type(),
-                                        normalized_string,
-                                        variable_token.get_contains_wildcard()
-                                );
-                            },
-                            [&]([[maybe_unused]] StaticQueryToken const& static_token) -> void {
-                                normalized_interpretation.append_static_token(normalized_string);
-                            }
-                    },
-                    token
-            );
+                    overloaded{[&](VariableQueryToken const& variable_token) -> void {
+                                   normalized_interpretation.append_variable_token(
+                                           variable_token.get_variable_type(),
+                                           normalized_string,
+                                           variable_token.get_contains_wildcard());
+                               },
+                               [&]([[maybe_unused]] StaticQueryToken const& static_token) -> void {
+                                   normalized_interpretation.append_static_token(normalized_string);
+                               }},
+                    token);
         }
         normalized_interpretations.insert(normalized_interpretation);
     }
@@ -81,11 +76,9 @@ auto SchemaSearcher::get_wildcard_encodable_positions(QueryInterpretation const&
     return wildcard_encodable_positions;
 }
 
-auto SchemaSearcher::generate_logtype_string(
-        QueryInterpretation const& interpretation,
-        vector<size_t> const& wildcard_encodable_positions,
-        vector<bool> const& mask_encoded_flags
-) -> string {
+auto SchemaSearcher::generate_logtype_string(QueryInterpretation const& interpretation,
+                                             vector<size_t> const& wildcard_encodable_positions,
+                                             vector<bool> const& mask_encoded_flags) -> string {
     string logtype_string;
 
     size_t logtype_string_size{0};
@@ -130,17 +123,14 @@ auto SchemaSearcher::generate_logtype_string(
 
         encoded_variable_t encoded_var{0};
         if (is_int
-            && EncodedVariableInterpreter::convert_string_to_representable_integer_var(
-                    raw_string,
-                    encoded_var
-            ))
+            && EncodedVariableInterpreter::convert_string_to_representable_integer_var(raw_string,
+                                                                                       encoded_var))
         {
             EncodedVariableInterpreter::add_int_var(logtype_string);
         } else if (is_float
                    && EncodedVariableInterpreter::convert_string_to_representable_float_var(
                            raw_string,
-                           encoded_var
-                   ))
+                           encoded_var))
         {
             EncodedVariableInterpreter::add_float_var(logtype_string);
         } else {

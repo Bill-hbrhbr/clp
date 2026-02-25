@@ -77,8 +77,8 @@ public:
      * error code indicating the failure:
      * - EncodedTextAstErrorEnum::MissingLogtype: if `string_blob` contains no strings.
      */
-    [[nodiscard]] static auto
-    create(std::vector<encoded_variable_t> encoded_vars, StringBlob string_blob)
+    [[nodiscard]] static auto create(std::vector<encoded_variable_t> encoded_vars,
+                                     StringBlob string_blob)
             -> ystdlib::error_handling::Result<EncodedTextAst> {
         if (string_blob.get_num_strings() < 1) {
             return EncodedTextAstError{EncodedTextAstErrorEnum::MissingLogtype};
@@ -145,8 +145,8 @@ public:
             EncodedTextAstConstantHandlerReq auto constant_handler,
             EncodedTextAstIntVarHandlerReq<encoded_variable_t> auto int_var_handler,
             EncodedTextAstFloatVarHandlerReq<encoded_variable_t> auto float_var_handler,
-            EncodedTextAstDictVarHandlerReq auto dict_var_handler
-    ) const -> ystdlib::error_handling::Result<void>;
+            EncodedTextAstDictVarHandlerReq auto dict_var_handler) const
+            -> ystdlib::error_handling::Result<void>;
 
     /**
      * Decodes and un-parses the encoded text AST into its string form.
@@ -157,17 +157,14 @@ public:
     [[nodiscard]] auto to_string() const -> ystdlib::error_handling::Result<std::string> {
         std::string decoded_string;
         YSTDLIB_ERROR_HANDLING_TRYV(
-                decode<true>(
-                        [&](std::string_view constant) { decoded_string.append(constant); },
-                        [&](encoded_variable_t int_var) {
-                            decoded_string.append(decode_integer_var(int_var));
-                        },
-                        [&](encoded_variable_t float_var) {
-                            decoded_string.append(decode_float_var(float_var));
-                        },
-                        [&](std::string_view dict_var) { decoded_string.append(dict_var); }
-                )
-        );
+                decode<true>([&](std::string_view constant) { decoded_string.append(constant); },
+                             [&](encoded_variable_t int_var) {
+                                 decoded_string.append(decode_integer_var(int_var));
+                             },
+                             [&](encoded_variable_t float_var) {
+                                 decoded_string.append(decode_float_var(float_var));
+                             },
+                             [&](std::string_view dict_var) { decoded_string.append(dict_var); }));
         return decoded_string;
     }
 
@@ -193,8 +190,8 @@ template <bool unescape_logtype>
         EncodedTextAstConstantHandlerReq auto constant_handler,
         EncodedTextAstIntVarHandlerReq<encoded_variable_t> auto int_var_handler,
         EncodedTextAstFloatVarHandlerReq<encoded_variable_t> auto float_var_handler,
-        EncodedTextAstDictVarHandlerReq auto dict_var_handler
-) const -> ystdlib::error_handling::Result<void> {
+        EncodedTextAstDictVarHandlerReq auto dict_var_handler) const
+        -> ystdlib::error_handling::Result<void> {
     auto const logtype{get_logtype()};
     auto const logtype_length = logtype.length();
     auto const num_encoded_vars{m_encoded_vars.size()};
@@ -207,10 +204,8 @@ template <bool unescape_logtype>
         auto const c{logtype.at(curr_pos)};
         switch (c) {
             case enum_to_underlying_type(ir::VariablePlaceholder::Float): {
-                constant_handler(logtype.substr(
-                        next_static_text_begin_pos,
-                        curr_pos - next_static_text_begin_pos
-                ));
+                constant_handler(logtype.substr(next_static_text_begin_pos,
+                                                curr_pos - next_static_text_begin_pos));
                 next_static_text_begin_pos = curr_pos + 1;
                 if (encoded_vars_idx >= num_encoded_vars) {
                     return EncodedTextAstError{EncodedTextAstErrorEnum::MissingEncodedVar};
@@ -221,10 +216,8 @@ template <bool unescape_logtype>
             }
 
             case enum_to_underlying_type(ir::VariablePlaceholder::Integer): {
-                constant_handler(logtype.substr(
-                        next_static_text_begin_pos,
-                        curr_pos - next_static_text_begin_pos
-                ));
+                constant_handler(logtype.substr(next_static_text_begin_pos,
+                                                curr_pos - next_static_text_begin_pos));
                 next_static_text_begin_pos = curr_pos + 1;
                 if (encoded_vars_idx >= num_encoded_vars) {
                     return EncodedTextAstError{EncodedTextAstErrorEnum::MissingEncodedVar};
@@ -235,10 +228,8 @@ template <bool unescape_logtype>
             }
 
             case enum_to_underlying_type(ir::VariablePlaceholder::Dictionary): {
-                constant_handler(logtype.substr(
-                        next_static_text_begin_pos,
-                        curr_pos - next_static_text_begin_pos
-                ));
+                constant_handler(logtype.substr(next_static_text_begin_pos,
+                                                curr_pos - next_static_text_begin_pos));
                 next_static_text_begin_pos = curr_pos + 1;
                 if (dictionary_vars_idx >= m_num_dict_vars) {
                     return EncodedTextAstError{EncodedTextAstErrorEnum::MissingDictVar};
@@ -252,15 +243,12 @@ template <bool unescape_logtype>
                 // Ensure the escape character is followed by a character that's being escaped
                 if (curr_pos == logtype_length - 1) {
                     return EncodedTextAstError{
-                            EncodedTextAstErrorEnum::UnexpectedTrailingEscapeCharacter
-                    };
+                            EncodedTextAstErrorEnum::UnexpectedTrailingEscapeCharacter};
                 }
 
                 if constexpr (unescape_logtype) {
-                    constant_handler(logtype.substr(
-                            next_static_text_begin_pos,
-                            curr_pos - next_static_text_begin_pos
-                    ));
+                    constant_handler(logtype.substr(next_static_text_begin_pos,
+                                                    curr_pos - next_static_text_begin_pos));
                     // Skip the escape character
                     next_static_text_begin_pos = curr_pos + 1;
                 }
@@ -281,10 +269,8 @@ template <bool unescape_logtype>
 
     // Add remainder
     if (next_static_text_begin_pos < logtype_length) {
-        constant_handler(logtype.substr(
-                next_static_text_begin_pos,
-                logtype_length - next_static_text_begin_pos
-        ));
+        constant_handler(logtype.substr(next_static_text_begin_pos,
+                                        logtype_length - next_static_text_begin_pos));
     }
 
     return ystdlib::error_handling::success();

@@ -10,27 +10,21 @@
 #include "Literal.hpp"
 
 namespace clp_s::search::ast {
-auto FilterExpr::create(
-        std::shared_ptr<ColumnDescriptor>& column,
-        FilterOperation op,
-        bool inverted,
-        Expression* parent
-) -> std::shared_ptr<Expression> {
+auto FilterExpr::create(std::shared_ptr<ColumnDescriptor>& column,
+                        FilterOperation op,
+                        bool inverted,
+                        Expression* parent) -> std::shared_ptr<Expression> {
     return std::shared_ptr<Expression>{
-            static_cast<Expression*>(new FilterExpr{column->copy(), op, inverted, parent})
-    };
+            static_cast<Expression*>(new FilterExpr{column->copy(), op, inverted, parent})};
 }
 
-auto FilterExpr::create(
-        std::shared_ptr<ColumnDescriptor>& column,
-        FilterOperation op,
-        std::shared_ptr<Literal>& operand,
-        bool inverted,
-        Expression* parent
-) -> std::shared_ptr<Expression> {
+auto FilterExpr::create(std::shared_ptr<ColumnDescriptor>& column,
+                        FilterOperation op,
+                        std::shared_ptr<Literal>& operand,
+                        bool inverted,
+                        Expression* parent) -> std::shared_ptr<Expression> {
     std::shared_ptr<Expression> expr{
-            static_cast<Expression*>(new FilterExpr{column->copy(), op, inverted, parent})
-    };
+            static_cast<Expression*>(new FilterExpr{column->copy(), op, inverted, parent})};
     expr->add_operand(operand);
     return expr;
 }
@@ -98,12 +92,10 @@ auto FilterExpr::get_operand() const -> std::shared_ptr<Literal> {
     return std::static_pointer_cast<Literal>(*it);
 }
 
-FilterExpr::FilterExpr(
-        std::shared_ptr<ColumnDescriptor> const& column,
-        FilterOperation op,
-        bool inverted,
-        Expression* parent
-)
+FilterExpr::FilterExpr(std::shared_ptr<ColumnDescriptor> const& column,
+                       FilterOperation op,
+                       bool inverted,
+                       Expression* parent)
         : Expression{inverted, parent},
           m_op{op} {
     add_operand(std::static_pointer_cast<Literal>(column));

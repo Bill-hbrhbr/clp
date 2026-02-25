@@ -92,13 +92,11 @@ MySQLDB::~MySQLDB() {
     }
 }
 
-void MySQLDB::open(
-        string const& host,
-        int port,
-        string const& username,
-        string const& password,
-        string const& database
-) {
+void MySQLDB::open(string const& host,
+                   int port,
+                   string const& username,
+                   string const& password,
+                   string const& database) {
     if (nullptr != m_db_handle) {
         throw OperationFailed(ErrorCode_NotReady, __FILENAME__, __LINE__);
     }
@@ -108,16 +106,14 @@ void MySQLDB::open(
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 
-    auto db_handle = mysql_real_connect(
-            m_db_handle,
-            host.c_str(),
-            username.c_str(),
-            password.c_str(),
-            database.c_str(),
-            port,
-            nullptr,
-            CLIENT_COMPRESS
-    );
+    auto db_handle = mysql_real_connect(m_db_handle,
+                                        host.c_str(),
+                                        username.c_str(),
+                                        password.c_str(),
+                                        database.c_str(),
+                                        port,
+                                        nullptr,
+                                        CLIENT_COMPRESS);
     if (nullptr == db_handle) {
         SPDLOG_ERROR("MySQLDB: Failed to connect - {}.", mysql_error(m_db_handle));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
@@ -139,11 +135,9 @@ bool MySQLDB::execute_query(string const& sql_query) {
     }
 
     if (0 != mysql_real_query(m_db_handle, sql_query.c_str(), sql_query.length())) {
-        SPDLOG_ERROR(
-                "MySQLDB: Query failed - {}. ({})",
-                mysql_error(m_db_handle),
-                sql_query.c_str()
-        );
+        SPDLOG_ERROR("MySQLDB: Query failed - {}. ({})",
+                     mysql_error(m_db_handle),
+                     sql_query.c_str());
         return false;
     }
 

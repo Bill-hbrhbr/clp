@@ -10,8 +10,8 @@
 #include "../clp/Defs.h"
 
 namespace clp_s {
-bool
-VariableDictionaryWriter::add_entry(std::string_view value, clp::variable_dictionary_id_t& id) {
+bool VariableDictionaryWriter::add_entry(std::string_view value,
+                                         clp::variable_dictionary_id_t& id) {
     bool new_entry = false;
 
     auto const ix = m_value_to_id.find(value);
@@ -42,10 +42,8 @@ VariableDictionaryWriter::add_entry(std::string_view value, clp::variable_dictio
     return new_entry;
 }
 
-bool LogTypeDictionaryWriter::add_entry(
-        LogTypeDictionaryEntry& logtype_entry,
-        clp::logtype_dictionary_id_t& logtype_id
-) {
+bool LogTypeDictionaryWriter::add_entry(LogTypeDictionaryEntry& logtype_entry,
+                                        clp::logtype_dictionary_id_t& logtype_id) {
     bool is_new_entry = false;
 
     std::string const& value = logtype_entry.get_value();

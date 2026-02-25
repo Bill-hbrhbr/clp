@@ -135,8 +135,7 @@ private:
     void parse_network_dest_output_handler_options(
             boost::program_options::options_description const& options_description,
             std::vector<boost::program_options::option> const& options,
-            boost::program_options::variables_map& parsed_options
-    );
+            boost::program_options::variables_map& parsed_options);
 
     /**
      * Validates output options related to the Reducer output handler.
@@ -148,8 +147,7 @@ private:
     void parse_reducer_output_handler_options(
             boost::program_options::options_description const& options_description,
             std::vector<boost::program_options::option> const& options,
-            boost::program_options::variables_map& parsed_options
-    );
+            boost::program_options::variables_map& parsed_options);
 
     /**
      * Validates output options related to the Results Cache output handler.
@@ -161,8 +159,7 @@ private:
     void parse_results_cache_output_handler_options(
             boost::program_options::options_description const& options_description,
             std::vector<boost::program_options::option> const& options,
-            boost::program_options::variables_map& parsed_options
-    );
+            boost::program_options::variables_map& parsed_options);
 
     /**
      * Validates output options related to the File output handler.
@@ -174,8 +171,7 @@ private:
     void parse_file_output_handler_options(
             boost::program_options::options_description const& options_description,
             std::vector<boost::program_options::option> const& options,
-            boost::program_options::variables_map& parsed_options
-    );
+            boost::program_options::variables_map& parsed_options);
 
     void print_basic_usage() const;
 

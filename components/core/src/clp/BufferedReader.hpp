@@ -35,19 +35,15 @@ public:
     public:
         // Constructors
         OperationFailed(ErrorCode error_code, char const* const filename, int line_number)
-                : OperationFailed(
-                          error_code,
-                          filename,
-                          line_number,
-                          "`BufferedReader` operation failed"
-                  ) {}
+                : OperationFailed(error_code,
+                                  filename,
+                                  line_number,
+                                  "`BufferedReader` operation failed") {}
 
-        OperationFailed(
-                ErrorCode error_code,
-                char const* const filename,
-                int line_number,
-                std::string message
-        )
+        OperationFailed(ErrorCode error_code,
+                        char const* const filename,
+                        int line_number,
+                        std::string message)
                 : TraceableException(error_code, filename, line_number),
                   m_message(std::move(message)) {}
 
@@ -69,10 +65,8 @@ public:
      * @param base_buffer_size The size for the fixed-size buffer used when no checkpoint is set. It
      * must be a multiple of `BufferedReader::cMinBufferSize`.
      */
-    explicit BufferedReader(
-            std::shared_ptr<ReaderInterface> reader_interface,
-            size_t base_buffer_size
-    );
+    explicit BufferedReader(std::shared_ptr<ReaderInterface> reader_interface,
+                            size_t base_buffer_size);
 
     explicit BufferedReader(std::shared_ptr<ReaderInterface> reader_interface)
             : BufferedReader{std::move(reader_interface), cDefaultBufferSize} {}
@@ -167,9 +161,10 @@ public:
      * @return Forwards `BufferReader::try_read_to_delimiter`'s return values on failure.
      * @return Forwards `refill_reader_buffer`'s return values on failure.
      */
-    [[nodiscard]] auto
-    try_read_to_delimiter(char delim, bool keep_delimiter, bool append, std::string& str)
-            -> ErrorCode override;
+    [[nodiscard]] auto try_read_to_delimiter(char delim,
+                                             bool keep_delimiter,
+                                             bool append,
+                                             std::string& str) -> ErrorCode override;
 
 private:
     // Methods

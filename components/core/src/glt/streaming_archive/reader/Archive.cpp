@@ -55,8 +55,7 @@ void Archive::open(string const& path) {
                     metadata_file_path.c_str(),
                     traceable_exception.get_filename(),
                     traceable_exception.get_line_number(),
-                    errno
-            );
+                    errno);
         } else {
             SPDLOG_CRITICAL(
                     "streaming_archive::reader::Archive: Failed to read archive metadata file "
@@ -64,8 +63,7 @@ void Archive::open(string const& path) {
                     metadata_file_path.c_str(),
                     traceable_exception.get_filename(),
                     traceable_exception.get_line_number(),
-                    error_code
-            );
+                    error_code);
         }
         throw;
     }
@@ -78,10 +76,8 @@ void Archive::open(string const& path) {
 
     auto metadata_db_path = boost::filesystem::path(path) / cMetadataDBFileName;
     if (false == boost::filesystem::exists(metadata_db_path)) {
-        SPDLOG_ERROR(
-                "streaming_archive::reader::Archive: Metadata DB not found: {}",
-                metadata_db_path.string()
-        );
+        SPDLOG_ERROR("streaming_archive::reader::Archive: Metadata DB not found: {}",
+                     metadata_db_path.string());
         throw OperationFailed(ErrorCode_FileNotFound, __FILENAME__, __LINE__);
     }
     m_metadata_db.open(metadata_db_path.string());
@@ -183,25 +179,22 @@ bool Archive::get_next_message(File& file, Message& msg) {
     return file.get_next_message(msg);
 }
 
-bool
-Archive::decompress_message(File& file, Message const& compressed_msg, string& decompressed_msg) {
+bool Archive::decompress_message(File& file,
+                                 Message const& compressed_msg,
+                                 string& decompressed_msg) {
     decompressed_msg.clear();
 
     // Build original message content
     logtype_dictionary_id_t const logtype_id = compressed_msg.get_logtype_id();
     auto const& logtype_entry = m_logtype_dictionary.get_entry(logtype_id);
-    if (!EncodedVariableInterpreter::decode_variables_into_message(
-                logtype_entry,
-                m_var_dictionary,
-                compressed_msg.get_vars(),
-                decompressed_msg
-        ))
+    if (!EncodedVariableInterpreter::decode_variables_into_message(logtype_entry,
+                                                                   m_var_dictionary,
+                                                                   compressed_msg.get_vars(),
+                                                                   decompressed_msg))
     {
-        SPDLOG_ERROR(
-                "streaming_archive::reader::Archive: Failed to decompress variables from "
-                "logtype id {}",
-                compressed_msg.get_logtype_id()
-        );
+        SPDLOG_ERROR("streaming_archive::reader::Archive: Failed to decompress variables from "
+                     "logtype id {}",
+                     compressed_msg.get_logtype_id());
         return false;
     }
 
@@ -226,8 +219,7 @@ Archive::decompress_message(File& file, Message const& compressed_msg, string& d
         }
         timestamp_patterns[file.get_current_ts_pattern_ix()].second.insert_formatted_timestamp(
                 compressed_msg.get_ts_in_milli(),
-                decompressed_msg
-        );
+                decompressed_msg);
     }
 
     return true;
@@ -243,11 +235,9 @@ void Archive::decompress_empty_directories(string const& output_dir) {
         auto empty_directory_path = output_dir_path / path;
         auto error_code = create_directory_structure(empty_directory_path.string(), 0700);
         if (ErrorCode_Success != error_code) {
-            SPDLOG_ERROR(
-                    "Failed to create directory structure {}, errno={}",
-                    empty_directory_path.string().c_str(),
-                    errno
-            );
+            SPDLOG_ERROR("Failed to create directory structure {}, errno={}",
+                         empty_directory_path.string().c_str(),
+                         errno);
             throw OperationFailed(error_code, __FILENAME__, __LINE__);
         }
     }
@@ -317,12 +307,9 @@ void Archive::update_valid_segment_ids() {
             SPDLOG_ERROR(
                     "streaming_archive::reader::Segment: Unable to obtain file size for segment: "
                     "{}",
-                    segment_file_path.c_str()
-            );
-            SPDLOG_ERROR(
-                    "streaming_archive::reader::Segment: {}",
-                    boost_error_code.message().c_str()
-            );
+                    segment_file_path.c_str());
+            SPDLOG_ERROR("streaming_archive::reader::Segment: {}",
+                         boost_error_code.message().c_str());
             throw ErrorCode_Failure;
         }
         if (segment_file_size != 0) {
@@ -338,8 +325,7 @@ bool Archive::find_message_matching_with_logtype_query_from_combined(
         bool& wildcard,
         Query const& query,
         size_t left_boundary,
-        size_t right_boundary
-) {
+        size_t right_boundary) {
     auto& combined_tables = m_logtype_table_manager.combined_tables();
     while (true) {
         // break if there's no next message
@@ -367,8 +353,7 @@ bool Archive::find_message_matching_with_logtype_query(
         std::vector<LogtypeQuery> const& logtype_query,
         Message& msg,
         bool& wildcard,
-        Query const& query
-) {
+        Query const& query) {
     while (true) {
         if (!m_logtype_table_manager.get_next_row(msg)) {
             break;
@@ -392,8 +377,7 @@ void Archive::find_message_matching_with_logtype_query_optimized(
         std::vector<LogtypeQuery> const& logtype_query,
         std::vector<size_t>& matched_rows,
         std::vector<bool>& wildcard,
-        Query const& query
-) {
+        Query const& query) {
     epochtime_t ts;
     auto& logtype_table = m_logtype_table_manager.logtype_table();
     size_t num_row = logtype_table.get_num_row();
@@ -418,16 +402,14 @@ void Archive::find_message_matching_with_logtype_query_optimized(
     }
 }
 
-size_t Archive::decompress_messages_and_output(
-        logtype_dictionary_id_t logtype_id,
-        std::vector<epochtime_t>& ts,
-        std::vector<file_id_t>& id,
-        std::vector<encoded_variable_t>& vars,
-        std::vector<bool>& wildcard_required,
-        Query const& query,
-        OutputFunc output_func,
-        void* output_func_arg
-) {
+size_t Archive::decompress_messages_and_output(logtype_dictionary_id_t logtype_id,
+                                               std::vector<epochtime_t>& ts,
+                                               std::vector<file_id_t>& id,
+                                               std::vector<encoded_variable_t>& vars,
+                                               std::vector<bool>& wildcard_required,
+                                               Query const& query,
+                                               OutputFunc output_func,
+                                               void* output_func_arg) {
     auto const& logtype_entry = m_logtype_dictionary.get_entry(logtype_id);
     size_t num_vars = logtype_entry.get_num_variables();
     size_t const total_matches = wildcard_required.size();
@@ -440,19 +422,15 @@ size_t Archive::decompress_messages_and_output(
 
         // first decompress the message with fixed time stamp
         size_t vars_offset = num_vars * ix;
-        if (!EncodedVariableInterpreter::decode_variables_into_message_with_offset(
-                    logtype_entry,
-                    m_var_dictionary,
-                    vars,
-                    decompressed_msg,
-                    vars_offset
-            ))
+        if (!EncodedVariableInterpreter::decode_variables_into_message_with_offset(logtype_entry,
+                                                                                   m_var_dictionary,
+                                                                                   vars,
+                                                                                   decompressed_msg,
+                                                                                   vars_offset))
         {
-            SPDLOG_ERROR(
-                    "streaming_archive::reader::Archive: Failed to decompress variables from "
-                    "logtype id {}",
-                    logtype_id
-            );
+            SPDLOG_ERROR("streaming_archive::reader::Archive: Failed to decompress variables from "
+                         "logtype id {}",
+                         logtype_id);
             throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
         }
         if (ts[ix] != 0) {
@@ -468,11 +446,9 @@ size_t Archive::decompress_messages_and_output(
             || (query.contains_sub_queries() == false
                 && query.search_string_matches_all() == false))
         {
-            bool matched = wildcard_match_unsafe(
-                    decompressed_msg,
-                    query.get_search_string(),
-                    query.get_ignore_case() == false
-            );
+            bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                 query.get_search_string(),
+                                                 query.get_ignore_case() == false);
             if (!matched) {
                 continue;
             }
@@ -485,27 +461,22 @@ size_t Archive::decompress_messages_and_output(
     return matches;
 }
 
-bool Archive::decompress_message_with_fixed_timestamp_pattern(
-        Message const& compressed_msg,
-        std::string& decompressed_msg
-) {
+bool Archive::decompress_message_with_fixed_timestamp_pattern(Message const& compressed_msg,
+                                                              std::string& decompressed_msg) {
     decompressed_msg.clear();
 
     // Build original message content
     logtype_dictionary_id_t const logtype_id = compressed_msg.get_logtype_id();
     auto const& logtype_entry = m_logtype_dictionary.get_entry(logtype_id);
-    if (!EncodedVariableInterpreter::decode_variables_into_message(
-                logtype_entry,
-                m_var_dictionary,
-                compressed_msg.get_vars(),
-                decompressed_msg
-        ))
+    if (!EncodedVariableInterpreter::decode_variables_into_message(logtype_entry,
+                                                                   m_var_dictionary,
+                                                                   compressed_msg.get_vars(),
+                                                                   decompressed_msg))
     {
         SPDLOG_ERROR(
                 "streaming_archive::reader::Archive: Failed to decompress variables from logtype "
                 "id {}",
-                compressed_msg.get_logtype_id()
-        );
+                compressed_msg.get_logtype_id());
         return false;
     }
     if (compressed_msg.get_ts_in_milli() != 0) {

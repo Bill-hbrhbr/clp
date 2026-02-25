@@ -20,8 +20,8 @@ using std::string;
 using std::vector;
 
 namespace clp::clp {
-CommandLineArgumentsBase::ParsingResult
-CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
+CommandLineArgumentsBase::ParsingResult CommandLineArguments::parse_arguments(int argc,
+                                                                              char const* argv[]) {
     // Print out basic usage if user doesn't specify any options
     if (1 == argc) {
         print_basic_usage();
@@ -57,20 +57,17 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
 
     // Define functional options
     po::options_description options_functional("Input Options");
-    options_functional.add_options()(
-            "files-from,f",
-            po::value<string>(&m_path_list_path)
-                    ->value_name("FILE")
-                    ->default_value(m_path_list_path),
-            "Compress/extract files specified in FILE"
-    );
+    options_functional.add_options()("files-from,f",
+                                     po::value<string>(&m_path_list_path)
+                                             ->value_name("FILE")
+                                             ->default_value(m_path_list_path),
+                                     "Compress/extract files specified in FILE");
 
     po::options_description general_positional_options;
     char command_input;
     general_positional_options.add_options()("command", po::value<char>(&command_input))(
             "command-args",
-            po::value<vector<string>>()
-    );
+            po::value<vector<string>>());
     po::positional_options_description general_positional_options_description;
     general_positional_options_description.add("command", 1);
     general_positional_options_description.add("command-args", -1);
@@ -182,13 +179,11 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             vector<string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
             unrecognized_options.erase(unrecognized_options.begin());
-            po::store(
-                    po::command_line_parser(unrecognized_options)
-                            .options(all_extraction_options)
-                            .positional(extraction_positional_options_description)
-                            .run(),
-                    parsed_command_line_options
-            );
+            po::store(po::command_line_parser(unrecognized_options)
+                              .options(all_extraction_options)
+                              .positional(extraction_positional_options_description)
+                              .run(),
+                      parsed_command_line_options);
 
             notify(parsed_command_line_options);
 
@@ -230,20 +225,17 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             ir_positional_options_description.add("orig-file-id", 1);
 
             po::options_description options_ir("IR extraction Options");
-            options_ir.add_options()(
-                    "msg-ix",
-                    po::value<size_t>(&m_ir_msg_ix)
-                            ->value_name("INDEX")
-                            ->default_value(m_ir_msg_ix),
-                    "Index of log event that decompressed IR chunks must include"
-            );
+            options_ir.add_options()("msg-ix",
+                                     po::value<size_t>(&m_ir_msg_ix)
+                                             ->value_name("INDEX")
+                                             ->default_value(m_ir_msg_ix),
+                                     "Index of log event that decompressed IR chunks must include");
             options_ir.add_options()(
                     "target-size",
                     po::value<size_t>(&m_ir_target_size)
                             ->value_name("SIZE")
                             ->default_value(m_ir_target_size),
-                    "Target size (B) for each IR chunk before a new chunk is created"
-            );
+                    "Target size (B) for each IR chunk before a new chunk is created");
 
             po::options_description all_ir_options;
             all_ir_options.add(ir_positional_options);
@@ -253,13 +245,11 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             vector<string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
             unrecognized_options.erase(unrecognized_options.begin());
-            po::store(
-                    po::command_line_parser(unrecognized_options)
-                            .options(all_ir_options)
-                            .positional(ir_positional_options_description)
-                            .run(),
-                    parsed_command_line_options
-            );
+            po::store(po::command_line_parser(unrecognized_options)
+                              .options(all_ir_options)
+                              .positional(ir_positional_options_description)
+                              .run(),
+                      parsed_command_line_options);
 
             notify(parsed_command_line_options);
 
@@ -315,54 +305,44 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
                     po::value<string>(&m_path_prefix_to_remove)
                             ->value_name("DIR")
                             ->default_value(m_path_prefix_to_remove),
-                    "Remove the given path prefix from each compressed file/dir."
-            )(
+                    "Remove the given path prefix from each compressed file/dir.")(
                     "sort-input-files",
                     po::value<string>(&sort_input_files_str)
                             ->value_name("BOOL")
                             ->default_value(sort_input_files_str),
                     "Whether to compress input files in descending order of their last modified"
-                    " time"
-            )(
-                    "target-encoded-file-size",
-                    po::value<size_t>(&m_target_encoded_file_size)
-                            ->value_name("SIZE")
-                            ->default_value(m_target_encoded_file_size),
-                    "Target size (B) for an encoded file before a new one is created"
-            )(
+                    " time")("target-encoded-file-size",
+                             po::value<size_t>(&m_target_encoded_file_size)
+                                     ->value_name("SIZE")
+                                     ->default_value(m_target_encoded_file_size),
+                             "Target size (B) for an encoded file before a new one is created")(
                     "target-segment-size",
                     po::value<size_t>(&m_target_segment_uncompressed_size)
                             ->value_name("SIZE")
                             ->default_value(m_target_segment_uncompressed_size),
-                    "Target uncompressed size (B) of a segment before a new one is created"
-            )(
+                    "Target uncompressed size (B) of a segment before a new one is created")(
                     "target-dictionaries-size",
                     po::value<size_t>(&m_target_data_size_of_dictionaries)
                             ->value_name("SIZE")
                             ->default_value(m_target_data_size_of_dictionaries),
-                    "Target size (B) for the dictionaries before a new archive is created"
-            )(
+                    "Target size (B) for the dictionaries before a new archive is created")(
                     "compression-level",
                     po::value<int>(&m_compression_level)
                             ->value_name("LEVEL")
                             ->default_value(m_compression_level),
-                    "1 (fast/low compression) to 19 (slow/high compression)"
-            )(
+                    "1 (fast/low compression) to 19 (slow/high compression)")(
                     "print-archive-stats-progress",
                     po::bool_switch(&m_print_archive_stats_progress),
-                    "Print statistics (ndjson) about each archive as it's compressed"
-            )(
+                    "Print statistics (ndjson) about each archive as it's compressed")(
                     "progress",
                     po::bool_switch(&m_show_progress),
-                    "Show progress during compression"
-            )(
+                    "Show progress during compression")(
                     "schema-path",
                     po::value<string>(&m_schema_file_path)
                             ->value_name("FILE")
                             ->default_value(m_schema_file_path),
                     "Path to a schema file. If not specified, heuristics are used to determine "
-                    "dictionary variables. See README-Schema.md for details."
-            );
+                    "dictionary variables. See README-Schema.md for details.");
 
             po::options_description all_compression_options;
             all_compression_options.add(options_compression);
@@ -371,13 +351,11 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             vector<string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
             unrecognized_options.erase(unrecognized_options.begin());
-            po::store(
-                    po::command_line_parser(unrecognized_options)
-                            .options(all_compression_options)
-                            .positional(compression_positional_options_description)
-                            .run(),
-                    parsed_command_line_options
-            );
+            po::store(po::command_line_parser(unrecognized_options)
+                              .options(all_compression_options)
+                              .positional(compression_positional_options_description)
+                              .run(),
+                      parsed_command_line_options);
 
             notify(parsed_command_line_options);
 
@@ -435,10 +413,8 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
                     throw invalid_argument("Specified schema file does not exist.");
                 }
                 if (false == boost::filesystem::is_regular_file(m_schema_file_path)) {
-                    throw invalid_argument(
-                            "Specified schema file '" + m_schema_file_path
-                            + "' is not a regular file."
-                    );
+                    throw invalid_argument("Specified schema file '" + m_schema_file_path
+                                           + "' is not a regular file.");
                 }
             }
         }

@@ -49,10 +49,8 @@ int32_t SchemaTree::add_node(int32_t parent_node_id, NodeType type, std::string_
     auto& node = m_nodes.emplace_back(parent_node_id, node_id, std::string{key}, type, 0);
     node.increase_count();
     if (constants::cRootNodeId == parent_node_id) {
-        m_namespace_and_type_to_subtree_id.emplace(
-                std::make_pair(node.get_key_name(), type),
-                node_id
-        );
+        m_namespace_and_type_to_subtree_id.emplace(std::make_pair(node.get_key_name(), type),
+                                                   node_id);
     }
 
     if (constants::cRootNodeId != parent_node_id) {
@@ -95,10 +93,8 @@ size_t SchemaTree::store(std::string const& archives_dir, int compression_level)
     FileWriter schema_tree_writer;
     ZstdCompressor schema_tree_compressor;
 
-    schema_tree_writer.open(
-            archives_dir + constants::cArchiveSchemaTreeFile,
-            FileWriter::OpenMode::CreateForWriting
-    );
+    schema_tree_writer.open(archives_dir + constants::cArchiveSchemaTreeFile,
+                            FileWriter::OpenMode::CreateForWriting);
     schema_tree_compressor.open(schema_tree_writer, compression_level);
 
     schema_tree_compressor.write_numeric_value(m_nodes.size());
@@ -117,11 +113,9 @@ size_t SchemaTree::store(std::string const& archives_dir, int compression_level)
     return compressed_size;
 }
 
-int32_t SchemaTree::find_matching_subtree_root_in_subtree(
-        int32_t const subtree_root_node,
-        int32_t node,
-        NodeType type
-) const {
+int32_t SchemaTree::find_matching_subtree_root_in_subtree(int32_t const subtree_root_node,
+                                                          int32_t node,
+                                                          NodeType type) const {
     int32_t earliest_match = -1;
     while (subtree_root_node != node) {
         auto const& schema_node = get_node(node);

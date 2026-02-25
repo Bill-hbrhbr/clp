@@ -41,12 +41,10 @@ std::shared_ptr<Expression> OrExpr::create(bool inverted, Expression* parent) {
     return std::shared_ptr<Expression>(static_cast<Expression*>(new OrExpr(inverted, parent)));
 }
 
-std::shared_ptr<Expression> OrExpr::create(
-        std::shared_ptr<Expression>& op1,
-        std::shared_ptr<Expression>& op2,
-        bool inverted,
-        Expression* parent
-) {
+std::shared_ptr<Expression> OrExpr::create(std::shared_ptr<Expression>& op1,
+                                           std::shared_ptr<Expression>& op2,
+                                           bool inverted,
+                                           Expression* parent) {
     std::shared_ptr<Expression> expr(static_cast<Expression*>(new OrExpr(inverted, parent)));
     op1->copy_append(expr.get());
     op2->copy_append(expr.get());

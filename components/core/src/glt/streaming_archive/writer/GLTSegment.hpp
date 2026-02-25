@@ -54,12 +54,10 @@ public:
      * @param compression_level
      * @param threshold
      */
-    void open(
-            std::string const& segments_dir_path,
-            segment_id_t id,
-            int compression_level,
-            double threshold
-    );
+    void open(std::string const& segments_dir_path,
+              segment_id_t id,
+              int compression_level,
+              double threshold);
 
     /**
      * Close the segment and flush all logtype tables onto the disk
@@ -70,12 +68,10 @@ public:
     uint64_t get_uncompressed_size();
     size_t get_compressed_size();
 
-    size_t append_to_segment(
-            logtype_dictionary_id_t logtype_id,
-            epochtime_t timestamp,
-            file_id_t file_id,
-            std::vector<encoded_variable_t> const& encoded_vars
-    );
+    size_t append_to_segment(logtype_dictionary_id_t logtype_id,
+                             epochtime_t timestamp,
+                             file_id_t file_id,
+                             std::vector<encoded_variable_t> const& encoded_vars);
 
 private:
     // Method
@@ -110,8 +106,7 @@ private:
      */
     void write_combined_logtype(
             std::vector<logtype_dictionary_id_t> const& accumulated_logtype,
-            std::map<combined_table_id_t, CombinedTableInfo>& combined_tables_info
-    );
+            std::map<combined_table_id_t, CombinedTableInfo>& combined_tables_info);
 
     uint64_t m_uncompressed_size;
     uint64_t m_compressed_size;

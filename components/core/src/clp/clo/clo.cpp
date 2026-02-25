@@ -77,12 +77,10 @@ enum class SearchFilesResult {
  * @return SearchFilesResult::ResultSendFailure on failure to send a result
  * @return SearchFilesResult::Success otherwise
  */
-static SearchFilesResult search_file(
-        Query& query,
-        Archive& archive,
-        MetadataDB::FileIterator& file_metadata_ix,
-        std::unique_ptr<OutputHandler>& output_handler
-);
+static SearchFilesResult search_file(Query& query,
+                                     Archive& archive,
+                                     MetadataDB::FileIterator& file_metadata_ix,
+                                     std::unique_ptr<OutputHandler>& output_handler);
 /**
  * Searches all files referenced by a given database cursor
  * @param query
@@ -91,23 +89,19 @@ static SearchFilesResult search_file(
  * @param output_handler
  * @param segments_to_search
  */
-static void search_files(
-        Query& query,
-        Archive& archive,
-        MetadataDB::FileIterator& file_metadata_ix,
-        std::unique_ptr<OutputHandler>& output_handler,
-        std::set<clp::segment_id_t> const& segments_to_search
-);
+static void search_files(Query& query,
+                         Archive& archive,
+                         MetadataDB::FileIterator& file_metadata_ix,
+                         std::unique_ptr<OutputHandler>& output_handler,
+                         std::set<clp::segment_id_t> const& segments_to_search);
 /**
  * Searches an archive with the given path
  * @param command_line_args
  * @param output_handler
  * @return true on success, false otherwise
  */
-static bool search_archive(
-        CommandLineArguments const& command_line_args,
-        std::unique_ptr<OutputHandler> output_handler
-);
+static bool search_archive(CommandLineArguments const& command_line_args,
+                           std::unique_ptr<OutputHandler> output_handler);
 
 namespace {
 /**
@@ -154,11 +148,9 @@ bool extract_ir(CommandLineArguments const& command_line_args) {
         auto const& file_split_id = command_line_args.get_file_split_id();
         auto file_metadata_ix_ptr = archive_reader.get_file_iterator_by_split_id(file_split_id);
         if (false == file_metadata_ix_ptr->has_next()) {
-            SPDLOG_ERROR(
-                    "File split '{}' doesn't exist in archive '{}'",
-                    file_split_id,
-                    archive_path.string()
-            );
+            SPDLOG_ERROR("File split '{}' doesn't exist in archive '{}'",
+                         file_split_id,
+                         archive_path.string());
             return false;
         }
 
@@ -190,40 +182,23 @@ bool extract_ir(CommandLineArguments const& command_line_args) {
             try {
                 std::filesystem::rename(src_ir_path, dest_ir_path);
             } catch (std::filesystem::filesystem_error const& e) {
-                SPDLOG_ERROR(
-                        "Failed to rename '{}' to '{}' - {}",
-                        src_ir_path.string(),
-                        dest_ir_path.string(),
-                        e.what()
-                );
+                SPDLOG_ERROR("Failed to rename '{}' to '{}' - {}",
+                             src_ir_path.string(),
+                             dest_ir_path.string(),
+                             e.what());
                 return false;
             }
-            results.emplace_back(
-                    std::move(
-                            bsoncxx::builder::basic::make_document(
-                                    bsoncxx::builder::basic::kvp(
-                                            clp::clo::cResultsCacheKeys::IrOutput::Path,
-                                            dest_ir_file_name
-                                    ),
-                                    bsoncxx::builder::basic::kvp(
-                                            clp::clo::cResultsCacheKeys::IrOutput::StreamId,
-                                            orig_file_id
-                                    ),
-                                    bsoncxx::builder::basic::kvp(
-                                            clp::clo::cResultsCacheKeys::IrOutput::BeginMsgIx,
-                                            static_cast<int64_t>(begin_message_ix)
-                                    ),
-                                    bsoncxx::builder::basic::kvp(
-                                            clp::clo::cResultsCacheKeys::IrOutput::EndMsgIx,
-                                            static_cast<int64_t>(end_message_ix)
-                                    ),
-                                    bsoncxx::builder::basic::kvp(
-                                            clp::clo::cResultsCacheKeys::IrOutput::IsLastChunk,
-                                            is_last_chunk
-                                    )
-                            )
-                    )
-            );
+            results.emplace_back(std::move(bsoncxx::builder::basic::make_document(
+                    bsoncxx::builder::basic::kvp(clp::clo::cResultsCacheKeys::IrOutput::Path,
+                                                 dest_ir_file_name),
+                    bsoncxx::builder::basic::kvp(clp::clo::cResultsCacheKeys::IrOutput::StreamId,
+                                                 orig_file_id),
+                    bsoncxx::builder::basic::kvp(clp::clo::cResultsCacheKeys::IrOutput::BeginMsgIx,
+                                                 static_cast<int64_t>(begin_message_ix)),
+                    bsoncxx::builder::basic::kvp(clp::clo::cResultsCacheKeys::IrOutput::EndMsgIx,
+                                                 static_cast<int64_t>(end_message_ix)),
+                    bsoncxx::builder::basic::kvp(clp::clo::cResultsCacheKeys::IrOutput::IsLastChunk,
+                                                 is_last_chunk))));
 
             if (command_line_args.print_ir_stats()) {
                 nlohmann::json json_msg;
@@ -237,13 +212,11 @@ bool extract_ir(CommandLineArguments const& command_line_args) {
 
         FileDecompressor file_decompressor;
         if (false
-            == file_decompressor.decompress_to_ir(
-                    archive_reader,
-                    *file_metadata_ix_ptr,
-                    command_line_args.get_ir_target_size(),
-                    command_line_args.get_ir_output_dir(),
-                    ir_output_handler
-            ))
+            == file_decompressor.decompress_to_ir(archive_reader,
+                                                  *file_metadata_ix_ptr,
+                                                  command_line_args.get_ir_target_size(),
+                                                  command_line_args.get_ir_output_dir(),
+                                                  ir_output_handler))
         {
             return false;
         }
@@ -265,21 +238,17 @@ bool extract_ir(CommandLineArguments const& command_line_args) {
     } catch (TraceableException& e) {
         auto error_code = e.get_error_code();
         if (ErrorCode_errno == error_code) {
-            SPDLOG_ERROR(
-                    "IR extraction failed: {}:{} {}, errno={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    errno
-            );
+            SPDLOG_ERROR("IR extraction failed: {}:{} {}, errno={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         errno);
         } else {
-            SPDLOG_ERROR(
-                    "IR extraction failed: {}:{} {}, error_code={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    error_code
-            );
+            SPDLOG_ERROR("IR extraction failed: {}:{} {}, error_code={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         error_code);
         }
         return false;
     }
@@ -294,15 +263,13 @@ bool search(CommandLineArguments const& command_line_args) {
             case CommandLineArguments::OutputHandlerType::Network:
                 output_handler = std::make_unique<NetworkOutputHandler>(
                         command_line_args.get_network_dest_host(),
-                        command_line_args.get_network_dest_port()
-                );
+                        command_line_args.get_network_dest_port());
                 break;
             case CommandLineArguments::OutputHandlerType::Reducer: {
-                auto const reducer_socket_fd = reducer::connect_to_reducer(
-                        command_line_args.get_reducer_host(),
-                        command_line_args.get_reducer_port(),
-                        command_line_args.get_job_id()
-                );
+                auto const reducer_socket_fd
+                        = reducer::connect_to_reducer(command_line_args.get_reducer_host(),
+                                                      command_line_args.get_reducer_port(),
+                                                      command_line_args.get_job_id());
                 if (-1 == reducer_socket_fd) {
                     SPDLOG_ERROR("Failed to connect to reducer");
                     return false;
@@ -313,8 +280,7 @@ bool search(CommandLineArguments const& command_line_args) {
                 } else if (command_line_args.do_count_by_time_aggregation()) {
                     output_handler = std::make_unique<CountByTimeOutputHandler>(
                             reducer_socket_fd,
-                            command_line_args.get_count_by_time_bucket_size()
-                    );
+                            command_line_args.get_count_by_time_bucket_size());
                 } else {
                     SPDLOG_ERROR("Unhandled aggregation type.");
                     return false;
@@ -327,8 +293,7 @@ bool search(CommandLineArguments const& command_line_args) {
                         command_line_args.get_mongodb_uri(),
                         command_line_args.get_mongodb_collection(),
                         command_line_args.get_batch_size(),
-                        command_line_args.get_max_num_results()
-                );
+                        command_line_args.get_max_num_results());
                 break;
             default:
                 SPDLOG_ERROR("Unhandled OutputHandlerType.");
@@ -344,21 +309,17 @@ bool search(CommandLineArguments const& command_line_args) {
     } catch (TraceableException& e) {
         auto error_code = e.get_error_code();
         if (ErrorCode_errno == error_code) {
-            SPDLOG_ERROR(
-                    "Search failed: {}:{} {}, errno={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    errno
-            );
+            SPDLOG_ERROR("Search failed: {}:{} {}, errno={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         errno);
         } else {
-            SPDLOG_ERROR(
-                    "Search failed: {}:{} {}, error_code={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    error_code
-            );
+            SPDLOG_ERROR("Search failed: {}:{} {}, error_code={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         error_code);
         }
         return false;
     }
@@ -371,23 +332,19 @@ bool validate_archive_path(std::filesystem::path const& archive_path) {
     }
     auto const archive_metadata_file = archive_path / clp::streaming_archive::cMetadataFileName;
     if (false == std::filesystem::exists(archive_metadata_file)) {
-        SPDLOG_ERROR(
-                "Archive metadata file '{}' doesn't exist. '{}' may not be an archive.",
-                archive_metadata_file.string(),
-                archive_path.string()
-        );
+        SPDLOG_ERROR("Archive metadata file '{}' doesn't exist. '{}' may not be an archive.",
+                     archive_metadata_file.string(),
+                     archive_path.string());
         return false;
     }
     return true;
 }
 }  // namespace
 
-static SearchFilesResult search_file(
-        Query& query,
-        Archive& archive,
-        MetadataDB::FileIterator& file_metadata_ix,
-        std::unique_ptr<OutputHandler>& output_handler
-) {
+static SearchFilesResult search_file(Query& query,
+                                     Archive& archive,
+                                     MetadataDB::FileIterator& file_metadata_ix,
+                                     std::unique_ptr<OutputHandler>& output_handler) {
     File compressed_file;
     Message encoded_message;
     string decompressed_message;
@@ -406,21 +363,17 @@ static SearchFilesResult search_file(
 
     SearchFilesResult result = SearchFilesResult::Success;
     query.make_sub_queries_relevant_to_segment(compressed_file.get_segment_id());
-    while (Grep::search_and_decompress(
-            query,
-            archive,
-            compressed_file,
-            encoded_message,
-            decompressed_message
-    ))
+    while (Grep::search_and_decompress(query,
+                                       archive,
+                                       compressed_file,
+                                       encoded_message,
+                                       decompressed_message))
     {
         if (ErrorCode_Success
-            != output_handler->add_result(
-                    compressed_file.get_orig_path(),
-                    compressed_file.get_orig_file_id_as_string(),
-                    encoded_message,
-                    decompressed_message
-            ))
+            != output_handler->add_result(compressed_file.get_orig_path(),
+                                          compressed_file.get_orig_file_id_as_string(),
+                                          encoded_message,
+                                          decompressed_message))
         {
             result = SearchFilesResult::ResultSendFailure;
             break;
@@ -431,13 +384,11 @@ static SearchFilesResult search_file(
     return result;
 }
 
-void search_files(
-        Query& query,
-        Archive& archive,
-        MetadataDB::FileIterator& file_metadata_ix,
-        std::unique_ptr<OutputHandler>& output_handler,
-        std::set<clp::segment_id_t> const& segments_to_search
-) {
+void search_files(Query& query,
+                  Archive& archive,
+                  MetadataDB::FileIterator& file_metadata_ix,
+                  std::unique_ptr<OutputHandler>& output_handler,
+                  std::set<clp::segment_id_t> const& segments_to_search) {
     if (query.contains_sub_queries()) {
         for (; file_metadata_ix.has_next(); file_metadata_ix.next()) {
             if (segments_to_search.count(file_metadata_ix.get_segment_id()) == 0) {
@@ -473,10 +424,8 @@ void search_files(
     }
 }
 
-static bool search_archive(
-        CommandLineArguments const& command_line_args,
-        std::unique_ptr<OutputHandler> output_handler
-) {
+static bool search_archive(CommandLineArguments const& command_line_args,
+                           std::unique_ptr<OutputHandler> output_handler) {
     std::filesystem::path const archive_path{command_line_args.get_archive_path()};
     if (false == validate_archive_path(archive_path)) {
         return false;
@@ -502,16 +451,14 @@ static bool search_archive(
 
     std::string wildcard_search_string
             = clean_up_wildcard_search_string('*' + command_line_args.get_search_string() + '*');
-    auto query_processing_result = GrepCore::process_raw_query(
-            logtype_dict,
-            var_dict,
-            wildcard_search_string,
-            search_begin_ts,
-            search_end_ts,
-            command_line_args.ignore_case(),
-            lexer,
-            use_heuristic
-    );
+    auto query_processing_result = GrepCore::process_raw_query(logtype_dict,
+                                                               var_dict,
+                                                               wildcard_search_string,
+                                                               search_begin_ts,
+                                                               search_end_ts,
+                                                               command_line_args.ignore_case(),
+                                                               lexer,
+                                                               use_heuristic);
     if (false == query_processing_result.has_value()) {
         return true;
     }
@@ -526,45 +473,35 @@ static bool search_archive(
             = [&var_dict](variable_dictionary_id_t var_id) -> std::set<segment_id_t> const& {
         return var_dict.get_entry(var_id).get_ids_of_segments_containing_entry();
     };
-    query.calculate_ids_of_matching_segments(
-            get_segments_containing_logtype_dict_id,
-            get_segments_containing_var_dict_id
-    );
+    query.calculate_ids_of_matching_segments(get_segments_containing_logtype_dict_id,
+                                             get_segments_containing_var_dict_id);
 
     // Get all segments potentially containing query results
     std::set<clp::segment_id_t> ids_of_segments_to_search;
     for (auto& sub_query : query.get_sub_queries()) {
         auto& ids_of_matching_segments = sub_query.get_ids_of_matching_segments();
-        ids_of_segments_to_search.insert(
-                ids_of_matching_segments.cbegin(),
-                ids_of_matching_segments.cend()
-        );
+        ids_of_segments_to_search.insert(ids_of_matching_segments.cbegin(),
+                                         ids_of_matching_segments.cend());
     }
 
-    auto file_metadata_ix_ptr = archive_reader.get_file_iterator(
-            search_begin_ts,
-            search_end_ts,
-            command_line_args.get_file_path(),
-            true
-    );
+    auto file_metadata_ix_ptr = archive_reader.get_file_iterator(search_begin_ts,
+                                                                 search_end_ts,
+                                                                 command_line_args.get_file_path(),
+                                                                 true);
     auto& file_metadata_ix = *file_metadata_ix_ptr;
-    search_files(
-            query,
-            archive_reader,
-            file_metadata_ix,
-            output_handler,
-            ids_of_segments_to_search
-    );
+    search_files(query,
+                 archive_reader,
+                 file_metadata_ix,
+                 output_handler,
+                 ids_of_segments_to_search);
     file_metadata_ix_ptr.reset(nullptr);
 
     archive_reader.close();
 
     auto ecode = output_handler->flush();
     if (ErrorCode::ErrorCode_Success != ecode) {
-        SPDLOG_ERROR(
-                "Failed to flush output handler, error={}",
-                clp::enum_to_underlying_type(ecode)
-        );
+        SPDLOG_ERROR("Failed to flush output handler, error={}",
+                     clp::enum_to_underlying_type(ecode));
         return false;
     }
     return true;

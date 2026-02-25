@@ -21,10 +21,8 @@
 #include "SingleFileArchiveDefs.hpp"
 
 namespace clp_s {
-ArchiveReaderAdaptor::ArchiveReaderAdaptor(
-        Path const& archive_path,
-        NetworkAuthOption const& network_auth
-)
+ArchiveReaderAdaptor::ArchiveReaderAdaptor(Path const& archive_path,
+                                           NetworkAuthOption const& network_auth)
         : m_archive_path{archive_path},
           m_network_auth{network_auth},
           m_single_file_archive{false},
@@ -36,8 +34,8 @@ ArchiveReaderAdaptor::ArchiveReaderAdaptor(
     }
 }
 
-ErrorCode
-ArchiveReaderAdaptor::try_read_archive_file_info(ZstdDecompressor& decompressor, size_t size) {
+ErrorCode ArchiveReaderAdaptor::try_read_archive_file_info(ZstdDecompressor& decompressor,
+                                                           size_t size) {
     std::vector<char> buffer(size);
     auto rc = decompressor.try_read_exact_length(buffer.data(), size);
     if (ErrorCodeSuccess != rc) {
@@ -73,12 +71,10 @@ ArchiveReaderAdaptor::try_read_archive_file_info(ZstdDecompressor& decompressor,
     }
 }
 
-ErrorCode
-ArchiveReaderAdaptor::try_read_timestamp_dictionary(ZstdDecompressor& decompressor, size_t size) {
-    return m_timestamp_dictionary->read(
-            decompressor,
-            m_archive_header.has_deprecated_timestamp_format()
-    );
+ErrorCode ArchiveReaderAdaptor::try_read_timestamp_dictionary(ZstdDecompressor& decompressor,
+                                                              size_t size) {
+    return m_timestamp_dictionary->read(decompressor,
+                                        m_archive_header.has_deprecated_timestamp_format());
 }
 
 ErrorCode ArchiveReaderAdaptor::try_read_archive_info(ZstdDecompressor& decompressor, size_t size) {
@@ -148,15 +144,13 @@ auto ArchiveReaderAdaptor::try_read_range_index(ZstdDecompressor& decompressor, 
         m_range_index.emplace_back(
                 start_index,
                 end_index,
-                std::move(range_index_entry.at(RangeIndexWriter::cMetadataFieldsName))
-        );
+                std::move(range_index_entry.at(RangeIndexWriter::cMetadataFieldsName)));
     }
     return ErrorCodeSuccess;
 }
 
-auto
-ArchiveReaderAdaptor::try_read_unknown_metadata_packet(ZstdDecompressor& decompressor, size_t size)
-        -> ErrorCode {
+auto ArchiveReaderAdaptor::try_read_unknown_metadata_packet(ZstdDecompressor& decompressor,
+                                                            size_t size) -> ErrorCode {
     std::vector<char> buffer(size);
     return decompressor.try_read_exact_length(buffer.data(), buffer.size());
 }
@@ -182,20 +176,16 @@ ErrorCode ArchiveReaderAdaptor::load_archive_metadata() {
 }
 
 ErrorCode ArchiveReaderAdaptor::try_read_header(clp::ReaderInterface& reader) {
-    auto const clp_rc = reader.try_read_exact_length(
-            reinterpret_cast<char*>(&m_archive_header),
-            sizeof(m_archive_header)
-    );
+    auto const clp_rc = reader.try_read_exact_length(reinterpret_cast<char*>(&m_archive_header),
+                                                     sizeof(m_archive_header));
     if (clp::ErrorCode::ErrorCode_Success != clp_rc) {
         return ErrorCodeErrno;
     }
 
     if (0
-        != std::memcmp(
-                m_archive_header.magic_number,
-                cStructuredSFAMagicNumber.data(),
-                sizeof(cStructuredSFAMagicNumber)
-        ))
+        != std::memcmp(m_archive_header.magic_number,
+                       cStructuredSFAMagicNumber.data(),
+                       sizeof(cStructuredSFAMagicNumber)))
     {
         return ErrorCodeMetadataCorrupted;
     }
@@ -255,9 +245,8 @@ ErrorCode ArchiveReaderAdaptor::try_read_archive_metadata(ZstdDecompressor& deco
 std::shared_ptr<clp::ReaderInterface> ArchiveReaderAdaptor::try_create_reader_at_header() {
     if (InputSource::Filesystem == m_archive_path.source && false == m_single_file_archive) {
         try {
-            return std::make_shared<clp::FileReader>(
-                    m_archive_path.path + constants::cArchiveHeaderFile
-            );
+            return std::make_shared<clp::FileReader>(m_archive_path.path
+                                                     + constants::cArchiveHeaderFile);
         } catch (std::exception const& e) {
             SPDLOG_ERROR("Failed to open archive header for reading - {}", e.what());
             return nullptr;
@@ -268,8 +257,7 @@ std::shared_ptr<clp::ReaderInterface> ArchiveReaderAdaptor::try_create_reader_at
 }
 
 std::unique_ptr<clp::ReaderInterface> ArchiveReaderAdaptor::checkout_reader_for_section(
-        std::string_view section
-) {
+        std::string_view section) {
     if (m_current_reader_holder.has_value()) {
         throw OperationFailed(ErrorCodeNotReady, __FILENAME__, __LINE__);
     }
@@ -283,13 +271,10 @@ std::unique_ptr<clp::ReaderInterface> ArchiveReaderAdaptor::checkout_reader_for_
 }
 
 std::unique_ptr<clp::ReaderInterface> ArchiveReaderAdaptor::checkout_reader_for_sfa_section(
-        std::string_view section
-) {
-    auto it = std::find_if(
-            m_archive_file_info.files.begin(),
-            m_archive_file_info.files.end(),
-            [&](ArchiveFileInfo& info) { return info.n == section; }
-    );
+        std::string_view section) {
+    auto it = std::find_if(m_archive_file_info.files.begin(),
+                           m_archive_file_info.files.end(),
+                           [&](ArchiveFileInfo& info) { return info.n == section; });
     if (m_archive_file_info.files.end() == it) {
         throw OperationFailed(ErrorCodeBadParam, __FILENAME__, __LINE__);
     }

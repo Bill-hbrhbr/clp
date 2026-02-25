@@ -11,20 +11,17 @@
 #include "../TimestampDictionaryReader.hpp"
 
 namespace clp_s::indexer {
-IndexManager::IndexManager(
-        std::optional<clp::GlobalMetadataDBConfig> const& optional_db_config,
-        bool should_create_table
-) {
+IndexManager::IndexManager(std::optional<clp::GlobalMetadataDBConfig> const& optional_db_config,
+                           bool should_create_table) {
     try {
         auto const& db_config = optional_db_config.value();
-        m_mysql_index_storage = std::make_unique<MySQLIndexStorage>(
-                db_config.get_metadata_db_host(),
-                db_config.get_metadata_db_port(),
-                db_config.get_metadata_db_username().value(),
-                db_config.get_metadata_db_password().value(),
-                db_config.get_metadata_db_name(),
-                db_config.get_metadata_table_prefix()
-        );
+        m_mysql_index_storage
+                = std::make_unique<MySQLIndexStorage>(db_config.get_metadata_db_host(),
+                                                      db_config.get_metadata_db_port(),
+                                                      db_config.get_metadata_db_username().value(),
+                                                      db_config.get_metadata_db_password().value(),
+                                                      db_config.get_metadata_db_name(),
+                                                      db_config.get_metadata_table_prefix());
     } catch (std::bad_optional_access const& e) {
         throw OperationFailed(ErrorCodeBadParam, __FILENAME__, __LINE__);
     }
@@ -48,10 +45,8 @@ void IndexManager::update_metadata(std::string const& dataset_name, Path const& 
     ArchiveReader archive_reader;
     archive_reader.open(archive_path, NetworkAuthOption{});
 
-    traverse_schema_tree_and_update_metadata(
-            archive_reader.get_schema_tree(),
-            archive_reader.get_timestamp_dictionary()
-    );
+    traverse_schema_tree_and_update_metadata(archive_reader.get_schema_tree(),
+                                             archive_reader.get_timestamp_dictionary());
 }
 
 std::string IndexManager::escape_key_name(std::string_view const key_name) {
@@ -88,12 +83,10 @@ std::string IndexManager::escape_key_name(std::string_view const key_name) {
                     escaped_key_name += c;
                 } else {
                     char buffer[7];
-                    std::snprintf(
-                            buffer,
-                            sizeof(buffer),
-                            "\\u00%02x",
-                            static_cast<unsigned char>(c)
-                    );
+                    std::snprintf(buffer,
+                                  sizeof(buffer),
+                                  "\\u00%02x",
+                                  static_cast<unsigned char>(c));
                     escaped_key_name += buffer;
                 }
         }
@@ -103,8 +96,7 @@ std::string IndexManager::escape_key_name(std::string_view const key_name) {
 
 void IndexManager::traverse_schema_tree_and_update_metadata(
         std::shared_ptr<SchemaTree> const& schema_tree,
-        std::shared_ptr<TimestampDictionaryReader> const& timestamp_dict
-) {
+        std::shared_ptr<TimestampDictionaryReader> const& timestamp_dict) {
     if (nullptr == schema_tree) {
         return;
     }

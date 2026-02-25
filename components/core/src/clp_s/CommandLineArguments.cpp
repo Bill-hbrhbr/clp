@@ -29,17 +29,13 @@ constexpr std::string_view cS3Auth{"s3"};
  * @return true on success
  * @return false on error
  */
-bool read_paths_from_file(
-        std::string const& input_path_list_file_path,
-        std::vector<std::string>& path_destination
-) {
+bool read_paths_from_file(std::string const& input_path_list_file_path,
+                          std::vector<std::string>& path_destination) {
     FileReader reader;
     auto error_code = reader.try_open(input_path_list_file_path);
     if (ErrorCodeFileNotFound == error_code) {
-        SPDLOG_ERROR(
-                "Failed to open input path list file {} - file not found",
-                input_path_list_file_path
-        );
+        SPDLOG_ERROR("Failed to open input path list file {} - file not found",
+                     input_path_list_file_path);
         return false;
     } else if (ErrorCodeSuccess != error_code) {
         SPDLOG_ERROR("Error opening input path list file {}", input_path_list_file_path);
@@ -84,11 +80,9 @@ void validate_network_auth(std::string_view auth_method, NetworkAuthOption& auth
  * @param archive_paths
  * @throws std::invalid_argument on any error
  */
-void validate_archive_paths(
-        std::string_view archive_path,
-        std::string_view archive_id,
-        std::vector<Path>& archive_paths
-) {
+void validate_archive_paths(std::string_view archive_path,
+                            std::string_view archive_id,
+                            std::vector<Path>& archive_paths) {
     if (archive_path.empty()) {
         throw std::invalid_argument("No archive path specified");
     }
@@ -99,12 +93,8 @@ void validate_archive_paths(
         if (false == std::filesystem::exists(archive_fs_path, ec) || ec) {
             throw std::invalid_argument("Requested archive does not exist");
         }
-        archive_paths.emplace_back(
-                clp_s::Path{
-                        .source = clp_s::InputSource::Filesystem,
-                        .path = archive_fs_path.string()
-                }
-        );
+        archive_paths.emplace_back(clp_s::Path{.source = clp_s::InputSource::Filesystem,
+                                               .path = archive_fs_path.string()});
     } else if (false == get_input_archives_for_raw_path(archive_path, archive_paths)) {
         throw std::invalid_argument("Invalid archive path");
     }
@@ -115,8 +105,8 @@ void validate_archive_paths(
 }
 }  // namespace
 
-CommandLineArguments::ParsingResult
-CommandLineArguments::parse_arguments(int argc, char const** argv) {
+CommandLineArguments::ParsingResult CommandLineArguments::parse_arguments(int argc,
+                                                                          char const** argv) {
     if (1 == argc) {
         print_basic_usage();
         return ParsingResult::Failure;
@@ -283,13 +273,11 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
             std::vector<std::string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
             unrecognized_options.erase(unrecognized_options.begin());
-            po::store(
-                    po::command_line_parser(unrecognized_options)
-                            .options(all_compression_options)
-                            .positional(positional_options)
-                            .run(),
-                    parsed_command_line_options
-            );
+            po::store(po::command_line_parser(unrecognized_options)
+                              .options(all_compression_options)
+                              .positional(positional_options)
+                              .run(),
+                      parsed_command_line_options);
             po::notify(parsed_command_line_options);
 
             if (parsed_command_line_options.count("help")) {
@@ -401,13 +389,11 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
             std::vector<std::string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
             unrecognized_options.erase(unrecognized_options.begin());
-            po::store(
-                    po::command_line_parser(unrecognized_options)
-                            .options(extraction_options)
-                            .positional(positional_options)
-                            .run(),
-                    parsed_command_line_options
-            );
+            po::store(po::command_line_parser(unrecognized_options)
+                              .options(extraction_options)
+                              .positional(positional_options)
+                              .run(),
+                      parsed_command_line_options);
 
             po::notify(parsed_command_line_options);
 
@@ -440,21 +426,18 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
             if (false == m_ordered_decompression) {
                 if (0 != m_target_ordered_chunk_size) {
                     throw std::invalid_argument(
-                            "target-ordered-chunk-size must be used with ordered argument"
-                    );
+                            "target-ordered-chunk-size must be used with ordered argument");
                 }
 
                 if (m_print_ordered_chunk_stats) {
                     throw std::invalid_argument(
-                            "print-ordered-chunk-stats must be used with ordered argument"
-                    );
+                            "print-ordered-chunk-stats must be used with ordered argument");
                 }
 
                 if (false == m_mongodb_uri.empty()) {
                     throw std::invalid_argument(
                             "Recording decompression metadata only supported for ordered"
-                            " decompression"
-                    );
+                            " decompression");
                 }
             }
 
@@ -462,8 +445,7 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
             // unspecified.
             if (m_mongodb_uri.empty() ^ m_mongodb_collection.empty()) {
                 throw std::invalid_argument(
-                        "mongodb-uri and mongodb-collection must both be non-empty"
-                );
+                        "mongodb-uri and mongodb-collection must both be non-empty");
             }
 
         } else if ((char)Command::Search == command_input) {
@@ -551,8 +533,7 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
             search_options.add(aggregation_options);
 
             po::options_description network_output_handler_options(
-                    "Network Output Handler Options"
-            );
+                    "Network Output Handler Options");
             // clang-format off
             network_output_handler_options.add_options()(
                     "host",
@@ -566,8 +547,7 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
             // clang-format on
 
             po::options_description reducer_output_handler_options(
-                    "Reducer Output Handler Options"
-            );
+                    "Reducer Output Handler Options");
             // clang-format off
             reducer_output_handler_options.add_options()(
                     "host",
@@ -585,34 +565,30 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
             // clang-format on
 
             po::options_description results_cache_output_handler_options(
-                    "Results Cache Output Handler Options"
-            );
+                    "Results Cache Output Handler Options");
             results_cache_output_handler_options.add_options()(
                     "uri",
                     po::value<std::string>(&m_mongodb_uri)->value_name("URI"),
-                    "MongoDB URI for the results cache"
-            )(
+                    "MongoDB URI for the results cache")(
                     "collection",
                     po::value<std::string>(&m_mongodb_collection)->value_name("COLLECTION"),
-                    "MongoDB collection to output to"
-            )(
+                    "MongoDB collection to output to")(
                     "batch-size",
-                    po::value<uint64_t>(&m_batch_size)->value_name("SIZE")->
-                            default_value(m_batch_size),
-                    "The number of documents to insert into MongoDB per batch"
-            )(
+                    po::value<uint64_t>(&m_batch_size)
+                            ->value_name("SIZE")
+                            ->default_value(m_batch_size),
+                    "The number of documents to insert into MongoDB per batch")(
                     "max-num-results",
-                    po::value<uint64_t>(&m_max_num_results)->value_name("MAX")->
-                            default_value(m_max_num_results),
-                    "The maximum number of results to output"
-            );
+                    po::value<uint64_t>(&m_max_num_results)
+                            ->value_name("MAX")
+                            ->default_value(m_max_num_results),
+                    "The maximum number of results to output");
 
             po::options_description file_output_handler_options("File Output Handler Options");
             file_output_handler_options.add_options()(
                     "path",
                     po::value<std::string>(&m_file_output_path)->value_name("PATH"),
-                    "File output path"
-            );
+                    "File output path");
 
             std::vector<std::string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
@@ -723,16 +699,14 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
                 && m_search_begin_ts.value() > m_search_end_ts.value())
             {
                 throw std::invalid_argument(
-                        "Timestamp range is invalid - begin timestamp is after end timestamp."
-                );
+                        "Timestamp range is invalid - begin timestamp is after end timestamp.");
             }
 
             if (parsed_command_line_options.count("count-by-time") > 0) {
                 m_do_count_by_time_aggregation = true;
                 if (m_count_by_time_bucket_size <= 0) {
                     throw std::invalid_argument(
-                            "Value for count-by-time must be greater than zero."
-                    );
+                            "Value for count-by-time must be greater than zero.");
                 }
             }
 
@@ -751,8 +725,8 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
                             == output_handler_name))
                 {
                     m_output_handler_type = OutputHandlerType::Stdout;
-                } else if ((static_cast<char const*>(cFileOutputHandlerName)
-                            == output_handler_name))
+                } else if (
+                        (static_cast<char const*>(cFileOutputHandlerName) == output_handler_name))
                 {
                     m_output_handler_type = OutputHandlerType::File;
                 } else if (output_handler_name.empty()) {
@@ -763,55 +737,43 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
             }
 
             if (OutputHandlerType::Network == m_output_handler_type) {
-                parse_network_dest_output_handler_options(
-                        network_output_handler_options,
-                        search_parsed.options,
-                        parsed_command_line_options
-                );
+                parse_network_dest_output_handler_options(network_output_handler_options,
+                                                          search_parsed.options,
+                                                          parsed_command_line_options);
             } else if (OutputHandlerType::Reducer == m_output_handler_type) {
-                parse_reducer_output_handler_options(
-                        reducer_output_handler_options,
-                        search_parsed.options,
-                        parsed_command_line_options
-                );
+                parse_reducer_output_handler_options(reducer_output_handler_options,
+                                                     search_parsed.options,
+                                                     parsed_command_line_options);
             } else if (OutputHandlerType::ResultsCache == m_output_handler_type) {
-                parse_results_cache_output_handler_options(
-                        results_cache_output_handler_options,
-                        search_parsed.options,
-                        parsed_command_line_options
-                );
+                parse_results_cache_output_handler_options(results_cache_output_handler_options,
+                                                           search_parsed.options,
+                                                           parsed_command_line_options);
             } else if (OutputHandlerType::File == m_output_handler_type) {
-                parse_file_output_handler_options(
-                        file_output_handler_options,
-                        search_parsed.options,
-                        parsed_command_line_options
-                );
+                parse_file_output_handler_options(file_output_handler_options,
+                                                  search_parsed.options,
+                                                  parsed_command_line_options);
             } else if (m_output_handler_type != OutputHandlerType::Stdout) {
                 throw std::invalid_argument(
                         "Unhandled OutputHandlerType="
-                        + std::to_string(clp::enum_to_underlying_type(m_output_handler_type))
-                );
+                        + std::to_string(clp::enum_to_underlying_type(m_output_handler_type)));
             }
 
             bool aggregation_was_specified
                     = m_do_count_by_time_aggregation || m_do_count_results_aggregation;
             if (aggregation_was_specified && OutputHandlerType::Reducer != m_output_handler_type) {
                 throw std::invalid_argument(
-                        "Aggregations are only supported with the reducer output handler."
-                );
+                        "Aggregations are only supported with the reducer output handler.");
             } else if ((false == aggregation_was_specified
                         && OutputHandlerType::Reducer == m_output_handler_type))
             {
                 throw std::invalid_argument(
                         "The reducer output handler currently only supports count and"
-                        " count-by-time aggregations."
-                );
+                        " count-by-time aggregations.");
             }
 
             if (m_do_count_by_time_aggregation && m_do_count_results_aggregation) {
                 throw std::invalid_argument(
-                        "The --count-by-time and --count options are mutually exclusive."
-                );
+                        "The --count-by-time and --count options are mutually exclusive.");
             }
         }
     } catch (std::exception& e) {
@@ -828,8 +790,7 @@ CommandLineArguments::parse_arguments(int argc, char const** argv) {
 void CommandLineArguments::parse_network_dest_output_handler_options(
         po::options_description const& options_description,
         std::vector<po::option> const& options,
-        po::variables_map& parsed_options
-) {
+        po::variables_map& parsed_options) {
     clp::parse_unrecognized_options(options_description, options, parsed_options);
 
     if (parsed_options.count("host") == 0) {
@@ -850,8 +811,7 @@ void CommandLineArguments::parse_network_dest_output_handler_options(
 void CommandLineArguments::parse_reducer_output_handler_options(
         po::options_description const& options_description,
         std::vector<po::option> const& options,
-        po::variables_map& parsed_options
-) {
+        po::variables_map& parsed_options) {
     clp::parse_unrecognized_options(options_description, options, parsed_options);
 
     if (parsed_options.count("host") == 0) {
@@ -879,8 +839,7 @@ void CommandLineArguments::parse_reducer_output_handler_options(
 void CommandLineArguments::parse_results_cache_output_handler_options(
         po::options_description const& options_description,
         std::vector<po::option> const& options,
-        po::variables_map& parsed_options
-) {
+        po::variables_map& parsed_options) {
     clp::parse_unrecognized_options(options_description, options, parsed_options);
 
     if (parsed_options.count("uri") == 0) {
@@ -909,8 +868,7 @@ void CommandLineArguments::parse_results_cache_output_handler_options(
 void CommandLineArguments::parse_file_output_handler_options(
         po::options_description const& options_description,
         std::vector<po::option> const& options,
-        po::variables_map& parsed_options
-) {
+        po::variables_map& parsed_options) {
     clp::parse_unrecognized_options(options_description, options, parsed_options);
     if (parsed_options.count("path") == 0) {
         throw std::invalid_argument("path must be specified.");

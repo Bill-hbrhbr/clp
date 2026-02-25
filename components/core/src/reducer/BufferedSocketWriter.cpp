@@ -40,11 +40,9 @@ bool BufferedSocketWriter::flush() {
 }
 
 bool BufferedSocketWriter::flush_unsafe() {
-    auto ecode = clp::networking::try_send(
-            m_socket_fd,
-            reinterpret_cast<char const*>(m_buffer.data()),
-            m_buffer.size()
-    );
+    auto ecode = clp::networking::try_send(m_socket_fd,
+                                           reinterpret_cast<char const*>(m_buffer.data()),
+                                           m_buffer.size());
     m_buffer.clear();
     return clp::ErrorCode::ErrorCode_Success == ecode;
 }

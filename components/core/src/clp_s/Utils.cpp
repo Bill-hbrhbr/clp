@@ -17,10 +17,8 @@ using std::string;
 using std::string_view;
 
 namespace clp_s {
-bool FileUtils::find_all_files_in_directory(
-        std::string const& path,
-        std::vector<std::string>& file_paths
-) {
+bool FileUtils::find_all_files_in_directory(std::string const& path,
+                                            std::vector<std::string>& file_paths) {
     try {
         if (false == std::filesystem::is_directory(path)) {
             // path is a file
@@ -36,8 +34,7 @@ bool FileUtils::find_all_files_in_directory(
         // Iterate directory
         std::filesystem::recursive_directory_iterator iter(
                 path,
-                std::filesystem::directory_options::follow_directory_symlink
-        );
+                std::filesystem::directory_options::follow_directory_symlink);
         std::filesystem::recursive_directory_iterator end;
         for (; iter != end; ++iter) {
             // Check if current entry is an empty directory or a file
@@ -50,11 +47,9 @@ bool FileUtils::find_all_files_in_directory(
             }
         }
     } catch (std::exception const& exception) {
-        SPDLOG_ERROR(
-                "Failed to find files/directories at '{}' - {}.",
-                path.c_str(),
-                exception.what()
-        );
+        SPDLOG_ERROR("Failed to find files/directories at '{}' - {}.",
+                     path.c_str(),
+                     exception.what());
         return false;
     }
 
@@ -102,10 +97,8 @@ bool is_multi_file_archive(std::string_view const path) {
 }
 }  // namespace
 
-bool FileUtils::find_all_archives_in_directory(
-        std::string_view const path,
-        std::vector<std::string>& archive_paths
-) {
+bool FileUtils::find_all_archives_in_directory(std::string_view const path,
+                                               std::vector<std::string>& archive_paths) {
     try {
         if (false == std::filesystem::is_directory(path)) {
             return false;

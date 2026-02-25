@@ -40,16 +40,13 @@ auto get_test_input_local_path() -> std::string;
 void serialize_record(
         nlohmann::json const& auto_gen,
         nlohmann::json const& user_gen,
-        clp::ffi::ir_stream::Serializer<clp::ir::eight_byte_encoded_variable_t>& serializer
-);
+        clp::ffi::ir_stream::Serializer<clp::ir::eight_byte_encoded_variable_t>& serializer);
 void generate_ir();
 void read_and_check_archive_metadata(bool from_ir);
-void check_archive_metadata_from_stats(
-        std::vector<clp_s::ArchiveStats> const& archive_stats,
-        bool from_ir
-);
-void
-check_archive_range_index(std::vector<clp_s::RangeIndexEntry> const& range_index, bool from_ir);
+void check_archive_metadata_from_stats(std::vector<clp_s::ArchiveStats> const& archive_stats,
+                                       bool from_ir);
+void check_archive_range_index(std::vector<clp_s::RangeIndexEntry> const& range_index,
+                               bool from_ir);
 
 auto get_test_input_path_relative_to_tests_dir() -> std::filesystem::path {
     return std::filesystem::path{cTestRangeIndexInputFileDirectory} / cTestRangeIndexInputFile;
@@ -69,18 +66,15 @@ auto get_ir_test_input_relative_path() -> std::string {
 void serialize_record(
         nlohmann::json const& auto_gen,
         nlohmann::json const& user_gen,
-        clp::ffi::ir_stream::Serializer<clp::ir::eight_byte_encoded_variable_t>& serializer
-) {
+        clp::ffi::ir_stream::Serializer<clp::ir::eight_byte_encoded_variable_t>& serializer) {
     auto const auto_gen_bytes{nlohmann::json::to_msgpack(auto_gen)};
     auto const user_gen_bytes{nlohmann::json::to_msgpack(user_gen)};
-    auto const auto_gen_handle{msgpack::unpack(
-            clp::size_checked_pointer_cast<char const>(auto_gen_bytes.data()),
-            auto_gen_bytes.size()
-    )};
-    auto const user_gen_handle{msgpack::unpack(
-            clp::size_checked_pointer_cast<char const>(user_gen_bytes.data()),
-            user_gen_bytes.size()
-    )};
+    auto const auto_gen_handle{
+            msgpack::unpack(clp::size_checked_pointer_cast<char const>(auto_gen_bytes.data()),
+                            auto_gen_bytes.size())};
+    auto const user_gen_handle{
+            msgpack::unpack(clp::size_checked_pointer_cast<char const>(user_gen_bytes.data()),
+                            user_gen_bytes.size())};
     auto const auto_gen_obj{auto_gen_handle.get()};
     auto const user_gen_obj{user_gen_handle.get()};
     REQUIRE(msgpack::type::MAP == auto_gen_obj.type);
@@ -95,8 +89,7 @@ void generate_ir() {
     nlohmann::json ir_metadata = {{cTestRangeIndexIRMetadataKey, cTestRangeIndexIRMetadataValue}};
 
     auto result{clp::ffi::ir_stream::Serializer<clp::ir::eight_byte_encoded_variable_t>::create(
-            ir_metadata
-    )};
+            ir_metadata)};
     REQUIRE(false == result.has_error());
     auto& serializer = result.value();
 
@@ -111,10 +104,8 @@ void generate_ir() {
     }
 
     clp::FileWriter writer;
-    REQUIRE_NOTHROW(writer.open(
-            get_ir_test_input_relative_path(),
-            clp::FileWriter::OpenMode::CREATE_FOR_WRITING
-    ));
+    REQUIRE_NOTHROW(writer.open(get_ir_test_input_relative_path(),
+                                clp::FileWriter::OpenMode::CREATE_FOR_WRITING));
     clp::streaming_compression::zstd::Compressor compressor;
     compressor.open(writer);
 
@@ -129,10 +120,8 @@ void generate_ir() {
 void read_and_check_archive_metadata(bool from_ir) {
     clp_s::ArchiveReader archive_reader;
     for (auto const& entry : std::filesystem::directory_iterator(cTestRangeIndexArchiveDirectory)) {
-        clp_s::Path archive_path{
-                .source{clp_s::InputSource::Filesystem},
-                .path{entry.path().string()}
-        };
+        clp_s::Path archive_path{.source{clp_s::InputSource::Filesystem},
+                                 .path{entry.path().string()}};
         REQUIRE_NOTHROW(archive_reader.open(archive_path, clp_s::NetworkAuthOption{}));
         auto const& range_index = archive_reader.get_range_index();
         check_archive_range_index(range_index, from_ir);
@@ -140,10 +129,8 @@ void read_and_check_archive_metadata(bool from_ir) {
     }
 }
 
-void check_archive_metadata_from_stats(
-        std::vector<clp_s::ArchiveStats> const& archive_stats,
-        bool from_ir
-) {
+void check_archive_metadata_from_stats(std::vector<clp_s::ArchiveStats> const& archive_stats,
+                                       bool from_ir) {
     for (auto const& stats : archive_stats) {
         auto const& range_index{stats.get_range_index()};
         REQUIRE(range_index.is_array());
@@ -159,17 +146,16 @@ void check_archive_metadata_from_stats(
         REQUIRE(start_index.is_number_integer());
         REQUIRE(end_index.is_number_integer());
         REQUIRE(metadata_fields.is_object());
-        std::vector<clp_s::RangeIndexEntry> range_index_entries{clp_s::RangeIndexEntry{
-                start_index.template get<size_t>(),
-                end_index.template get<size_t>(),
-                std::move(metadata_fields)
-        }};
+        std::vector<clp_s::RangeIndexEntry> range_index_entries{
+                clp_s::RangeIndexEntry{start_index.template get<size_t>(),
+                                       end_index.template get<size_t>(),
+                                       std::move(metadata_fields)}};
         check_archive_range_index(range_index_entries, from_ir);
     }
 }
 
-void
-check_archive_range_index(std::vector<clp_s::RangeIndexEntry> const& range_index, bool from_ir) {
+void check_archive_range_index(std::vector<clp_s::RangeIndexEntry> const& range_index,
+                               bool from_ir) {
     REQUIRE(1ULL == range_index.size());
     auto const& range_index_entry = range_index.front();
     REQUIRE(0ULL == range_index_entry.start_index);
@@ -183,16 +169,14 @@ check_archive_range_index(std::vector<clp_s::RangeIndexEntry> const& range_index
                        .empty());
     REQUIRE(metadata_fields.contains(clp_s::constants::range_index::cFilename));
     REQUIRE(metadata_fields.at(clp_s::constants::range_index::cFilename).is_string());
-    auto const expected_input_path{
-            from_ir ? get_ir_test_input_relative_path() : get_test_input_local_path()
-    };
+    auto const expected_input_path{from_ir ? get_ir_test_input_relative_path()
+                                           : get_test_input_local_path()};
     REQUIRE(expected_input_path
             == metadata_fields.at(clp_s::constants::range_index::cFilename)
                        .template get<std::string>());
     REQUIRE(metadata_fields.contains(clp_s::constants::range_index::cFileSplitNumber));
-    REQUIRE(
-            metadata_fields.at(clp_s::constants::range_index::cFileSplitNumber).is_number_integer()
-    );
+    REQUIRE(metadata_fields.at(clp_s::constants::range_index::cFileSplitNumber)
+                    .is_number_integer());
     REQUIRE(0ULL
             == metadata_fields.at(clp_s::constants::range_index::cFileSplitNumber)
                        .template get<size_t>());
@@ -209,9 +193,8 @@ TEST_CASE("clp-s-range-index", "[clp-s][range-index]") {
     auto single_file_archive = GENERATE(true, false);
     auto from_ir = GENERATE(true, false);
 
-    TestOutputCleaner const test_cleanup{
-            {std::string{cTestRangeIndexArchiveDirectory}, std::string{cTestRangeIndexIRDirectory}}
-    };
+    TestOutputCleaner const test_cleanup{{std::string{cTestRangeIndexArchiveDirectory},
+                                          std::string{cTestRangeIndexIRDirectory}}};
 
     auto input_file{get_test_input_local_path()};
     if (from_ir) {
@@ -219,16 +202,12 @@ TEST_CASE("clp-s-range-index", "[clp-s][range-index]") {
         input_file = get_ir_test_input_relative_path();
     }
     std::vector<clp_s::ArchiveStats> archive_stats;
-    REQUIRE_NOTHROW(
-            archive_stats = compress_archive(
-                    input_file,
-                    std::string{cTestRangeIndexArchiveDirectory},
-                    std::nullopt,
-                    false,
-                    single_file_archive,
-                    false
-            )
-    );
+    REQUIRE_NOTHROW(archive_stats = compress_archive(input_file,
+                                                     std::string{cTestRangeIndexArchiveDirectory},
+                                                     std::nullopt,
+                                                     false,
+                                                     single_file_archive,
+                                                     false));
     read_and_check_archive_metadata(from_ir);
     check_archive_metadata_from_stats(archive_stats, from_ir);
 }

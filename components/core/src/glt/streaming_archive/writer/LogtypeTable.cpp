@@ -7,15 +7,12 @@ LogtypeTable::LogtypeTable(size_t num_columns) {
     m_num_rows = 0;
 }
 
-void LogtypeTable::append_to_table(
-        epochtime_t timestamp,
-        file_id_t file_id,
-        std::vector<encoded_variable_t> const& encoded_vars
-) {
+void LogtypeTable::append_to_table(epochtime_t timestamp,
+                                   file_id_t file_id,
+                                   std::vector<encoded_variable_t> const& encoded_vars) {
     if (encoded_vars.size() != m_num_columns) {
         SPDLOG_ERROR(
-                "streaming_compression::writer::LogtypeTable: input doesn't match table dimension"
-        );
+                "streaming_compression::writer::LogtypeTable: input doesn't match table dimension");
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
     m_num_rows++;

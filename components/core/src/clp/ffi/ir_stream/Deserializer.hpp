@@ -41,10 +41,8 @@ namespace clp::ffi::ir_stream {
  * @tparam IrUnitHandlerType
  * @tparam QueryHandlerType
  */
-template <
-        IrUnitHandlerReq IrUnitHandlerType,
-        search::QueryHandlerReq QueryHandlerType = search::EmptyQueryHandler
->
+template <IrUnitHandlerReq IrUnitHandlerType,
+          search::QueryHandlerReq QueryHandlerType = search::EmptyQueryHandler>
 class Deserializer {
 public:
     // Factory function
@@ -74,10 +72,10 @@ public:
      * failure:
      * - Forwards `create_generic`'s return values.
      */
-    [[nodiscard]] static auto
-    create(ReaderInterface& reader,
-           IrUnitHandlerType ir_unit_handler,
-           QueryHandlerType query_handler) -> ystdlib::error_handling::Result<Deserializer>
+    [[nodiscard]] static auto create(ReaderInterface& reader,
+                                     IrUnitHandlerType ir_unit_handler,
+                                     QueryHandlerType query_handler)
+            -> ystdlib::error_handling::Result<Deserializer>
     requires search::IsNonEmptyQueryHandler<QueryHandlerType>::value
     {
         return create_generic(reader, std::move(ir_unit_handler), std::move(query_handler));
@@ -182,18 +180,15 @@ private:
      *   - the IR stream's version is unsupported;
      *   - or the IR stream's user-defined metadata is not a JSON object.
      */
-    [[nodiscard]] static auto create_generic(
-            ReaderInterface& reader,
-            IrUnitHandlerType ir_unit_handler,
-            QueryHandlerType query_handler
-    ) -> ystdlib::error_handling::Result<Deserializer>;
+    [[nodiscard]] static auto create_generic(ReaderInterface& reader,
+                                             IrUnitHandlerType ir_unit_handler,
+                                             QueryHandlerType query_handler)
+            -> ystdlib::error_handling::Result<Deserializer>;
 
     // Constructor
-    Deserializer(
-            IrUnitHandlerType ir_unit_handler,
-            nlohmann::json metadata,
-            QueryHandlerType query_handler
-    )
+    Deserializer(IrUnitHandlerType ir_unit_handler,
+                 nlohmann::json metadata,
+                 QueryHandlerType query_handler)
             : m_metadata(std::move(metadata)),
               m_ir_unit_handler{std::move(ir_unit_handler)},
               m_query_handler{std::move(query_handler)} {}
@@ -227,18 +222,16 @@ template <IrUnitHandlerReq IrUnitHandler>
  * @return Forwards `Deserializer::create`'s return values.
  */
 template <IrUnitHandlerReq IrUnitHandler, search::QueryHandlerReq QueryHandlerType>
-[[nodiscard]] auto make_deserializer(
-        ReaderInterface& reader,
-        IrUnitHandler ir_unit_handler,
-        QueryHandlerType query_handler
-) -> ystdlib::error_handling::Result<Deserializer<IrUnitHandler, QueryHandlerType>>;
+[[nodiscard]] auto make_deserializer(ReaderInterface& reader,
+                                     IrUnitHandler ir_unit_handler,
+                                     QueryHandlerType query_handler)
+        -> ystdlib::error_handling::Result<Deserializer<IrUnitHandler, QueryHandlerType>>;
 
 template <IrUnitHandlerReq IrUnitHandlerType, search::QueryHandlerReq QueryHandlerType>
 auto Deserializer<IrUnitHandlerType, QueryHandlerType>::create_generic(
         ReaderInterface& reader,
         IrUnitHandlerType ir_unit_handler,
-        QueryHandlerType query_handler
-) -> ystdlib::error_handling::Result<Deserializer> {
+        QueryHandlerType query_handler) -> ystdlib::error_handling::Result<Deserializer> {
     bool is_four_byte_encoded{};
     if (auto const err{get_encoding_type(reader, is_four_byte_encoded)};
         IRErrorCode::IRErrorCode_Success != err)
@@ -279,17 +272,14 @@ auto Deserializer<IrUnitHandlerType, QueryHandlerType>::create_generic(
         return std::errc::protocol_not_supported;
     }
 
-    return Deserializer{
-            std::move(ir_unit_handler),
-            std::move(metadata_json),
-            std::move(query_handler)
-    };
+    return Deserializer{std::move(ir_unit_handler),
+                        std::move(metadata_json),
+                        std::move(query_handler)};
 }
 
 template <IrUnitHandlerReq IrUnitHandler, search::QueryHandlerReq QueryHandlerType>
 auto Deserializer<IrUnitHandler, QueryHandlerType>::deserialize_next_ir_unit(
-        ReaderInterface& reader
-) -> ystdlib::error_handling::Result<IrUnitType> {
+        ReaderInterface& reader) -> ystdlib::error_handling::Result<IrUnitType> {
     if (is_stream_completed()) {
         return std::errc::operation_not_permitted;
     }
@@ -307,13 +297,12 @@ auto Deserializer<IrUnitHandler, QueryHandlerType>::deserialize_next_ir_unit(
     auto const ir_unit_type{optional_ir_unit_type.value()};
     switch (ir_unit_type) {
         case IrUnitType::LogEvent: {
-            auto log_event{YSTDLIB_ERROR_HANDLING_TRYX(deserialize_ir_unit_kv_pair_log_event(
-                    reader,
-                    tag,
-                    m_auto_gen_keys_schema_tree,
-                    m_user_gen_keys_schema_tree,
-                    m_utc_offset
-            ))};
+            auto log_event{YSTDLIB_ERROR_HANDLING_TRYX(
+                    deserialize_ir_unit_kv_pair_log_event(reader,
+                                                          tag,
+                                                          m_auto_gen_keys_schema_tree,
+                                                          m_user_gen_keys_schema_tree,
+                                                          m_utc_offset))};
 
             auto const log_event_idx{m_next_log_event_idx};
             m_next_log_event_idx += 1;
@@ -321,16 +310,14 @@ auto Deserializer<IrUnitHandler, QueryHandlerType>::deserialize_next_ir_unit(
             if constexpr (search::IsNonEmptyQueryHandler<QueryHandlerType>::value) {
                 if (search::AstEvaluationResult::True
                     != YSTDLIB_ERROR_HANDLING_TRYX(
-                            m_query_handler.evaluate_kv_pair_log_event(log_event)
-                    ))
+                            m_query_handler.evaluate_kv_pair_log_event(log_event)))
                 {
                     break;
                 }
             }
 
             if (auto const err{
-                        m_ir_unit_handler.handle_log_event(std::move(log_event), log_event_idx)
-                };
+                        m_ir_unit_handler.handle_log_event(std::move(log_event), log_event_idx)};
                 IRErrorCode::IRErrorCode_Success != err)
             {
                 return ir_error_code_to_errc(err);
@@ -341,11 +328,9 @@ auto Deserializer<IrUnitHandler, QueryHandlerType>::deserialize_next_ir_unit(
         case IrUnitType::SchemaTreeNodeInsertion: {
             std::string key_name;
             auto const [is_auto_generated, node_locator]{YSTDLIB_ERROR_HANDLING_TRYX(
-                    deserialize_ir_unit_schema_tree_node_insertion(reader, tag, key_name)
-            )};
-            auto& schema_tree_to_insert{
-                    is_auto_generated ? m_auto_gen_keys_schema_tree : m_user_gen_keys_schema_tree
-            };
+                    deserialize_ir_unit_schema_tree_node_insertion(reader, tag, key_name))};
+            auto& schema_tree_to_insert{is_auto_generated ? m_auto_gen_keys_schema_tree
+                                                          : m_user_gen_keys_schema_tree};
 
             if (schema_tree_to_insert->has_node(node_locator)) {
                 return std::errc::protocol_error;
@@ -354,18 +339,16 @@ auto Deserializer<IrUnitHandler, QueryHandlerType>::deserialize_next_ir_unit(
             auto const node_id{schema_tree_to_insert->insert_node(node_locator)};
 
             if constexpr (search::IsNonEmptyQueryHandler<QueryHandlerType>::value) {
-                YSTDLIB_ERROR_HANDLING_TRYV(m_query_handler.update_partially_resolved_columns(
-                        is_auto_generated,
-                        node_locator,
-                        node_id
-                ));
+                YSTDLIB_ERROR_HANDLING_TRYV(
+                        m_query_handler.update_partially_resolved_columns(is_auto_generated,
+                                                                          node_locator,
+                                                                          node_id));
             }
 
-            if (auto const err{m_ir_unit_handler.handle_schema_tree_node_insertion(
-                        is_auto_generated,
-                        node_locator,
-                        schema_tree_to_insert
-                )};
+            if (auto const err{
+                        m_ir_unit_handler.handle_schema_tree_node_insertion(is_auto_generated,
+                                                                            node_locator,
+                                                                            schema_tree_to_insert)};
                 IRErrorCode::IRErrorCode_Success != err)
             {
                 return ir_error_code_to_errc(err);
@@ -375,11 +358,9 @@ auto Deserializer<IrUnitHandler, QueryHandlerType>::deserialize_next_ir_unit(
 
         case IrUnitType::UtcOffsetChange: {
             auto const new_utc_offset{
-                    YSTDLIB_ERROR_HANDLING_TRYX(deserialize_ir_unit_utc_offset_change(reader))
-            };
+                    YSTDLIB_ERROR_HANDLING_TRYX(deserialize_ir_unit_utc_offset_change(reader))};
             if (auto const err{
-                        m_ir_unit_handler.handle_utc_offset_change(m_utc_offset, new_utc_offset)
-                };
+                        m_ir_unit_handler.handle_utc_offset_change(m_utc_offset, new_utc_offset)};
                 IRErrorCode::IRErrorCode_Success != err)
             {
                 return ir_error_code_to_errc(err);
@@ -413,16 +394,13 @@ template <IrUnitHandlerReq IrUnitHandlerType>
 }
 
 template <IrUnitHandlerReq IrUnitHandlerType, search::QueryHandlerReq QueryHandlerType>
-[[nodiscard]] auto make_deserializer(
-        ReaderInterface& reader,
-        IrUnitHandlerType ir_unit_handler,
-        QueryHandlerType query_handler
-) -> ystdlib::error_handling::Result<Deserializer<IrUnitHandlerType, QueryHandlerType>> {
-    return Deserializer<IrUnitHandlerType, QueryHandlerType>::create(
-            reader,
-            std::move(ir_unit_handler),
-            std::move(query_handler)
-    );
+[[nodiscard]] auto make_deserializer(ReaderInterface& reader,
+                                     IrUnitHandlerType ir_unit_handler,
+                                     QueryHandlerType query_handler)
+        -> ystdlib::error_handling::Result<Deserializer<IrUnitHandlerType, QueryHandlerType>> {
+    return Deserializer<IrUnitHandlerType, QueryHandlerType>::create(reader,
+                                                                     std::move(ir_unit_handler),
+                                                                     std::move(query_handler));
 }
 }  // namespace clp::ffi::ir_stream
 

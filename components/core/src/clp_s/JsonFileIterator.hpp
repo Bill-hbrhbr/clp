@@ -21,10 +21,9 @@ public:
      * @param max_document_size the maximum allowed size of a single document
      * @param buf_size the initial buffer size
      */
-    explicit JsonFileIterator(
-            clp::ReaderInterface& reader,
-            size_t max_document_size,
-            size_t buf_size = 1024 * 1024 /* 1 MiB default */
+    explicit JsonFileIterator(clp::ReaderInterface& reader,
+                              size_t max_document_size,
+                              size_t buf_size = 1024 * 1024 /* 1 MiB default */
     );
     ~JsonFileIterator();
 

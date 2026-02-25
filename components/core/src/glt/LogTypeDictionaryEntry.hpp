@@ -114,8 +114,9 @@ public:
      * @param begin_pos Start of the constant in value_containing_constant
      * @param length
      */
-    void
-    add_constant(std::string const& value_containing_constant, size_t begin_pos, size_t length);
+    void add_constant(std::string const& value_containing_constant,
+                      size_t begin_pos,
+                      size_t length);
     /**
      * Adds an int variable placeholder
      */
@@ -144,12 +145,10 @@ public:
      * @param var
      * @return true if another variable was found, false otherwise
      */
-    bool parse_next_var(
-            std::string const& msg,
-            size_t& var_begin_pos,
-            size_t& var_end_pos,
-            std::string& var
-    );
+    bool parse_next_var(std::string const& msg,
+                        size_t& var_begin_pos,
+                        size_t& var_end_pos,
+                        std::string& var);
 
     /**
      * Reserves space for a constant of the given length

@@ -31,8 +31,9 @@ public:
      * - Forwards `refill_buffer()`'s return values.
      * - Forwards `LogSerializer::add_message()`'s return values.
      */
-    [[nodiscard]] auto
-    convert_file(clp_s::Path const& path, clp::ReaderInterface* reader, std::string_view output_dir)
+    [[nodiscard]] auto convert_file(clp_s::Path const& path,
+                                    clp::ReaderInterface* reader,
+                                    std::string_view output_dir)
             -> ystdlib::error_handling::Result<void>;
 
 private:

@@ -49,11 +49,9 @@ public:
      * @param dictionary_path
      * @param segment_index_path
      */
-    void open(
-            std::string const& dictionary_path,
-            std::string const& segment_index_path,
-            DictionaryIdType max_id
-    );
+    void open(std::string const& dictionary_path,
+              std::string const& segment_index_path,
+              DictionaryIdType max_id);
     /**
      * Closes the dictionary
      */
@@ -115,11 +113,9 @@ protected:
 };
 
 template <typename DictionaryIdType, typename EntryType>
-void DictionaryWriter<DictionaryIdType, EntryType>::open(
-        std::string const& dictionary_path,
-        std::string const& segment_index_path,
-        DictionaryIdType max_id
-) {
+void DictionaryWriter<DictionaryIdType, EntryType>::open(std::string const& dictionary_path,
+                                                         std::string const& segment_index_path,
+                                                         DictionaryIdType max_id) {
     if (m_is_open) {
         throw OperationFailed(ErrorCode_NotReady, __FILENAME__, __LINE__);
     }
@@ -183,8 +179,7 @@ void DictionaryWriter<DictionaryIdType, EntryType>::write_header_and_flush_to_di
 template <typename DictionaryIdType, typename EntryType>
 void DictionaryWriter<DictionaryIdType, EntryType>::index_segment(
         segment_id_t segment_id,
-        ArrayBackedPosIntSet<DictionaryIdType> const& ids
-) {
+        ArrayBackedPosIntSet<DictionaryIdType> const& ids) {
     if (false == m_is_open) {
         throw OperationFailed(ErrorCode_NotInit, __FILENAME__, __LINE__);
     }

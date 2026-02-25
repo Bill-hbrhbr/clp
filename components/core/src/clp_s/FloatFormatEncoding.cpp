@@ -75,9 +75,8 @@ auto trim_leading_zeros(std::string_view scientific_notation, size_t start, size
         return sci_str;
     }
     size_t actual_number_of_zeros_to_trim{0};
-    auto const limit{
-            num_exp_digits > sci_str.length() ? size_t{0} : (sci_str.length() - num_exp_digits)
-    };
+    auto const limit{num_exp_digits > sci_str.length() ? size_t{0}
+                                                       : (sci_str.length() - num_exp_digits)};
     for (size_t i{start}; i < limit; ++i) {
         if ('0' == sci_str[i]) {
             actual_number_of_zeros_to_trim++;
@@ -227,8 +226,7 @@ auto get_float_encoding(std::string_view float_str)
         // We don't support prefix zeroes of the form 0N.Y
         if (first_non_zero_frac_digit_pos + 1 < float_str.length()
             && std::isdigit(
-                    static_cast<unsigned char>(float_str[first_non_zero_frac_digit_pos + 1])
-            ))
+                    static_cast<unsigned char>(float_str[first_non_zero_frac_digit_pos + 1])))
         {
             return std::errc::protocol_not_supported;
         }
@@ -256,8 +254,7 @@ auto get_float_encoding(std::string_view float_str)
     }
 
     float_format_t const compressed_num_significant_digits{
-            static_cast<float_format_t>(num_significant_digits - 1ULL)
-    };
+            static_cast<float_format_t>(num_significant_digits - 1ULL)};
     format |= compressed_num_significant_digits << cNumSignificantDigitsPos;
     return format;
 }
@@ -294,11 +291,10 @@ auto restore_encoded_float(double value, float_format_t format)
             formatted_double_str
                     = trim_leading_zeros(formatted_double_str, exp_pos + 1, num_exp_digits);
         } else {
-            formatted_double_str.insert(
-                    exp_pos + 1,
-                    num_exp_digits - (formatted_double_str.length() - exp_pos - 1),
-                    '0'
-            );
+            formatted_double_str.insert(exp_pos + 1,
+                                        num_exp_digits
+                                                - (formatted_double_str.length() - exp_pos - 1),
+                                        '0');
         }
 
         return formatted_double_str;
@@ -322,11 +318,9 @@ auto restore_encoded_float(double value, float_format_t format)
         formatted_double_str
                 = trim_leading_zeros(formatted_double_str, exp_pos + 2, num_exp_digits);
     } else {
-        formatted_double_str.insert(
-                exp_pos + 2,
-                num_exp_digits - (formatted_double_str.length() - exp_pos - 2),
-                '0'
-        );
+        formatted_double_str.insert(exp_pos + 2,
+                                    num_exp_digits - (formatted_double_str.length() - exp_pos - 2),
+                                    '0');
     }
 
     return formatted_double_str;

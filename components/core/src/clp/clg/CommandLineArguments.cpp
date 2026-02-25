@@ -17,8 +17,8 @@ using std::string;
 using std::vector;
 
 namespace clp::clg {
-CommandLineArgumentsBase::ParsingResult
-CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
+CommandLineArgumentsBase::ParsingResult CommandLineArguments::parse_arguments(int argc,
+                                                                              char const* argv[]) {
     // Print out basic usage if user doesn't specify any options
     if (1 == argc) {
         print_basic_usage();
@@ -56,50 +56,39 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
 
     // Define input options
     po::options_description options_input("Input Options");
-    options_input.add_options()(
-            "file,f",
-            po::value<string>(&m_search_strings_file_path)->value_name("FILE"),
-            "Obtain wildcard strings from FILE, one per line"
-    );
+    options_input.add_options()("file,f",
+                                po::value<string>(&m_search_strings_file_path)->value_name("FILE"),
+                                "Obtain wildcard strings from FILE, one per line");
 
     // Define output options
     po::options_description options_output("Output Options");
     char output_method_input = 's';
-    options_output.add_options()(
-            "output-method",
-            po::value<char>(&output_method_input)
-                    ->value_name("CHAR")
-                    ->default_value(output_method_input),
-            "Use output method specified by CHAR (s - stdout, b - binary)"
-    );
+    options_output.add_options()("output-method",
+                                 po::value<char>(&output_method_input)
+                                         ->value_name("CHAR")
+                                         ->default_value(output_method_input),
+                                 "Use output method specified by CHAR (s - stdout, b - binary)");
 
     // Define match controls
     po::options_description options_match_control("Match Controls");
-    options_match_control.add_options()(
-            "tgt",
-            po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp >  TS ms"
-    )(
+    options_match_control.add_options()("tgt",
+                                        po::value<epochtime_t>()->value_name("TS"),
+                                        "Find messages with UNIX timestamp >  TS ms")(
             "tge",
             po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp >= TS ms"
-    )(
+            "Find messages with UNIX timestamp >= TS ms")(
             "teq",
             po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp == TS ms"
-    )(
+            "Find messages with UNIX timestamp == TS ms")(
             "tlt",
             po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp <  TS ms"
-    )(
+            "Find messages with UNIX timestamp <  TS ms")(
             "tle",
             po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp <= TS ms"
-    )(
+            "Find messages with UNIX timestamp <= TS ms")(
             "ignore-case,i",
             po::bool_switch(&m_ignore_case),
-            "Ignore case distinctions in both WILDCARD STRING and the input files"
-    );
+            "Ignore case distinctions in both WILDCARD STRING and the input files");
 
     // Define visible options
     po::options_description visible_options;
@@ -206,8 +195,7 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             if (m_search_string.empty() == false) {
                 throw invalid_argument(
                         "Wildcard strings cannot be specified both through the command line and a"
-                        " file."
-                );
+                        " file.");
             }
         } else if (m_search_string.empty()) {
             throw invalid_argument("Wildcard string not specified or empty.");
@@ -221,8 +209,7 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
                 > 0)
             {
                 throw invalid_argument(
-                        "--teq cannot be specified with any other timestamp filtering option."
-                );
+                        "--teq cannot be specified with any other timestamp filtering option.");
             }
 
             m_search_begin_ts = parsed_command_line_options["teq"].as<epochtime_t>();
@@ -256,8 +243,7 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
 
             if (m_search_begin_ts > m_search_end_ts) {
                 throw invalid_argument(
-                        "Timestamp range is invalid - begin timestamp is after end timestamp."
-                );
+                        "Timestamp range is invalid - begin timestamp is after end timestamp.");
             }
         }
 

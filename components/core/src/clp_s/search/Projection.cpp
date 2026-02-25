@@ -15,11 +15,9 @@ void Projection::add_column(std::shared_ptr<ast::ColumnDescriptor> column) {
     }
     if (false == m_allow_duplicate_columns
         && m_selected_columns.end()
-                   != std::find_if(
-                           m_selected_columns.begin(),
-                           m_selected_columns.end(),
-                           [&column](auto const& rhs) -> bool { return *column == *rhs; }
-                   ))
+                   != std::find_if(m_selected_columns.begin(),
+                                   m_selected_columns.end(),
+                                   [&column](auto const& rhs) -> bool { return *column == *rhs; }))
     {
         // no duplicate columns in projection
         throw OperationFailed(ErrorCodeBadParam, __FILE__, __LINE__);
@@ -33,10 +31,8 @@ void Projection::resolve_columns(std::shared_ptr<SchemaTree> tree) {
     }
 }
 
-void Projection::resolve_column(
-        std::shared_ptr<SchemaTree> tree,
-        std::shared_ptr<ast::ColumnDescriptor> column
-) {
+void Projection::resolve_column(std::shared_ptr<SchemaTree> tree,
+                                std::shared_ptr<ast::ColumnDescriptor> column) {
     /**
      * Ideally we would reuse the code from SchemaMatch for resolving columns, but unfortunately we
      * can not.

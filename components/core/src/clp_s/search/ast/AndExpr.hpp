@@ -40,12 +40,10 @@ public:
      * @param parent parent this expression is attached to
      * @return Newly created Or expression
      */
-    static std::shared_ptr<Expression> create(
-            std::shared_ptr<Expression>& op1,
-            std::shared_ptr<Expression>& op2,
-            bool inverted = false,
-            Expression* parent = nullptr
-    );
+    static std::shared_ptr<Expression> create(std::shared_ptr<Expression>& op1,
+                                              std::shared_ptr<Expression>& op2,
+                                              bool inverted = false,
+                                              Expression* parent = nullptr);
 
 private:
     // Constructor

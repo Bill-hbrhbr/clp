@@ -19,10 +19,8 @@ epochtime_t File::get_end_ts() const {
     return m_end_ts;
 }
 
-ErrorCode File::init(
-        LogTypeDictionaryReader const& archive_logtype_dict,
-        MetadataDB::FileIterator const& file_metadata_ix
-) {
+ErrorCode File::init(LogTypeDictionaryReader const& archive_logtype_dict,
+                     MetadataDB::FileIterator const& file_metadata_ix) {
     m_archive_logtype_dict = &archive_logtype_dict;
 
     // Populate metadata from database document
@@ -62,11 +60,9 @@ ErrorCode File::init(
         timestamp_format.assign(encoded_timestamp_patterns, begin_pos, end_pos - begin_pos);
         begin_pos = end_pos + 1;
 
-        m_timestamp_patterns.emplace_back(
-                std::piecewise_construct,
-                std::forward_as_tuple(msg_num),
-                forward_as_tuple(num_spaces_before_ts, timestamp_format)
-        );
+        m_timestamp_patterns.emplace_back(std::piecewise_construct,
+                                          std::forward_as_tuple(msg_num),
+                                          forward_as_tuple(num_spaces_before_ts, timestamp_format));
     }
 
     m_num_messages = file_metadata_ix.get_num_messages();
@@ -83,12 +79,10 @@ ErrorCode File::init(
     return ErrorCode_Success;
 }
 
-ErrorCode File::open_me(
-        LogTypeDictionaryReader const& archive_logtype_dict,
-        MetadataDB::FileIterator const& file_metadata_ix,
-        GLTSegment& segment,
-        Segment& message_order_table
-) {
+ErrorCode File::open_me(LogTypeDictionaryReader const& archive_logtype_dict,
+                        MetadataDB::FileIterator const& file_metadata_ix,
+                        GLTSegment& segment,
+                        Segment& message_order_table) {
     File::init(archive_logtype_dict, file_metadata_ix);
     m_segment_logtypes_decompressed_stream_pos = file_metadata_ix.get_segment_logtypes_pos();
     m_segment_offsets_decompressed_stream_pos = file_metadata_ix.get_segment_offset_pos();
@@ -108,22 +102,19 @@ ErrorCode File::open_me(
         }
 
         num_bytes_to_read = m_num_messages * sizeof(logtype_dictionary_id_t);
-        ErrorCode error_code = message_order_table.try_read(
-                m_segment_logtypes_decompressed_stream_pos,
-                reinterpret_cast<char*>(m_segment_logtypes.get()),
-                num_bytes_to_read
-        );
+        ErrorCode error_code
+                = message_order_table.try_read(m_segment_logtypes_decompressed_stream_pos,
+                                               reinterpret_cast<char*>(m_segment_logtypes.get()),
+                                               num_bytes_to_read);
         if (ErrorCode_Success != error_code) {
             close_me();
             return error_code;
         }
         m_logtypes = m_segment_logtypes.get();
         num_bytes_to_read = m_num_messages * sizeof(size_t);
-        error_code = message_order_table.try_read(
-                m_segment_offsets_decompressed_stream_pos,
-                reinterpret_cast<char*>(m_segment_offsets.get()),
-                num_bytes_to_read
-        );
+        error_code = message_order_table.try_read(m_segment_offsets_decompressed_stream_pos,
+                                                  reinterpret_cast<char*>(m_segment_offsets.get()),
+                                                  num_bytes_to_read);
         if (ErrorCode_Success != error_code) {
             close_me();
             return error_code;

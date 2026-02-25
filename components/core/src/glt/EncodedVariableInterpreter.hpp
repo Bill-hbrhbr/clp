@@ -53,20 +53,16 @@ public:
      * @param encoded_var
      * @return true if was successfully converted, false otherwise
      */
-    static bool convert_string_to_representable_integer_var(
-            std::string const& value,
-            encoded_variable_t& encoded_var
-    );
+    static bool convert_string_to_representable_integer_var(std::string const& value,
+                                                            encoded_variable_t& encoded_var);
     /**
      * Converts the given string into a representable float variable if possible
      * @param value
      * @param encoded_var
      * @return true if was successfully converted, false otherwise
      */
-    static bool convert_string_to_representable_float_var(
-            std::string const& value,
-            encoded_variable_t& encoded_var
-    );
+    static bool convert_string_to_representable_float_var(std::string const& value,
+                                                          encoded_variable_t& encoded_var);
     /**
      * Converts the given encoded float into a string
      * @param encoded_var
@@ -83,13 +79,11 @@ public:
      * @param encoded_vars
      * @param var_ids
      */
-    static void encode_and_add_to_dictionary(
-            std::string const& message,
-            LogTypeDictionaryEntry& logtype_dict_entry,
-            VariableDictionaryWriter& var_dict,
-            std::vector<encoded_variable_t>& encoded_vars,
-            std::vector<variable_dictionary_id_t>& var_ids
-    );
+    static void encode_and_add_to_dictionary(std::string const& message,
+                                             LogTypeDictionaryEntry& logtype_dict_entry,
+                                             VariableDictionaryWriter& var_dict,
+                                             std::vector<encoded_variable_t>& encoded_vars,
+                                             std::vector<variable_dictionary_id_t>& var_ids);
 
     /**
      * Encodes the given IR log event, constructing a logtype dictionary entry, and adding any
@@ -111,8 +105,7 @@ public:
             VariableDictionaryWriter& var_dict,
             std::vector<ir::eight_byte_encoded_variable_t>& encoded_vars,
             std::vector<variable_dictionary_id_t>& var_ids,
-            size_t& raw_num_bytes
-    );
+            size_t& raw_num_bytes);
 
     /**
      * Decodes all variables and decompresses them into a message
@@ -122,12 +115,10 @@ public:
      * @param decompressed_msg
      * @return true if successful, false otherwise
      */
-    static bool decode_variables_into_message(
-            LogTypeDictionaryEntry const& logtype_dict_entry,
-            VariableDictionaryReader const& var_dict,
-            std::vector<encoded_variable_t> const& encoded_vars,
-            std::string& decompressed_msg
-    );
+    static bool decode_variables_into_message(LogTypeDictionaryEntry const& logtype_dict_entry,
+                                              VariableDictionaryReader const& var_dict,
+                                              std::vector<encoded_variable_t> const& encoded_vars,
+                                              std::string& decompressed_msg);
 
     /**
      * Decodes all variables and decompresses them into a message
@@ -143,8 +134,7 @@ public:
             VariableDictionaryReader const& var_dict,
             std::vector<encoded_variable_t> const& encoded_vars,
             std::string& decompressed_msg,
-            size_t var_offset
-    );
+            size_t var_offset);
     /**
      * Encodes a string-form variable, and if it is dictionary variable, searches for its ID in the
      * given variable dictionary
@@ -157,13 +147,11 @@ public:
      * dictionary
      * @return false otherwise
      */
-    static bool encode_and_search_dictionary(
-            std::string const& var_str,
-            VariableDictionaryReader const& var_dict,
-            bool ignore_case,
-            std::string& logtype,
-            SubQuery& sub_query
-    );
+    static bool encode_and_search_dictionary(std::string const& var_str,
+                                             VariableDictionaryReader const& var_dict,
+                                             bool ignore_case,
+                                             std::string& logtype,
+                                             SubQuery& sub_query);
     /**
      * Search for the given string-form variable in the variable dictionary, encode any matches, and
      * add them to the given sub-query
@@ -177,8 +165,7 @@ public:
             std::string const& var_wildcard_str,
             VariableDictionaryReader const& var_dict,
             bool ignore_case,
-            SubQuery& sub_query
-    );
+            SubQuery& sub_query);
 
 private:
     /**
@@ -191,12 +178,10 @@ private:
      * variable)
      * @return The encoded variable
      */
-    static encoded_variable_t encode_var(
-            std::string const& var,
-            LogTypeDictionaryEntry& logtype_dict_entry,
-            VariableDictionaryWriter& var_dict,
-            std::vector<variable_dictionary_id_t>& var_ids
-    );
+    static encoded_variable_t encode_var(std::string const& var,
+                                         LogTypeDictionaryEntry& logtype_dict_entry,
+                                         VariableDictionaryWriter& var_dict,
+                                         std::vector<variable_dictionary_id_t>& var_ids);
 
     /**
      * Adds the given string to the variable dictionary and adds a corresponding placeholder to
@@ -207,12 +192,10 @@ private:
      * @param var_ids A container to add the dictionary ID to
      * @return The dictionary ID
      */
-    static variable_dictionary_id_t add_dict_var(
-            std::string const& var,
-            LogTypeDictionaryEntry& logtype_dict_entry,
-            VariableDictionaryWriter& var_dict,
-            std::vector<variable_dictionary_id_t>& var_ids
-    );
+    static variable_dictionary_id_t add_dict_var(std::string const& var,
+                                                 LogTypeDictionaryEntry& logtype_dict_entry,
+                                                 VariableDictionaryWriter& var_dict,
+                                                 std::vector<variable_dictionary_id_t>& var_ids);
 };
 }  // namespace glt
 

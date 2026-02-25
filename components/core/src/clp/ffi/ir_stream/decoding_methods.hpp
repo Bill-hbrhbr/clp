@@ -34,12 +34,10 @@ enum class IRProtocolErrorCode : uint8_t {
 class DecodingException : public TraceableException {
 public:
     // Constructors
-    DecodingException(
-            ErrorCode error_code,
-            char const* const filename,
-            int line_number,
-            std::string message
-    )
+    DecodingException(ErrorCode error_code,
+                      char const* const filename,
+                      int line_number,
+                      std::string message)
             : TraceableException(error_code, filename, line_number),
               m_message(std::move(message)) {}
 
@@ -84,14 +82,12 @@ IRErrorCode get_encoding_type(ReaderInterface& reader, bool& is_four_bytes_encod
  * @return IRErrorCode_Incomplete_IR if reader doesn't contain enough data
  */
 template <typename encoded_variable_t>
-auto deserialize_log_event(
-        ReaderInterface& reader,
-        encoded_tag_t encoded_tag,
-        std::string& logtype,
-        std::vector<encoded_variable_t>& encoded_vars,
-        std::vector<std::string>& dict_vars,
-        ir::epoch_time_ms_t& timestamp_or_timestamp_delta
-) -> IRErrorCode;
+auto deserialize_log_event(ReaderInterface& reader,
+                           encoded_tag_t encoded_tag,
+                           std::string& logtype,
+                           std::vector<encoded_variable_t>& encoded_vars,
+                           std::vector<std::string>& dict_vars,
+                           ir::epoch_time_ms_t& timestamp_or_timestamp_delta) -> IRErrorCode;
 
 /**
  * Deserializes an encoded text AST from the given stream
@@ -106,13 +102,11 @@ auto deserialize_log_event(
  * @return IRErrorCode_Incomplete_IR if `reader` doesn't contain enough data
  */
 template <typename encoded_variable_t>
-auto deserialize_encoded_text_ast(
-        ReaderInterface& reader,
-        encoded_tag_t encoded_tag,
-        std::string& logtype,
-        std::vector<encoded_variable_t>& encoded_vars,
-        std::vector<std::string>& dict_vars
-) -> IRErrorCode;
+auto deserialize_encoded_text_ast(ReaderInterface& reader,
+                                  encoded_tag_t encoded_tag,
+                                  std::string& logtype,
+                                  std::vector<encoded_variable_t>& encoded_vars,
+                                  std::vector<std::string>& dict_vars) -> IRErrorCode;
 
 /**
  * Deserializes an encoded text AST from the given reader.
@@ -152,23 +146,19 @@ template <ir::EncodedVariableTypeReq encoded_variable_t>
  * @param dict_var_handler
  * @throw DecodingException if the message can not be decoded properly
  */
-template <
-        bool unescape_logtype,
-        typename encoded_variable_t,
-        typename ConstantHandler,
-        typename EncodedIntHandler,
-        typename EncodedFloatHandler,
-        typename DictVarHandler
->
-void generic_decode_message(
-        std::string const& logtype,
-        std::vector<encoded_variable_t> const& encoded_vars,
-        std::vector<std::string> const& dict_vars,
-        ConstantHandler constant_handler,
-        EncodedIntHandler encoded_int_handler,
-        EncodedFloatHandler encoded_float_handler,
-        DictVarHandler dict_var_handler
-);
+template <bool unescape_logtype,
+          typename encoded_variable_t,
+          typename ConstantHandler,
+          typename EncodedIntHandler,
+          typename EncodedFloatHandler,
+          typename DictVarHandler>
+void generic_decode_message(std::string const& logtype,
+                            std::vector<encoded_variable_t> const& encoded_vars,
+                            std::vector<std::string> const& dict_vars,
+                            ConstantHandler constant_handler,
+                            EncodedIntHandler encoded_int_handler,
+                            EncodedFloatHandler encoded_float_handler,
+                            DictVarHandler dict_var_handler);
 
 /**
  * Deserializes the preamble for an IR stream.
@@ -180,12 +170,10 @@ void generic_decode_message(
  * @return IRErrorCode_Corrupted_IR if reader contains invalid IR
  * @return IRErrorCode_Incomplete_IR if reader doesn't contain enough data to deserialize
  */
-IRErrorCode deserialize_preamble(
-        ReaderInterface& reader,
-        encoded_tag_t& metadata_type,
-        size_t& metadata_pos,
-        uint16_t& metadata_size
-);
+IRErrorCode deserialize_preamble(ReaderInterface& reader,
+                                 encoded_tag_t& metadata_type,
+                                 size_t& metadata_pos,
+                                 uint16_t& metadata_size);
 
 /**
  * Deserializes the preamble for an IR stream.
@@ -196,11 +184,9 @@ IRErrorCode deserialize_preamble(
  * @return IRErrorCode_Corrupted_IR if reader contains invalid IR
  * @return IRErrorCode_Incomplete_IR if reader doesn't contain enough data to deserialize
  */
-IRErrorCode deserialize_preamble(
-        ReaderInterface& reader,
-        encoded_tag_t& metadata_type,
-        std::vector<int8_t>& metadata
-);
+IRErrorCode deserialize_preamble(ReaderInterface& reader,
+                                 encoded_tag_t& metadata_type,
+                                 std::vector<int8_t>& metadata);
 
 /**
  * Deserializes a UTC offset change packet.
@@ -240,12 +226,10 @@ namespace eight_byte_encoding {
  * @return ErrorCode_Decode_Error if the log event cannot be properly deserialized
  * @return ErrorCode_Incomplete_IR if reader doesn't contain enough data to deserialize
  */
-IRErrorCode deserialize_log_event(
-        ReaderInterface& reader,
-        encoded_tag_t encoded_tag,
-        std::string& message,
-        ir::epoch_time_ms_t& timestamp
-);
+IRErrorCode deserialize_log_event(ReaderInterface& reader,
+                                  encoded_tag_t encoded_tag,
+                                  std::string& message,
+                                  ir::epoch_time_ms_t& timestamp);
 }  // namespace eight_byte_encoding
 
 namespace four_byte_encoding {
@@ -260,12 +244,10 @@ namespace four_byte_encoding {
  * @return ErrorCode_Decode_Error if the log event cannot be properly deserialized
  * @return ErrorCode_Incomplete_IR if reader doesn't contain enough data to deserialize
  */
-IRErrorCode deserialize_log_event(
-        ReaderInterface& reader,
-        encoded_tag_t encoded_tag,
-        std::string& message,
-        ir::epoch_time_ms_t& timestamp_delta
-);
+IRErrorCode deserialize_log_event(ReaderInterface& reader,
+                                  encoded_tag_t encoded_tag,
+                                  std::string& message,
+                                  ir::epoch_time_ms_t& timestamp_delta);
 }  // namespace four_byte_encoding
 }  // namespace clp::ffi::ir_stream
 

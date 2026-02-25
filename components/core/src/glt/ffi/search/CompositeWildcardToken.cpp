@@ -15,11 +15,9 @@ static auto TokenGetBeginPos = [](auto const& token) { return token.get_begin_po
 static auto TokenGetEndPos = [](auto const& token) { return token.get_end_pos(); };
 
 template <typename encoded_variable_t>
-CompositeWildcardToken<encoded_variable_t>::CompositeWildcardToken(
-        string_view query,
-        size_t begin_pos,
-        size_t end_pos
-)
+CompositeWildcardToken<encoded_variable_t>::CompositeWildcardToken(string_view query,
+                                                                   size_t begin_pos,
+                                                                   size_t end_pos)
         : QueryToken(query, begin_pos, end_pos) {
     // Find wildcards
     bool is_escaped = false;
@@ -45,8 +43,7 @@ template <typename encoded_variable_t>
 void CompositeWildcardToken<encoded_variable_t>::add_to_query(
         string& logtype_query,
         vector<variant<ExactVariableToken<encoded_variable_t>, WildcardToken<encoded_variable_t>>>&
-                variable_tokens
-) const {
+                variable_tokens) const {
     // We need to handle '*' carefully when building the logtype query since we may have a token
     // like "a1*b2" with interpretation ["a1*", "*b2"]. In this case, we want to make sure the
     // logtype query only ends up with one '*' rather than one for the suffix of "a1*" and one for
@@ -62,24 +59,20 @@ void CompositeWildcardToken<encoded_variable_t>::add_to_query(
         if (begin_pos > constant_begin_pos) {
             logtype_query.append(m_query, constant_begin_pos, begin_pos - constant_begin_pos);
         }
-        std::visit(
-                overloaded{
-                        [&logtype_query, &variable_tokens](  // clang-format off
+        std::visit(overloaded{[&logtype_query, &variable_tokens](  // clang-format off
                                 ExactVariableToken<encoded_variable_t> const& exact_var
                         ) {  // clang-format on
-                            exact_var.add_to_logtype_query(logtype_query);
-                            variable_tokens.emplace_back(exact_var);
-                        },
-                        [&logtype_query, &variable_tokens](  // clang-format off
+                                  exact_var.add_to_logtype_query(logtype_query);
+                                  variable_tokens.emplace_back(exact_var);
+                              },
+                              [&logtype_query, &variable_tokens](  // clang-format off
                                 WildcardToken<encoded_variable_t> const& wildcard_var
                         ) {  // clang-format on
-                            if (wildcard_var.add_to_logtype_query(logtype_query)) {
-                                variable_tokens.emplace_back(wildcard_var);
-                            }
-                        }
-                },
-                var
-        );
+                                  if (wildcard_var.add_to_logtype_query(logtype_query)) {
+                                      variable_tokens.emplace_back(wildcard_var);
+                                  }
+                              }},
+                   var);
         constant_begin_pos = std::visit(TokenGetEndPos, var);
     }
     // Add the remainder
@@ -217,12 +210,10 @@ void CompositeWildcardToken<encoded_variable_t>::tokenize_into_wildcard_variable
     if (nullptr == last_wildcard) {
         // NOTE: Since the token contains a wildcard (this is the CompositeWildcardToken class),
         // there's no way this could be an ExactVariableToken
-        m_variables.emplace_back(
-                std::in_place_type<WildcardToken<encoded_variable_t>>,
-                m_query,
-                m_begin_pos,
-                m_end_pos
-        );
+        m_variables.emplace_back(std::in_place_type<WildcardToken<encoded_variable_t>>,
+                                 m_query,
+                                 m_begin_pos,
+                                 m_end_pos);
     } else if (last_wildcard->get_pos_in_query() < m_end_pos - 1) {
         if (WildcardType::ZeroOrMoreChars == last_wildcard->get_type()) {
             // Include the wildcard in the token
@@ -239,27 +230,21 @@ void CompositeWildcardToken<encoded_variable_t>::tokenize_into_wildcard_variable
 }
 
 template <typename encoded_variable_t>
-void CompositeWildcardToken<encoded_variable_t>::try_add_wildcard_variable(
-        size_t begin_pos,
-        size_t end_pos,
-        bool wildcard_in_token
-) {
+void CompositeWildcardToken<encoded_variable_t>::try_add_wildcard_variable(size_t begin_pos,
+                                                                           size_t end_pos,
+                                                                           bool wildcard_in_token) {
     if (wildcard_in_token) {
-        m_variables.emplace_back(
-                std::in_place_type<WildcardToken<encoded_variable_t>>,
-                m_query,
-                begin_pos,
-                end_pos
-        );
+        m_variables.emplace_back(std::in_place_type<WildcardToken<encoded_variable_t>>,
+                                 m_query,
+                                 begin_pos,
+                                 end_pos);
     } else {
         string_view var(m_query.cbegin() + begin_pos, end_pos - begin_pos);
         if (ir::is_var(var)) {
-            m_variables.emplace_back(
-                    std::in_place_type<ExactVariableToken<encoded_variable_t>>,
-                    m_query,
-                    begin_pos,
-                    end_pos
-            );
+            m_variables.emplace_back(std::in_place_type<ExactVariableToken<encoded_variable_t>>,
+                                     m_query,
+                                     begin_pos,
+                                     end_pos);
         }
     }
 }

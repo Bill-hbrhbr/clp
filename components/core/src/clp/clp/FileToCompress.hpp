@@ -12,11 +12,9 @@ namespace clp::clp {
 class FileToCompress {
 public:
     // Constructors
-    FileToCompress(
-            std::string const& path,
-            std::string const& path_for_compression,
-            group_id_t group_id
-    )
+    FileToCompress(std::string const& path,
+                   std::string const& path_for_compression,
+                   group_id_t group_id)
             : m_path(path),
               m_path_for_compression(path_for_compression),
               m_group_id(group_id) {}

@@ -91,13 +91,11 @@ public:
      * @param password
      * @param database
      */
-    void open(
-            std::string const& host,
-            int port,
-            std::string const& username,
-            std::string const& password,
-            std::string const& database
-    );
+    void open(std::string const& host,
+              int port,
+              std::string const& username,
+              std::string const& password,
+              std::string const& database);
     /**
      * Closes the connection to the database server
      */

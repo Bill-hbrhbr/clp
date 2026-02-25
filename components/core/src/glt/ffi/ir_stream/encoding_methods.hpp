@@ -17,12 +17,10 @@ namespace eight_byte_encoding {
  * @param ir_buf
  * @return true on success, false otherwise
  */
-bool serialize_preamble(
-        std::string_view timestamp_pattern,
-        std::string_view timestamp_pattern_syntax,
-        std::string_view time_zone_id,
-        std::vector<int8_t>& ir_buf
-);
+bool serialize_preamble(std::string_view timestamp_pattern,
+                        std::string_view timestamp_pattern_syntax,
+                        std::string_view time_zone_id,
+                        std::vector<int8_t>& ir_buf);
 
 /**
  * Serializes the given log event into the eight-byte encoding IR stream
@@ -32,12 +30,10 @@ bool serialize_preamble(
  * @param ir_buf
  * @return true on success, false otherwise
  */
-bool serialize_log_event(
-        ir::epoch_time_ms_t timestamp,
-        std::string_view message,
-        std::string& logtype,
-        std::vector<int8_t>& ir_buf
-);
+bool serialize_log_event(ir::epoch_time_ms_t timestamp,
+                         std::string_view message,
+                         std::string& logtype,
+                         std::vector<int8_t>& ir_buf);
 }  // namespace eight_byte_encoding
 
 namespace four_byte_encoding {
@@ -50,13 +46,11 @@ namespace four_byte_encoding {
  * @param ir_buf
  * @return true on success, false otherwise
  */
-bool serialize_preamble(
-        std::string_view timestamp_pattern,
-        std::string_view timestamp_pattern_syntax,
-        std::string_view time_zone_id,
-        ir::epoch_time_ms_t reference_timestamp,
-        std::vector<int8_t>& ir_buf
-);
+bool serialize_preamble(std::string_view timestamp_pattern,
+                        std::string_view timestamp_pattern_syntax,
+                        std::string_view time_zone_id,
+                        ir::epoch_time_ms_t reference_timestamp,
+                        std::vector<int8_t>& ir_buf);
 
 /**
  * Serializes the given log event into the four-byte encoding IR stream
@@ -66,12 +60,10 @@ bool serialize_preamble(
  * @param ir_buf
  * @return true on success, false otherwise
  */
-bool serialize_log_event(
-        ir::epoch_time_ms_t timestamp_delta,
-        std::string_view message,
-        std::string& logtype,
-        std::vector<int8_t>& ir_buf
-);
+bool serialize_log_event(ir::epoch_time_ms_t timestamp_delta,
+                         std::string_view message,
+                         std::string& logtype,
+                         std::vector<int8_t>& ir_buf);
 
 /**
  * Serializes the given message into the four-byte encoding IR stream

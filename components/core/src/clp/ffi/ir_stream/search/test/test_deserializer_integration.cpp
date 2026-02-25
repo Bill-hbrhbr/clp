@@ -42,25 +42,23 @@ using JsonPair = std::pair<nlohmann::json, nlohmann::json>;
  */
 class IrUnitHandler {
 public:
-    [[nodiscard]] auto
-    handle_log_event(KeyValuePairLogEvent&& log_event, [[maybe_unused]] size_t log_event_idx)
-            -> IRErrorCode {
+    [[nodiscard]] auto handle_log_event(KeyValuePairLogEvent&& log_event,
+                                        [[maybe_unused]] size_t log_event_idx) -> IRErrorCode {
         m_deserialized_log_events.emplace_back(std::move(log_event));
         return IRErrorCode::IRErrorCode_Success;
     }
 
-    [[nodiscard]] static auto handle_utc_offset_change(
-            [[maybe_unused]] UtcOffset utc_offset_old,
-            [[maybe_unused]] UtcOffset utc_offset_new
-    ) -> IRErrorCode {
+    [[nodiscard]] static auto handle_utc_offset_change([[maybe_unused]] UtcOffset utc_offset_old,
+                                                       [[maybe_unused]] UtcOffset utc_offset_new)
+            -> IRErrorCode {
         return IRErrorCode::IRErrorCode_Decode_Error;
     }
 
     [[nodiscard]] static auto handle_schema_tree_node_insertion(
             [[maybe_unused]] bool is_auto_generated,
             [[maybe_unused]] clp::ffi::SchemaTree::NodeLocator schema_tree_node_locator,
-            [[maybe_unused]] std::shared_ptr<clp::ffi::SchemaTree const> const& schema_tree
-    ) -> IRErrorCode {
+            [[maybe_unused]] std::shared_ptr<clp::ffi::SchemaTree const> const& schema_tree)
+            -> IRErrorCode {
         return IRErrorCode::IRErrorCode_Success;
     }
 
@@ -91,8 +89,7 @@ private:
  */
 template <typename encoded_variable_t>
 [[nodiscard]] auto serialize_json_pairs_into_kv_pair_ir_stream(
-        std::vector<JsonPair> const& json_pairs
-) -> std::vector<int8_t>;
+        std::vector<JsonPair> const& json_pairs) -> std::vector<int8_t>;
 
 /**
  * Serializes a vector of JSON object pairs into a string, where each pair represents the
@@ -110,11 +107,9 @@ auto serialize_json_pairs_into_kv_pair_ir_stream(std::vector<JsonPair> const& js
     REQUIRE_FALSE(serializer_result.has_error());
     auto& serializer{serializer_result.value()};
     for (auto const& [auto_gen_kv_pairs, user_gen_kv_pairs] : json_pairs) {
-        REQUIRE(unpack_and_serialize_msgpack_bytes(
-                nlohmann::json::to_msgpack(auto_gen_kv_pairs),
-                nlohmann::json::to_msgpack(user_gen_kv_pairs),
-                serializer
-        ));
+        REQUIRE(unpack_and_serialize_msgpack_bytes(nlohmann::json::to_msgpack(auto_gen_kv_pairs),
+                                                   nlohmann::json::to_msgpack(user_gen_kv_pairs),
+                                                   serializer));
     }
     auto const ir_buf_view{serializer.get_ir_buf_view()};
     std::vector<int8_t> ir_buf{ir_buf_view.begin(), ir_buf_view.end()};
@@ -125,22 +120,18 @@ auto serialize_json_pairs_into_kv_pair_ir_stream(std::vector<JsonPair> const& js
 auto serialize_json_pairs_to_str(std::vector<JsonPair> const& json_pairs) -> std::string {
     std::string serialized_json_pairs;
     for (auto const& [auto_gen, user_gen] : json_pairs) {
-        serialized_json_pairs += fmt::format(
-                "auto-gen-kv-pairs:{} | user-gen-kv-pairs:{}\n",
-                auto_gen.dump(),
-                user_gen.dump()
-        );
+        serialized_json_pairs += fmt::format("auto-gen-kv-pairs:{} | user-gen-kv-pairs:{}\n",
+                                             auto_gen.dump(),
+                                             user_gen.dump());
     }
     return serialized_json_pairs;
 }
 }  // namespace
 
-TEMPLATE_TEST_CASE(
-        "deserialization_kv_ir_stream_with_query",
-        "[ffi][ir_stream][search][QueryHandler]",
-        ir::four_byte_encoded_variable_t,
-        ir::eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("deserialization_kv_ir_stream_with_query",
+                   "[ffi][ir_stream][search][QueryHandler]",
+                   ir::four_byte_encoded_variable_t,
+                   ir::eight_byte_encoded_variable_t) {
     constexpr std::string_view cIntKey{"int_key"};
     constexpr std::string_view cStrKey{"str_key"};
     constexpr std::string_view cObjKey{"obj_key"};
@@ -153,8 +144,7 @@ TEMPLATE_TEST_CASE(
     nlohmann::json const base_obj_1 = {
             {cIntKey, cIntBase + 1},
             {cStrKey,
-             fmt::format("This is a {} ClpStr; And it contains a var={}", cTestSubStr, cIntBase)}
-    };
+             fmt::format("This is a {} ClpStr; And it contains a var={}", cTestSubStr, cIntBase)}};
     nlohmann::json const nested_obj_0 = {{cObjKey, base_obj_0}};
     nlohmann::json const nested_obj_1 = {{cObjKey, base_obj_1}};
 
@@ -163,114 +153,78 @@ TEMPLATE_TEST_CASE(
     JsonPair const json_pair_2{nested_obj_0, nested_obj_1};
     JsonPair const json_pair_3{nested_obj_1, nested_obj_0};
 
-    std::vector<JsonPair> const
-            json_pairs_to_serialize{json_pair_0, json_pair_1, json_pair_2, json_pair_3};
+    std::vector<JsonPair> const json_pairs_to_serialize{json_pair_0,
+                                                        json_pair_1,
+                                                        json_pair_2,
+                                                        json_pair_3};
 
     auto const ir_stream_bytes{
-            serialize_json_pairs_into_kv_pair_ir_stream<TestType>(json_pairs_to_serialize)
-    };
+            serialize_json_pairs_into_kv_pair_ir_stream<TestType>(json_pairs_to_serialize)};
     CAPTURE(ir_stream_bytes.size());
 
     auto const wildcard_str_query{fmt::format("*{}*", cTestSubStr)};
     auto const [kql_query_str, expected_json_pairs] = GENERATE_COPY(
-            std::make_pair(
-                    fmt::format("{}: {}", cStrKey, wildcard_str_query),
-                    std::vector<JsonPair>{json_pair_0, json_pair_1}
-            ),
-            std::make_pair(
-                    fmt::format("*.{}.*: {}", cStrKey, wildcard_str_query),
-                    json_pairs_to_serialize
-            ),
-            std::make_pair(
-                    fmt::format("*.{}.*: {}", cObjKey, wildcard_str_query),
-                    std::vector<JsonPair>{json_pair_2, json_pair_3}
-            ),
-            std::make_pair(
-                    fmt::format("NOT *.{}.*: {}", cObjKey, wildcard_str_query),
-                    std::vector<JsonPair>{}
-            ),
-            std::make_pair(
-                    fmt::format("{} >= {}", cIntKey, cIntBase),
-                    std::vector<JsonPair>{json_pair_0}
-            ),
-            std::make_pair(
-                    fmt::format("*.{} >= {}", cIntKey, cIntBase),
-                    std::vector<JsonPair>{
-                            json_pair_0,
-                            json_pair_2,
-                    }
-            ),
-            std::make_pair(
-                    fmt::format("{} <= {}", cIntKey, cIntBase),
-                    std::vector<JsonPair>{json_pair_1}
-            ),
-            std::make_pair(
-                    fmt::format("*.{} <= {}", cIntKey, cIntBase),
-                    std::vector<JsonPair>{json_pair_1, json_pair_3}
-            ),
+            std::make_pair(fmt::format("{}: {}", cStrKey, wildcard_str_query),
+                           std::vector<JsonPair>{json_pair_0, json_pair_1}),
+            std::make_pair(fmt::format("*.{}.*: {}", cStrKey, wildcard_str_query),
+                           json_pairs_to_serialize),
+            std::make_pair(fmt::format("*.{}.*: {}", cObjKey, wildcard_str_query),
+                           std::vector<JsonPair>{json_pair_2, json_pair_3}),
+            std::make_pair(fmt::format("NOT *.{}.*: {}", cObjKey, wildcard_str_query),
+                           std::vector<JsonPair>{}),
+            std::make_pair(fmt::format("{} >= {}", cIntKey, cIntBase),
+                           std::vector<JsonPair>{json_pair_0}),
+            std::make_pair(fmt::format("*.{} >= {}", cIntKey, cIntBase),
+                           std::vector<JsonPair>{
+                                   json_pair_0,
+                                   json_pair_2,
+                           }),
+            std::make_pair(fmt::format("{} <= {}", cIntKey, cIntBase),
+                           std::vector<JsonPair>{json_pair_1}),
+            std::make_pair(fmt::format("*.{} <= {}", cIntKey, cIntBase),
+                           std::vector<JsonPair>{json_pair_1, json_pair_3}),
             std::make_pair(
                     fmt::format("@*.{} <= {} AND *.{} >= {}", cIntKey, cIntBase, cIntKey, cIntBase),
-                    std::vector<JsonPair>{json_pair_0, json_pair_2}
-            ),
+                    std::vector<JsonPair>{json_pair_0, json_pair_2}),
             std::make_pair(
                     fmt::format("@*.{} >= {} AND *.{} <= {}", cIntKey, cIntBase, cIntKey, cIntBase),
-                    std::vector<JsonPair>{json_pair_1, json_pair_3}
-            ),
+                    std::vector<JsonPair>{json_pair_1, json_pair_3}),
             std::make_pair(
                     fmt::format("@*.{} > {} OR *.{} > {}", cIntKey, cIntBase, cIntKey, cIntBase),
-                    json_pairs_to_serialize
-            ),
+                    json_pairs_to_serialize),
             std::make_pair(
                     fmt::format("@*.{} < {} OR *.{} < {}", cIntKey, cIntBase, cIntKey, cIntBase),
-                    json_pairs_to_serialize
-            ),
+                    json_pairs_to_serialize),
             std::make_pair(
                     fmt::format("@*.{} > {} AND *.{} > {}", cIntKey, cIntBase, cIntKey, cIntBase),
-                    std::vector<JsonPair>{}
-            ),
-            std::make_pair(
-                    fmt::format(
-                            "@*.{} < {} AND NOT *.{} < {}",
-                            cIntKey,
-                            cIntBase,
-                            cIntKey,
-                            cIntBase
-                    ),
-                    std::vector<JsonPair>{json_pair_0, json_pair_2}
-            ),
-            std::make_pair(
-                    fmt::format(
-                            "@*.{} > {} AND NOT *.{} > {}",
-                            cIntKey,
-                            cIntBase,
-                            cIntKey,
-                            cIntBase
-                    ),
-                    std::vector<JsonPair>{json_pair_1, json_pair_3}
-            ),
-            std::make_pair(
-                    fmt::format(
-                            "NOT (@*.{} > {} AND *.{} > {})",
-                            cIntKey,
-                            cIntBase,
-                            cIntKey,
-                            cIntBase
-                    ),
-                    json_pairs_to_serialize
-            ),
-            std::make_pair(
-                    fmt::format(
-                            "NOT (@*.{} < {} AND *.{} < {})",
-                            cIntKey,
-                            cIntBase,
-                            cIntKey,
-                            cIntBase
-                    ),
-                    json_pairs_to_serialize
-            ),
+                    std::vector<JsonPair>{}),
+            std::make_pair(fmt::format("@*.{} < {} AND NOT *.{} < {}",
+                                       cIntKey,
+                                       cIntBase,
+                                       cIntKey,
+                                       cIntBase),
+                           std::vector<JsonPair>{json_pair_0, json_pair_2}),
+            std::make_pair(fmt::format("@*.{} > {} AND NOT *.{} > {}",
+                                       cIntKey,
+                                       cIntBase,
+                                       cIntKey,
+                                       cIntBase),
+                           std::vector<JsonPair>{json_pair_1, json_pair_3}),
+            std::make_pair(fmt::format("NOT (@*.{} > {} AND *.{} > {})",
+                                       cIntKey,
+                                       cIntBase,
+                                       cIntKey,
+                                       cIntBase),
+                           json_pairs_to_serialize),
+            std::make_pair(fmt::format("NOT (@*.{} < {} AND *.{} < {})",
+                                       cIntKey,
+                                       cIntBase,
+                                       cIntKey,
+                                       cIntBase),
+                           json_pairs_to_serialize),
             std::make_pair(fmt::format("*.{}.*: *", cUnresolvableKey), std::vector<JsonPair>{}),
-            std::make_pair(fmt::format("NOT *.{}.*: *", cUnresolvableKey), std::vector<JsonPair>{})
-    );
+            std::make_pair(fmt::format("NOT *.{}.*: *", cUnresolvableKey),
+                           std::vector<JsonPair>{}));
     CAPTURE(kql_query_str);
 
     std::istringstream query_stream{kql_query_str};
@@ -282,18 +236,14 @@ TEMPLATE_TEST_CASE(
                     &trivial_new_projected_schema_tree_node_callback,
                     query,
                     {},
-                    false
-            )
-    };
+                    false)};
     REQUIRE_FALSE(query_handler_result.has_error());
 
-    BufferReader buf_reader{
-            size_checked_pointer_cast<char const>(ir_stream_bytes.data()),
-            ir_stream_bytes.size()
-    };
-    auto deserializer_result{
-            make_deserializer(buf_reader, IrUnitHandler{}, std::move(query_handler_result.value()))
-    };
+    BufferReader buf_reader{size_checked_pointer_cast<char const>(ir_stream_bytes.data()),
+                            ir_stream_bytes.size()};
+    auto deserializer_result{make_deserializer(buf_reader,
+                                               IrUnitHandler{},
+                                               std::move(query_handler_result.value()))};
     REQUIRE_FALSE(deserializer_result.has_error());
     auto& deserializer{deserializer_result.value()};
     while (true) {
@@ -304,8 +254,7 @@ TEMPLATE_TEST_CASE(
         }
     }
     auto const& deserialized_log_events{
-            deserializer.get_ir_unit_handler().get_deserialized_log_events()
-    };
+            deserializer.get_ir_unit_handler().get_deserialized_log_events()};
 
     std::vector<JsonPair> deserialized_json_pairs;
     for (auto const& log_event : deserialized_log_events) {

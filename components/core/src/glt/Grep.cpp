@@ -87,12 +87,10 @@ private:
     size_t m_current_possible_type_ix;
 };
 
-QueryToken::QueryToken(
-        string const& query_string,
-        size_t const begin_pos,
-        size_t const end_pos,
-        bool const is_var
-)
+QueryToken::QueryToken(string const& query_string,
+                       size_t const begin_pos,
+                       size_t const end_pos,
+                       bool const is_var)
         : m_current_possible_type_ix(0) {
     m_begin_pos = begin_pos;
     m_end_pos = end_pos;
@@ -117,9 +115,8 @@ QueryToken::QueryToken(
             }
         }
 
-        m_contains_wildcards
-                = (m_has_prefix_greedy_wildcard || m_has_suffix_greedy_wildcard
-                   || m_has_greedy_wildcard_in_middle);
+        m_contains_wildcards = (m_has_prefix_greedy_wildcard || m_has_suffix_greedy_wildcard
+                                || m_has_greedy_wildcard_in_middle);
 
         if (!is_var) {
             if (!m_contains_wildcards) {
@@ -145,15 +142,13 @@ QueryToken::QueryToken(
             bool converts_to_int
                     = EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                             value_without_wildcards,
-                            encoded_var
-                    );
+                            encoded_var);
             bool converts_to_float = false;
             if (!converts_to_int) {
                 converts_to_float
                         = EncodedVariableInterpreter::convert_string_to_representable_float_var(
                                 value_without_wildcards,
-                                encoded_var
-                        );
+                                encoded_var);
             }
             if (converts_to_int || converts_to_float) {
                 converts_to_non_dict_var = true;
@@ -267,13 +262,11 @@ bool QueryToken::change_to_next_possible_type() {
  * @param logtype
  * @return true if this token might match a message, false otherwise
  */
-bool process_var_token(
-        QueryToken const& query_token,
-        Archive const& archive,
-        bool ignore_case,
-        SubQuery& sub_query,
-        string& logtype
-);
+bool process_var_token(QueryToken const& query_token,
+                       Archive const& archive,
+                       bool ignore_case,
+                       SubQuery& sub_query,
+                       string& logtype);
 /**
  * Finds a message matching the given query
  * @param query
@@ -283,13 +276,11 @@ bool process_var_token(
  * @param compressed_msg
  * @return true on success, false otherwise
  */
-bool find_matching_message(
-        Query const& query,
-        Archive& archive,
-        SubQuery const*& matching_sub_query,
-        File& compressed_file,
-        Message& compressed_msg
-);
+bool find_matching_message(Query const& query,
+                           Archive& archive,
+                           SubQuery const*& matching_sub_query,
+                           File& compressed_file,
+                           Message& compressed_msg);
 /**
  * Generates logtypes and variables for subquery
  * @param archive
@@ -301,34 +292,28 @@ bool find_matching_message(
  * @return SubQueryMatchabilityResult::WontMatch
  * @return SubQueryMatchabilityResult::MayMatch
  */
-SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(
-        Archive const& archive,
-        string& processed_search_string,
-        vector<QueryToken>& query_tokens,
-        bool ignore_case,
-        SubQuery& sub_query
-);
+SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(Archive const& archive,
+                                                                   string& processed_search_string,
+                                                                   vector<QueryToken>& query_tokens,
+                                                                   bool ignore_case,
+                                                                   SubQuery& sub_query);
 
-bool process_var_token(
-        QueryToken const& query_token,
-        Archive const& archive,
-        bool ignore_case,
-        SubQuery& sub_query,
-        string& logtype
-) {
+bool process_var_token(QueryToken const& query_token,
+                       Archive const& archive,
+                       bool ignore_case,
+                       SubQuery& sub_query,
+                       string& logtype) {
     // Even though we may have a precise variable, we still fallback to decompressing to ensure that
     // it is in the right place in the message
     sub_query.mark_wildcard_match_required();
 
     // Create QueryVar corresponding to token
     if (!query_token.contains_wildcards()) {
-        if (EncodedVariableInterpreter::encode_and_search_dictionary(
-                    query_token.get_value(),
-                    archive.get_var_dictionary(),
-                    ignore_case,
-                    logtype,
-                    sub_query
-            )
+        if (EncodedVariableInterpreter::encode_and_search_dictionary(query_token.get_value(),
+                                                                     archive.get_var_dictionary(),
+                                                                     ignore_case,
+                                                                     logtype,
+                                                                     sub_query)
             == false)
         {
             // Variable doesn't exist in dictionary
@@ -352,8 +337,7 @@ bool process_var_token(
                             query_token.get_value(),
                             archive.get_var_dictionary(),
                             ignore_case,
-                            sub_query
-                    ))
+                            sub_query))
                 {
                     // Variable doesn't exist in dictionary
                     return false;
@@ -369,13 +353,11 @@ bool process_var_token(
     return true;
 }
 
-bool find_matching_message(
-        Query const& query,
-        Archive& archive,
-        SubQuery const*& matching_sub_query,
-        File& compressed_file,
-        Message& compressed_msg
-) {
+bool find_matching_message(Query const& query,
+                           Archive& archive,
+                           SubQuery const*& matching_sub_query,
+                           File& compressed_file,
+                           Message& compressed_msg) {
     if (query.contains_sub_queries()) {
         return false;
     } else if ((query.get_search_begin_timestamp() > cEpochTimeMin
@@ -393,13 +375,11 @@ bool find_matching_message(
     return true;
 }
 
-SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(
-        Archive const& archive,
-        string& processed_search_string,
-        vector<QueryToken>& query_tokens,
-        bool ignore_case,
-        SubQuery& sub_query
-) {
+SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(Archive const& archive,
+                                                                   string& processed_search_string,
+                                                                   vector<QueryToken>& query_tokens,
+                                                                   bool ignore_case,
+                                                                   SubQuery& sub_query) {
     size_t last_token_end_pos = 0;
     string logtype;
     auto escape_handler
@@ -422,8 +402,7 @@ SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(
                         .substr(last_token_end_pos,
                                 query_token.get_begin_pos() - last_token_end_pos),
                 escape_handler,
-                logtype
-        );
+                logtype);
         last_token_end_pos = query_token.get_end_pos();
 
         if (query_token.is_wildcard()) {
@@ -451,12 +430,10 @@ SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(
 
     if (last_token_end_pos < processed_search_string.length()) {
         // Append from end of last token to end
-        ir::append_constant_to_logtype(
-                static_cast<std::string_view>(processed_search_string)
-                        .substr(last_token_end_pos, string::npos),
-                escape_handler,
-                logtype
-        );
+        ir::append_constant_to_logtype(static_cast<std::string_view>(processed_search_string)
+                                               .substr(last_token_end_pos, string::npos),
+                                       escape_handler,
+                                       logtype);
         last_token_end_pos = processed_search_string.length();
     }
 
@@ -467,8 +444,9 @@ SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(
 
     // Find matching logtypes
     std::unordered_set<LogTypeDictionaryEntry const*> possible_logtype_entries;
-    archive.get_logtype_dictionary()
-            .get_entries_matching_wildcard_string(logtype, ignore_case, possible_logtype_entries);
+    archive.get_logtype_dictionary().get_entries_matching_wildcard_string(logtype,
+                                                                          ignore_case,
+                                                                          possible_logtype_entries);
     if (possible_logtype_entries.empty()) {
         return SubQueryMatchabilityResult::WontMatch;
     }
@@ -482,13 +460,11 @@ SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(
 }
 }  // namespace
 
-std::optional<Query> Grep::process_raw_query(
-        Archive const& archive,
-        string const& search_string,
-        epochtime_t search_begin_ts,
-        epochtime_t search_end_ts,
-        bool ignore_case
-) {
+std::optional<Query> Grep::process_raw_query(Archive const& archive,
+                                             string const& search_string,
+                                             epochtime_t search_begin_ts,
+                                             epochtime_t search_end_ts,
+                                             bool ignore_case) {
     // Add prefix and suffix '*' to make the search a sub-string match
     string processed_search_string = "*";
     processed_search_string += search_string;
@@ -505,20 +481,16 @@ std::optional<Query> Grep::process_raw_query(
     // Replace '?' wildcards with '*' wildcards since we currently have no support for
     // generating sub-queries with '?' wildcards. The final wildcard match on the decompressed
     // message uses the original wildcards, so correctness will be maintained.
-    std::replace(
-            search_string_for_sub_queries.begin(),
-            search_string_for_sub_queries.end(),
-            '?',
-            '*'
-    );
+    std::replace(search_string_for_sub_queries.begin(),
+                 search_string_for_sub_queries.end(),
+                 '?',
+                 '*');
     // Clean-up in case any instances of "?*" or "*?" were changed into "**"
     search_string_for_sub_queries = clean_up_wildcard_search_string(search_string_for_sub_queries);
-    while (get_bounds_of_next_potential_var(
-            search_string_for_sub_queries,
-            begin_pos,
-            end_pos,
-            is_var
-    ))
+    while (get_bounds_of_next_potential_var(search_string_for_sub_queries,
+                                            begin_pos,
+                                            end_pos,
+                                            is_var))
     {
         query_tokens.emplace_back(search_string_for_sub_queries, begin_pos, end_pos, is_var);
     }
@@ -546,24 +518,20 @@ std::optional<Query> Grep::process_raw_query(
         SubQuery sub_query;
 
         // Compute logtypes and variables for query
-        auto matchability = generate_logtypes_and_vars_for_subquery(
-                archive,
-                search_string_for_sub_queries,
-                query_tokens,
-                ignore_case,
-                sub_query
-        );
+        auto matchability = generate_logtypes_and_vars_for_subquery(archive,
+                                                                    search_string_for_sub_queries,
+                                                                    query_tokens,
+                                                                    ignore_case,
+                                                                    sub_query);
         switch (matchability) {
             case SubQueryMatchabilityResult::SupercedesAllSubQueries:
                 // Since other sub-queries will be superceded by this one, we can stop processing
                 // now
-                return Query{
-                        search_begin_ts,
-                        search_end_ts,
-                        ignore_case,
-                        processed_search_string,
-                        {}
-                };
+                return Query{search_begin_ts,
+                             search_end_ts,
+                             ignore_case,
+                             processed_search_string,
+                             {}};
             case SubQueryMatchabilityResult::MayMatch:
                 sub_queries.push_back(std::move(sub_query));
                 break;
@@ -587,21 +555,17 @@ std::optional<Query> Grep::process_raw_query(
         return std::nullopt;
     }
 
-    return Query{
-            search_begin_ts,
-            search_end_ts,
-            ignore_case,
-            processed_search_string,
-            std::move(sub_queries)
-    };
+    return Query{search_begin_ts,
+                 search_end_ts,
+                 ignore_case,
+                 processed_search_string,
+                 std::move(sub_queries)};
 }
 
-bool Grep::get_bounds_of_next_potential_var(
-        string const& value,
-        size_t& begin_pos,
-        size_t& end_pos,
-        bool& is_var
-) {
+bool Grep::get_bounds_of_next_potential_var(string const& value,
+                                            size_t& begin_pos,
+                                            size_t& end_pos,
+                                            bool& is_var) {
     auto const value_length = value.length();
     if (end_pos >= value_length) {
         return false;
@@ -716,21 +680,19 @@ bool Grep::get_bounds_of_next_potential_var(
     return (value_length != begin_pos);
 }
 
-void
-Grep::calculate_sub_queries_relevant_to_file(File const& compressed_file, vector<Query>& queries) {
+void Grep::calculate_sub_queries_relevant_to_file(File const& compressed_file,
+                                                  vector<Query>& queries) {
     for (auto& query : queries) {
         query.make_sub_queries_relevant_to_segment(compressed_file.get_segment_id());
     }
 }
 
-size_t Grep::search_and_output(
-        Query const& query,
-        size_t limit,
-        Archive& archive,
-        File& compressed_file,
-        OutputFunc output_func,
-        void* output_func_arg
-) {
+size_t Grep::search_and_output(Query const& query,
+                               size_t limit,
+                               Archive& archive,
+                               File& compressed_file,
+                               OutputFunc output_func,
+                               void* output_func_arg) {
     size_t num_matches = 0;
 
     Message compressed_msg;
@@ -739,13 +701,11 @@ size_t Grep::search_and_output(
     while (num_matches < limit) {
         // Find matching message
         SubQuery const* matching_sub_query = nullptr;
-        if (find_matching_message(
-                    query,
-                    archive,
-                    matching_sub_query,
-                    compressed_file,
-                    compressed_msg
-            )
+        if (find_matching_message(query,
+                                  archive,
+                                  matching_sub_query,
+                                  compressed_file,
+                                  compressed_msg)
             == false)
         {
             break;
@@ -766,11 +726,9 @@ size_t Grep::search_and_output(
             || (query.contains_sub_queries() == false
                 && query.search_string_matches_all() == false))
         {
-            bool matched = wildcard_match_unsafe(
-                    decompressed_msg,
-                    query.get_search_string(),
-                    query.get_ignore_case() == false
-            );
+            bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                 query.get_search_string(),
+                                                 query.get_ignore_case() == false);
             if (!matched) {
                 continue;
             }
@@ -784,26 +742,22 @@ size_t Grep::search_and_output(
     return num_matches;
 }
 
-bool Grep::search_and_decompress(
-        Query const& query,
-        Archive& archive,
-        File& compressed_file,
-        Message& compressed_msg,
-        string& decompressed_msg
-) {
+bool Grep::search_and_decompress(Query const& query,
+                                 Archive& archive,
+                                 File& compressed_file,
+                                 Message& compressed_msg,
+                                 string& decompressed_msg) {
     string const& orig_file_path = compressed_file.get_orig_path();
 
     bool matched = false;
     while (false == matched) {
         // Find matching message
         SubQuery const* matching_sub_query = nullptr;
-        bool message_found = find_matching_message(
-                query,
-                archive,
-                matching_sub_query,
-                compressed_file,
-                compressed_msg
-        );
+        bool message_found = find_matching_message(query,
+                                                   archive,
+                                                   matching_sub_query,
+                                                   compressed_file,
+                                                   compressed_msg);
         if (false == message_found) {
             return false;
         }
@@ -823,11 +777,9 @@ bool Grep::search_and_decompress(
             || (query.contains_sub_queries() == false
                 && query.search_string_matches_all() == false))
         {
-            matched = wildcard_match_unsafe(
-                    decompressed_msg,
-                    query.get_search_string(),
-                    query.get_ignore_case() == false
-            );
+            matched = wildcard_match_unsafe(decompressed_msg,
+                                            query.get_search_string(),
+                                            query.get_ignore_case() == false);
         } else {
             matched = true;
         }
@@ -845,13 +797,11 @@ size_t Grep::search(Query const& query, size_t limit, Archive& archive, File& co
     while (num_matches < limit) {
         // Find matching message
         SubQuery const* matching_sub_query = nullptr;
-        if (find_matching_message(
-                    query,
-                    archive,
-                    matching_sub_query,
-                    compressed_file,
-                    compressed_msg
-            )
+        if (find_matching_message(query,
+                                  archive,
+                                  matching_sub_query,
+                                  compressed_file,
+                                  compressed_msg)
             == false)
         {
             break;
@@ -872,11 +822,9 @@ size_t Grep::search(Query const& query, size_t limit, Archive& archive, File& co
                 break;
             }
 
-            bool matched = wildcard_match_unsafe(
-                    decompressed_msg,
-                    query.get_search_string(),
-                    query.get_ignore_case() == false
-            );
+            bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                 query.get_search_string(),
+                                                 query.get_ignore_case() == false);
             if (!matched) {
                 continue;
             }
@@ -909,8 +857,7 @@ Grep::get_converted_logtype_query(Query const& query, size_t segment_id) {
                     == converted_logtype_based_queries.end())
                 {
                     converted_logtype_based_queries[possible_logtype_id].set_logtype_id(
-                            possible_logtype_id
-                    );
+                            possible_logtype_id);
                 }
                 converted_logtype_based_queries[possible_logtype_id].add_query(query_info);
             }
@@ -927,8 +874,7 @@ size_t Grep::output_message_in_segment_within_time_range(
         size_t limit,
         streaming_archive::reader::Archive& archive,
         OutputFunc output_func,
-        void* output_func_arg
-) {
+        void* output_func_arg) {
     size_t num_matches = 0;
 
     Message compressed_msg;
@@ -952,10 +898,9 @@ size_t Grep::output_message_in_segment_within_time_range(
             if (!query.timestamp_is_in_search_time_range(compressed_msg.get_ts_in_milli())) {
                 continue;
             }
-            bool decompress_successful = archive.decompress_message_with_fixed_timestamp_pattern(
-                    compressed_msg,
-                    decompressed_msg
-            );
+            bool decompress_successful
+                    = archive.decompress_message_with_fixed_timestamp_pattern(compressed_msg,
+                                                                              decompressed_msg);
             if (!decompress_successful) {
                 break;
             }
@@ -963,11 +908,9 @@ size_t Grep::output_message_in_segment_within_time_range(
             // In this branch, subqueries should not exist
             // So just check if the search string is not a match-all
             if (query.search_string_matches_all() == false) {
-                bool matched = wildcard_match_unsafe(
-                        decompressed_msg,
-                        query.get_search_string(),
-                        query.get_ignore_case() == false
-                );
+                bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                     query.get_search_string(),
+                                                     query.get_ignore_case() == false);
                 if (!matched) {
                     continue;
                 }
@@ -987,8 +930,7 @@ size_t Grep::output_message_in_combined_segment_within_time_range(
         size_t limit,
         streaming_archive::reader::Archive& archive,
         OutputFunc output_func,
-        void* output_func_arg
-) {
+        void* output_func_arg) {
     size_t num_matches = 0;
 
     Message compressed_msg;
@@ -1019,10 +961,8 @@ size_t Grep::output_message_in_combined_segment_within_time_range(
                     continue;
                 }
                 bool decompress_successful
-                        = archive.decompress_message_with_fixed_timestamp_pattern(
-                                compressed_msg,
-                                decompressed_msg
-                        );
+                        = archive.decompress_message_with_fixed_timestamp_pattern(compressed_msg,
+                                                                                  decompressed_msg);
                 if (!decompress_successful) {
                     break;
                 }
@@ -1030,11 +970,9 @@ size_t Grep::output_message_in_combined_segment_within_time_range(
                 // In this execution branch, subqueries should not exist
                 // So just check if the search string is not a match-all
                 if (query.search_string_matches_all() == false) {
-                    bool matched = wildcard_match_unsafe(
-                            decompressed_msg,
-                            query.get_search_string(),
-                            query.get_ignore_case() == false
-                    );
+                    bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                         query.get_search_string(),
+                                                         query.get_ignore_case() == false);
                     if (!matched) {
                         continue;
                     }
@@ -1051,14 +989,12 @@ size_t Grep::output_message_in_combined_segment_within_time_range(
     return num_matches;
 }
 
-size_t Grep::search_segment_and_output(
-        std::vector<LogtypeQueries> const& queries,
-        Query const& query,
-        size_t limit,
-        Archive& archive,
-        OutputFunc output_func,
-        void* output_func_arg
-) {
+size_t Grep::search_segment_and_output(std::vector<LogtypeQueries> const& queries,
+                                       Query const& query,
+                                       size_t limit,
+                                       Archive& archive,
+                                       OutputFunc output_func,
+                                       void* output_func_arg) {
     size_t num_matches = 0;
 
     Message compressed_msg;
@@ -1080,20 +1016,18 @@ size_t Grep::search_segment_and_output(
         while (num_matches < limit) {
             // Find matching message
             bool required_wild_card = false;
-            bool found_matched = archive.find_message_matching_with_logtype_query(
-                    sub_queries,
-                    compressed_msg,
-                    required_wild_card,
-                    query
-            );
+            bool found_matched
+                    = archive.find_message_matching_with_logtype_query(sub_queries,
+                                                                       compressed_msg,
+                                                                       required_wild_card,
+                                                                       query);
             if (found_matched == false) {
                 break;
             }
             // Decompress match
-            bool decompress_successful = archive.decompress_message_with_fixed_timestamp_pattern(
-                    compressed_msg,
-                    decompressed_msg
-            );
+            bool decompress_successful
+                    = archive.decompress_message_with_fixed_timestamp_pattern(compressed_msg,
+                                                                              decompressed_msg);
             if (!decompress_successful) {
                 break;
             }
@@ -1106,11 +1040,9 @@ size_t Grep::search_segment_and_output(
                 || (query.contains_sub_queries() == false
                     && query.search_string_matches_all() == false))
             {
-                bool matched = wildcard_match_unsafe(
-                        decompressed_msg,
-                        query.get_search_string(),
-                        query.get_ignore_case() == false
-                );
+                bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                     query.get_search_string(),
+                                                     query.get_ignore_case() == false);
                 if (!matched) {
                     continue;
                 }
@@ -1127,15 +1059,13 @@ size_t Grep::search_segment_and_output(
     return num_matches;
 }
 
-size_t Grep::search_combined_table_and_output(
-        combined_table_id_t table_id,
-        std::vector<LogtypeQueries> const& queries,
-        Query const& query,
-        size_t limit,
-        Archive& archive,
-        OutputFunc output_func,
-        void* output_func_arg
-) {
+size_t Grep::search_combined_table_and_output(combined_table_id_t table_id,
+                                              std::vector<LogtypeQueries> const& queries,
+                                              Query const& query,
+                                              size_t limit,
+                                              Archive& archive,
+                                              OutputFunc output_func,
+                                              void* output_func_arg) {
     size_t num_matches = 0;
 
     Message compressed_msg;
@@ -1165,16 +1095,14 @@ size_t Grep::search_combined_table_and_output(
                     required_wild_card,
                     query,
                     left_boundary,
-                    right_boundary
-            );
+                    right_boundary);
             if (found_matched == false) {
                 break;
             }
             // Decompress match
-            bool decompress_successful = archive.decompress_message_with_fixed_timestamp_pattern(
-                    compressed_msg,
-                    decompressed_msg
-            );
+            bool decompress_successful
+                    = archive.decompress_message_with_fixed_timestamp_pattern(compressed_msg,
+                                                                              decompressed_msg);
             if (!decompress_successful) {
                 break;
             }
@@ -1187,11 +1115,9 @@ size_t Grep::search_combined_table_and_output(
                 || (query.contains_sub_queries() == false
                     && query.search_string_matches_all() == false))
             {
-                bool matched = wildcard_match_unsafe(
-                        decompressed_msg,
-                        query.get_search_string(),
-                        query.get_ignore_case() == false
-                );
+                bool matched = wildcard_match_unsafe(decompressed_msg,
+                                                     query.get_search_string(),
+                                                     query.get_ignore_case() == false);
                 if (!matched) {
                     continue;
                 }
@@ -1207,14 +1133,12 @@ size_t Grep::search_combined_table_and_output(
     return num_matches;
 }
 
-size_t Grep::search_segment_optimized_and_output(
-        std::vector<LogtypeQueries> const& queries,
-        Query const& query,
-        size_t limit,
-        Archive& archive,
-        OutputFunc output_func,
-        void* output_func_arg
-) {
+size_t Grep::search_segment_optimized_and_output(std::vector<LogtypeQueries> const& queries,
+                                                 Query const& query,
+                                                 size_t limit,
+                                                 Archive& archive,
+                                                 OutputFunc output_func,
+                                                 void* output_func_arg) {
     size_t num_matches = 0;
 
     Message compressed_msg;
@@ -1240,12 +1164,10 @@ size_t Grep::search_segment_optimized_and_output(
         std::vector<size_t> matched_row_ix;
         std::vector<bool> wildcard_required;
         // Find matching message
-        archive.find_message_matching_with_logtype_query_optimized(
-                sub_queries,
-                matched_row_ix,
-                wildcard_required,
-                query
-        );
+        archive.find_message_matching_with_logtype_query_optimized(sub_queries,
+                                                                   matched_row_ix,
+                                                                   wildcard_required,
+                                                                   query);
 
         size_t num_potential_matches = matched_row_ix.size();
         if (num_potential_matches != 0) {
@@ -1253,22 +1175,18 @@ size_t Grep::search_segment_optimized_and_output(
             std::vector<epochtime_t> loaded_ts(num_potential_matches);
             std::vector<file_id_t> loaded_file_id(num_potential_matches);
             std::vector<encoded_variable_t> loaded_vars(num_potential_matches * num_vars);
-            logtype_table_manager.logtype_table().load_remaining_data_into_vec(
-                    loaded_ts,
-                    loaded_file_id,
-                    loaded_vars,
-                    matched_row_ix
-            );
-            num_matches += archive.decompress_messages_and_output(
-                    logtype_id,
-                    loaded_ts,
-                    loaded_file_id,
-                    loaded_vars,
-                    wildcard_required,
-                    query,
-                    output_func,
-                    output_func_arg
-            );
+            logtype_table_manager.logtype_table().load_remaining_data_into_vec(loaded_ts,
+                                                                               loaded_file_id,
+                                                                               loaded_vars,
+                                                                               matched_row_ix);
+            num_matches += archive.decompress_messages_and_output(logtype_id,
+                                                                  loaded_ts,
+                                                                  loaded_file_id,
+                                                                  loaded_vars,
+                                                                  wildcard_required,
+                                                                  query,
+                                                                  output_func,
+                                                                  output_func_arg);
         }
         logtype_table_manager.close_logtype_table();
     }

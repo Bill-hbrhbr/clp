@@ -115,8 +115,7 @@ private:
             boost::program_options::options_description const& options_general,
             boost::program_options::variables_map& parsed_command_line_options,
             std::vector<boost::program_options::option> const& options,
-            int argc
-    ) -> CommandLineArgumentsBase::ParsingResult;
+            int argc) -> CommandLineArgumentsBase::ParsingResult;
 
     /**
      * Parses arguments for the IR extraction command
@@ -132,8 +131,7 @@ private:
             boost::program_options::options_description const& options_general,
             boost::program_options::variables_map& parsed_command_line_options,
             std::vector<boost::program_options::option> const& options,
-            int argc
-    ) -> CommandLineArgumentsBase::ParsingResult;
+            int argc) -> CommandLineArgumentsBase::ParsingResult;
 
     /**
      * Validates output options related to the Network Destination output handler.
@@ -145,8 +143,7 @@ private:
     void parse_network_dest_output_handler_options(
             boost::program_options::options_description const& options_description,
             std::vector<boost::program_options::option> const& options,
-            boost::program_options::variables_map& parsed_options
-    );
+            boost::program_options::variables_map& parsed_options);
 
     /**
      * Validates output options related to the Reducer output handler.
@@ -158,8 +155,7 @@ private:
     void parse_reducer_output_handler_options(
             boost::program_options::options_description const& options_description,
             std::vector<boost::program_options::option> const& options,
-            boost::program_options::variables_map& parsed_options
-    );
+            boost::program_options::variables_map& parsed_options);
 
     /**
      * Validates output options related to the Results Cache output handler.
@@ -171,8 +167,7 @@ private:
     void parse_results_cache_output_handler_options(
             boost::program_options::options_description const& options_description,
             std::vector<boost::program_options::option> const& options,
-            boost::program_options::variables_map& parsed_options
-    );
+            boost::program_options::variables_map& parsed_options);
 
     void print_basic_usage() const override;
     void print_search_basic_usage() const;

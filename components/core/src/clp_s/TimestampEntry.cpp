@@ -19,11 +19,9 @@ void TimestampEntry::ingest_timestamp(epochtime_t timestamp) {
     auto const whole_milliseconds_in_timestamp{timestamp / cNanosecondsInMillisecond};
     auto const remainder_nanoseconds_in_timestamp{timestamp % cNanosecondsInMillisecond};
     auto const millisecond_timestamp_upper_bound{
-            whole_milliseconds_in_timestamp + (remainder_nanoseconds_in_timestamp > 0 ? 1 : 0)
-    };
+            whole_milliseconds_in_timestamp + (remainder_nanoseconds_in_timestamp > 0 ? 1 : 0)};
     auto const millisecond_timestamp_lower_bound{
-            whole_milliseconds_in_timestamp - (remainder_nanoseconds_in_timestamp < 0 ? 1 : 0)
-    };
+            whole_milliseconds_in_timestamp - (remainder_nanoseconds_in_timestamp < 0 ? 1 : 0)};
     m_epoch_start = std::min(m_epoch_start, millisecond_timestamp_lower_bound);
     m_epoch_end = std::max(m_epoch_end, millisecond_timestamp_upper_bound);
 }

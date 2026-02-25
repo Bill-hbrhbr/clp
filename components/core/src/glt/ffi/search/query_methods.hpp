@@ -13,10 +13,8 @@
 
 namespace glt::ffi::search {
 template <typename encoded_variable_t>
-void generate_subqueries(
-        std::string_view wildcard_query,
-        std::vector<Subquery<encoded_variable_t>>& sub_queries
-);
+void generate_subqueries(std::string_view wildcard_query,
+                         std::vector<Subquery<encoded_variable_t>>& sub_queries);
 }  // namespace glt::ffi::search
 
 #endif  // GLT_FFI_SEARCH_QUERY_METHODS_HPP

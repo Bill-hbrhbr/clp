@@ -34,12 +34,10 @@ public:
  * @param empty_directory_paths
  * @return true on success, false otherwise
  */
-bool find_all_files_and_empty_directories(
-        boost::filesystem::path& path_prefix_to_remove,
-        std::string const& path,
-        std::vector<FileToCompress>& file_paths,
-        std::vector<std::string>& empty_directory_paths
-);
+bool find_all_files_and_empty_directories(boost::filesystem::path& path_prefix_to_remove,
+                                          std::string const& path,
+                                          std::vector<FileToCompress>& file_paths,
+                                          std::vector<std::string>& empty_directory_paths);
 
 /**
  * Reads a list of input paths
@@ -59,11 +57,9 @@ bool read_input_paths(std::string const& list_path, std::vector<std::string>& pa
  * @return false if the path didn't contain the prefix or it didn't contain anything besides the
  * prefix, true otherwise
  */
-bool remove_prefix_and_clean_up_path(
-        boost::filesystem::path const& prefix_to_remove,
-        boost::filesystem::path const& path,
-        std::string& path_without_prefix_string
-);
+bool remove_prefix_and_clean_up_path(boost::filesystem::path const& prefix_to_remove,
+                                     boost::filesystem::path const& path,
+                                     std::string& path_without_prefix_string);
 
 /**
  * Validates that all paths in the given list exist

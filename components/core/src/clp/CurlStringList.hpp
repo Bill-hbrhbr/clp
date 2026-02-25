@@ -36,13 +36,11 @@ public:
     auto append(std::string_view str) -> void {
         auto* list_after_appending{curl_slist_append(m_list, str.data())};
         if (nullptr == list_after_appending) {
-            throw CurlOperationFailed(
-                    ErrorCode_Failure,
-                    __FILE__,
-                    __LINE__,
-                    CURLE_OUT_OF_MEMORY,
-                    "curl_slist_append failed."
-            );
+            throw CurlOperationFailed(ErrorCode_Failure,
+                                      __FILE__,
+                                      __LINE__,
+                                      CURLE_OUT_OF_MEMORY,
+                                      "curl_slist_append failed.");
         }
         m_list = list_after_appending;
         ++m_size;

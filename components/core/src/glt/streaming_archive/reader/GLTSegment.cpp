@@ -21,11 +21,9 @@ epochtime_t GLTSegment::get_timestamp_at_offset(logtype_dictionary_id_t logtype_
     return m_logtype_tables_manager.get_timestamp_at_offset(logtype_id, offset);
 }
 
-void GLTSegment::get_variable_row_at_offset(
-        logtype_dictionary_id_t logtype_id,
-        size_t offset,
-        Message& msg
-) {
+void GLTSegment::get_variable_row_at_offset(logtype_dictionary_id_t logtype_id,
+                                            size_t offset,
+                                            Message& msg) {
     if (!m_logtype_tables_manager.check_variable_column(logtype_id)) {
         m_logtype_tables_manager.load_variable_columns(logtype_id);
     }

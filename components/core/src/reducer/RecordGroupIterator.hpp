@@ -101,11 +101,9 @@ private:
  */
 class FilteredInt64MapRecordGroupIterator : public RecordGroupIterator {
 public:
-    FilteredInt64MapRecordGroupIterator(
-            std::map<GroupTags, int64_t> const& map,
-            std::set<GroupTags> const& filter,
-            std::string key
-    )
+    FilteredInt64MapRecordGroupIterator(std::map<GroupTags, int64_t> const& map,
+                                        std::set<GroupTags> const& filter,
+                                        std::string key)
             : m_map{map},
               m_map_it{map.cend()},
               m_map_end_it{map.cend()},
@@ -122,8 +120,7 @@ public:
     FilteredInt64MapRecordGroupIterator const& operator=(FilteredInt64MapRecordGroupIterator const&)
             = delete;
     FilteredInt64MapRecordGroupIterator const& operator=(
-            FilteredInt64MapRecordGroupIterator const&&
-    ) = delete;
+            FilteredInt64MapRecordGroupIterator const&&) = delete;
 
     RecordGroup& get() override {
         m_record.set_record_value(m_map_end_it->second);

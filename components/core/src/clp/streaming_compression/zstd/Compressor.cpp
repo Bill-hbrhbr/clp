@@ -12,11 +12,9 @@
 namespace clp::streaming_compression::zstd {
 Compressor::Compressor()
         : m_compressed_stream_block_buffer(ZSTD_CStreamOutSize()),
-          m_compressed_stream_block{
-                  .dst = m_compressed_stream_block_buffer.data(),
-                  .size = m_compressed_stream_block_buffer.size(),
-                  .pos = 0
-          } {
+          m_compressed_stream_block{.dst = m_compressed_stream_block_buffer.data(),
+                                    .size = m_compressed_stream_block_buffer.size(),
+                                    .pos = 0} {
     if (nullptr == m_compression_stream) {
         SPDLOG_ERROR("streaming_compression::zstd::Compressor: ZSTD_createCStream() error");
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
@@ -35,10 +33,8 @@ auto Compressor::open(WriterInterface& writer, int compression_level) -> void {
     // Setup compression stream
     auto const init_result{ZSTD_initCStream(m_compression_stream, compression_level)};
     if (0 != ZSTD_isError(init_result)) {
-        SPDLOG_ERROR(
-                "streaming_compression::zstd::Compressor: ZSTD_initCStream() error: {}",
-                ZSTD_getErrorName(init_result)
-        );
+        SPDLOG_ERROR("streaming_compression::zstd::Compressor: ZSTD_initCStream() error: {}",
+                     ZSTD_getErrorName(init_result));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 
@@ -72,16 +68,12 @@ auto Compressor::write(char const* data, size_t data_length) -> void {
     ZSTD_inBuffer uncompressed_stream_block = {data, data_length, 0};
     while (uncompressed_stream_block.pos < uncompressed_stream_block.size) {
         m_compressed_stream_block.pos = 0;
-        auto const compress_result{ZSTD_compressStream(
-                m_compression_stream,
-                &m_compressed_stream_block,
-                &uncompressed_stream_block
-        )};
+        auto const compress_result{ZSTD_compressStream(m_compression_stream,
+                                                       &m_compressed_stream_block,
+                                                       &uncompressed_stream_block)};
         if (0 != ZSTD_isError(compress_result)) {
-            SPDLOG_ERROR(
-                    "streaming_compression::zstd::Compressor: ZSTD_compressStream() error: {}",
-                    ZSTD_getErrorName(compress_result)
-            );
+            SPDLOG_ERROR("streaming_compression::zstd::Compressor: ZSTD_compressStream() error: {}",
+                         ZSTD_getErrorName(compress_result));
             throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
         }
         if (m_compressed_stream_block.pos > 0) {
@@ -89,8 +81,7 @@ auto Compressor::write(char const* data, size_t data_length) -> void {
             // block buffer
             m_compressed_stream_writer->write(
                     static_cast<char const*>(m_compressed_stream_block.dst),
-                    m_compressed_stream_block.pos
-            );
+                    m_compressed_stream_block.pos);
         }
     }
 
@@ -108,16 +99,12 @@ auto Compressor::flush() -> void {
     if (0 != ZSTD_isError(end_stream_result)) {
         // Note: Output buffer is large enough that it is guaranteed to have enough room to be
         // able to flush the entire buffer, so this can only be an error
-        SPDLOG_ERROR(
-                "streaming_compression::zstd::Compressor: ZSTD_endStream() error: {}",
-                ZSTD_getErrorName(end_stream_result)
-        );
+        SPDLOG_ERROR("streaming_compression::zstd::Compressor: ZSTD_endStream() error: {}",
+                     ZSTD_getErrorName(end_stream_result));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
-    m_compressed_stream_writer->write(
-            static_cast<char const*>(m_compressed_stream_block.dst),
-            m_compressed_stream_block.pos
-    );
+    m_compressed_stream_writer->write(static_cast<char const*>(m_compressed_stream_block.dst),
+                                      m_compressed_stream_block.pos);
 
     m_compression_stream_contains_data = false;
 }
@@ -140,17 +127,14 @@ auto Compressor::flush_without_ending_frame() -> void {
         m_compressed_stream_block.pos = 0;
         auto const flush_result{ZSTD_flushStream(m_compression_stream, &m_compressed_stream_block)};
         if (0 != ZSTD_isError(flush_result)) {
-            SPDLOG_ERROR(
-                    "streaming_compression::zstd::Compressor: ZSTD_flushStream() error: {}",
-                    ZSTD_getErrorName(flush_result)
-            );
+            SPDLOG_ERROR("streaming_compression::zstd::Compressor: ZSTD_flushStream() error: {}",
+                         ZSTD_getErrorName(flush_result));
             throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
         }
         if (m_compressed_stream_block.pos > 0) {
             m_compressed_stream_writer->write(
                     static_cast<char const*>(m_compressed_stream_block.dst),
-                    m_compressed_stream_block.pos
-            );
+                    m_compressed_stream_block.pos);
         }
         if (0 == flush_result) {
             break;

@@ -18,11 +18,9 @@ template <typename encoded_variable_t>
 class LogEvent {
 public:
     // Constructors
-    LogEvent(
-            epoch_time_ms_t timestamp,
-            UtcOffset utc_offset,
-            EncodedTextAst<encoded_variable_t> message
-    )
+    LogEvent(epoch_time_ms_t timestamp,
+             UtcOffset utc_offset,
+             EncodedTextAst<encoded_variable_t> message)
             : m_timestamp{timestamp},
               m_utc_offset{utc_offset},
               m_message{std::move(message)} {}

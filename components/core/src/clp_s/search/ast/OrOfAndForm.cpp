@@ -134,24 +134,20 @@ std::shared_ptr<Expression> OrOfAndForm::simplify_and(std::shared_ptr<Expression
 
     auto new_or_expr = OrExpr::create(false, expr->get_parent());
     ExpressionList prefix;
-    insert_all_combinations(
-            new_or_expr,
-            expr,
-            or_expressions.begin(),
-            or_expressions.end(),
-            prefix
-    );
+    insert_all_combinations(new_or_expr,
+                            expr,
+                            or_expressions.begin(),
+                            or_expressions.end(),
+                            prefix);
 
     return new_or_expr;
 }
 
-void OrOfAndForm::insert_all_combinations(
-        std::shared_ptr<Expression> const& new_or_expr,
-        std::shared_ptr<Expression> const& base_and_expr,
-        ExpressionVector::iterator cur,
-        ExpressionVector::iterator end,
-        ExpressionList& prefix
-) {
+void OrOfAndForm::insert_all_combinations(std::shared_ptr<Expression> const& new_or_expr,
+                                          std::shared_ptr<Expression> const& base_and_expr,
+                                          ExpressionVector::iterator cur,
+                                          ExpressionVector::iterator end,
+                                          ExpressionList& prefix) {
     if (cur == end) {
         auto new_and_expr = base_and_expr->copy();
         for (auto const& it : prefix) {

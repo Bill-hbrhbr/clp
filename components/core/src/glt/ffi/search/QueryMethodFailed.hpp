@@ -9,12 +9,10 @@ namespace glt::ffi::search {
 class QueryMethodFailed : public TraceableException {
 public:
     // Constructors
-    QueryMethodFailed(
-            ErrorCode error_code,
-            char const* const filename,
-            int line_number,
-            std::string message
-    )
+    QueryMethodFailed(ErrorCode error_code,
+                      char const* const filename,
+                      int line_number,
+                      std::string message)
             : TraceableException(error_code, filename, line_number),
               m_message(std::move(message)) {}
 

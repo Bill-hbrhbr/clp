@@ -17,36 +17,24 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
 
         po::options_description options_reducer("Reducer Options");
         options_reducer.add_options()(
-            "reducer-host",
-            po::value<std::string>(&m_reducer_host)
-                ->default_value(m_reducer_host),
-            "Host that this reducer should bind to"
-        )(
-            "reducer-port",
-            po::value<int>(&m_reducer_port)
-                ->default_value(m_reducer_port),
-            "Port this reducer should listen on for connections"
-        )(
-            "scheduler-host",
-            po::value<std::string>(&m_scheduler_host)
-                ->default_value(m_scheduler_host),
-            "Host the query scheduler is running on"
-        )(
-            "scheduler-port",
-            po::value<int>(&m_scheduler_port)
-                ->default_value(m_scheduler_port),
-            "Port the query scheduler is listening on"
-        )(
-            "mongodb-uri",
-            po::value<std::string>(&m_mongodb_uri)
-                ->default_value(m_mongodb_uri),
-            "URI pointing to MongoDB database"
-        )(
-            "upsert-interval",
-            po::value<int>(&m_upsert_interval)
-                ->default_value(m_upsert_interval),
-            "Interval for upserting timeline aggregation results (ms)"
-        );
+                "reducer-host",
+                po::value<std::string>(&m_reducer_host)->default_value(m_reducer_host),
+                "Host that this reducer should bind to")(
+                "reducer-port",
+                po::value<int>(&m_reducer_port)->default_value(m_reducer_port),
+                "Port this reducer should listen on for connections")(
+                "scheduler-host",
+                po::value<std::string>(&m_scheduler_host)->default_value(m_scheduler_host),
+                "Host the query scheduler is running on")(
+                "scheduler-port",
+                po::value<int>(&m_scheduler_port)->default_value(m_scheduler_port),
+                "Port the query scheduler is listening on")(
+                "mongodb-uri",
+                po::value<std::string>(&m_mongodb_uri)->default_value(m_mongodb_uri),
+                "URI pointing to MongoDB database")(
+                "upsert-interval",
+                po::value<int>(&m_upsert_interval)->default_value(m_upsert_interval),
+                "Interval for upserting timeline aggregation results (ms)");
 
         po::options_description all_options;
         all_options.add(options_general);

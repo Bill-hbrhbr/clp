@@ -105,10 +105,8 @@ public:
 
     private:
         // Constructor
-        ColumnDescriptorTokenIterator(
-                clp_s::search::ast::ColumnDescriptor* column_descriptor,
-                clp_s::search::ast::DescriptorList::iterator curr_token_it
-        )
+        ColumnDescriptorTokenIterator(clp_s::search::ast::ColumnDescriptor* column_descriptor,
+                                      clp_s::search::ast::DescriptorList::iterator curr_token_it)
                 : m_column_descriptor{column_descriptor},
                   m_curr_token_it{curr_token_it},
                   m_next_token_it{curr_token_it + 1} {}
@@ -118,11 +116,11 @@ public:
         clp_s::search::ast::DescriptorList::iterator m_next_token_it;
     };
 
-    using ProjectionMap = std::
-            unordered_map<clp_s::search::ast::ColumnDescriptor*, std::pair<std::string, size_t>>;
+    using ProjectionMap = std::unordered_map<clp_s::search::ast::ColumnDescriptor*,
+                                             std::pair<std::string, size_t>>;
 
-    using PartialResolutionMap = std::
-            unordered_map<SchemaTree::Node::id_t, std::vector<ColumnDescriptorTokenIterator>>;
+    using PartialResolutionMap = std::unordered_map<SchemaTree::Node::id_t,
+                                                    std::vector<ColumnDescriptorTokenIterator>>;
 
     // Factory function
     /**
@@ -141,8 +139,8 @@ public:
             std::vector<std::pair<std::string, clp_s::search::ast::literal_type_bitmask_t>> const&
                     projections,
             bool case_sensitive_match,
-            bool allow_duplicate_projected_columns
-    ) -> ystdlib::error_handling::Result<QueryHandlerImpl>;
+            bool allow_duplicate_projected_columns)
+            -> ystdlib::error_handling::Result<QueryHandlerImpl>;
 
     // Delete copy constructor and assignment operator
     QueryHandlerImpl(QueryHandlerImpl const&) = delete;
@@ -186,13 +184,12 @@ public:
             bool is_auto_generated,
             SchemaTree::NodeLocator const& node_locator,
             SchemaTree::Node::id_t node_id,
-            NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback
-    ) -> ystdlib::error_handling::Result<void>;
+            NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback)
+            -> ystdlib::error_handling::Result<void>;
 
-    [[nodiscard]] auto get_resolved_column_to_schema_tree_node_ids() const -> std::unordered_map<
-            clp_s::search::ast::ColumnDescriptor*,
-            std::unordered_set<SchemaTree::Node::id_t>
-    > {
+    [[nodiscard]] auto get_resolved_column_to_schema_tree_node_ids() const
+            -> std::unordered_map<clp_s::search::ast::ColumnDescriptor*,
+                                  std::unordered_set<SchemaTree::Node::id_t>> {
         return m_resolved_column_to_schema_tree_node_ids;
     }
 
@@ -267,18 +264,15 @@ private:
 
     private:
         // Types
-        using ExprVariant = std::
-                variant<clp_s::search::ast::AndExpr*,
-                        clp_s::search::ast::OrExpr*,
-                        clp_s::search::ast::FilterExpr*>;
+        using ExprVariant = std::variant<clp_s::search::ast::AndExpr*,
+                                         clp_s::search::ast::OrExpr*,
+                                         clp_s::search::ast::FilterExpr*>;
 
         // Constructor
-        AstExprIterator(
-                ExprVariant expr,
-                clp_s::search::ast::OpList::const_iterator op_next_it,
-                clp_s::search::ast::OpList::const_iterator op_end_it,
-                bool is_inverted
-        )
+        AstExprIterator(ExprVariant expr,
+                        clp_s::search::ast::OpList::const_iterator op_next_it,
+                        clp_s::search::ast::OpList::const_iterator op_end_it,
+                        bool is_inverted)
                 : m_expr{expr},
                   m_op_next_it{op_next_it},
                   m_op_end_it{op_end_it},
@@ -298,22 +292,17 @@ private:
             PartialResolutionMap user_gen_namespace_partial_resolutions,
             std::vector<std::shared_ptr<clp_s::search::ast::ColumnDescriptor>> projected_columns,
             ProjectionMap projected_column_to_original_key_and_index,
-            bool case_sensitive_match
-    )
+            bool case_sensitive_match)
             : m_query{std::move(query)},
-              m_is_empty_query{
-                      nullptr != dynamic_cast<clp_s::search::ast::EmptyExpr*>(m_query.get())
-              },
+              m_is_empty_query{nullptr
+                               != dynamic_cast<clp_s::search::ast::EmptyExpr*>(m_query.get())},
               m_auto_gen_namespace_partial_resolutions{
-                      std::move(auto_gen_namespace_partial_resolutions)
-              },
+                      std::move(auto_gen_namespace_partial_resolutions)},
               m_user_gen_namespace_partial_resolutions{
-                      std::move(user_gen_namespace_partial_resolutions)
-              },
+                      std::move(user_gen_namespace_partial_resolutions)},
               m_projected_columns{std::move(projected_columns)},
               m_projected_column_to_original_key_and_index{
-                      std::move(projected_column_to_original_key_and_index)
-              },
+                      std::move(projected_column_to_original_key_and_index)},
               m_case_sensitive_match{case_sensitive_match} {}
 
     // Methods
@@ -335,8 +324,8 @@ private:
             SchemaTree::Node::id_t node_id,
             SchemaTree::NodeLocator const& node_locator,
             ColumnDescriptorTokenIterator const& token_it,
-            NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback
-    ) -> ystdlib::error_handling::Result<void>;
+            NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback)
+            -> ystdlib::error_handling::Result<void>;
 
     /**
      * Evaluates the filter expression against the given kv-pair log event.
@@ -349,10 +338,9 @@ private:
      * - Forwards `evaluate_wildcard_filter`'s return values.
      * - Forwards `evaluate_filter_against_node_id_value_pair`'s return values.
      */
-    [[nodiscard]] auto evaluate_filter_expr(
-            clp_s::search::ast::FilterExpr* filter_expr,
-            KeyValuePairLogEvent const& log_event
-    ) -> ystdlib::error_handling::Result<AstEvaluationResult>;
+    [[nodiscard]] auto evaluate_filter_expr(clp_s::search::ast::FilterExpr* filter_expr,
+                                            KeyValuePairLogEvent const& log_event)
+            -> ystdlib::error_handling::Result<AstEvaluationResult>;
 
     auto push_to_ast_dfs_stack(AstExprIterator ast_expr_it) -> void {
         m_ast_dfs_stack.emplace_back(ast_expr_it, ast_evaluation_result_bitmask_t{});
@@ -367,8 +355,7 @@ private:
      */
     auto pop_from_ast_dfs_stack_and_update_evaluation_results(
             AstEvaluationResult evaluation_result,
-            std::optional<AstEvaluationResult>& query_evaluation_result
-    ) -> void;
+            std::optional<AstEvaluationResult>& query_evaluation_result) -> void;
 
     /**
      * Advances the AST DFS evaluation by visiting the top of `m_ast_dfs_stack`.
@@ -382,18 +369,16 @@ private:
      */
     [[nodiscard]] auto advance_ast_dfs_evaluation(
             KeyValuePairLogEvent const& log_event,
-            std::optional<AstEvaluationResult>& query_evaluation_result
-    ) -> ystdlib::error_handling::Result<void>;
+            std::optional<AstEvaluationResult>& query_evaluation_result)
+            -> ystdlib::error_handling::Result<void>;
 
     // Variables
     std::shared_ptr<clp_s::search::ast::Expression> m_query;
     bool m_is_empty_query;
     PartialResolutionMap m_auto_gen_namespace_partial_resolutions;
     PartialResolutionMap m_user_gen_namespace_partial_resolutions;
-    std::unordered_map<
-            clp_s::search::ast::ColumnDescriptor*,
-            std::unordered_set<SchemaTree::Node::id_t>
-    >
+    std::unordered_map<clp_s::search::ast::ColumnDescriptor*,
+                       std::unordered_set<SchemaTree::Node::id_t>>
             m_resolved_column_to_schema_tree_node_ids;
     std::vector<std::shared_ptr<clp_s::search::ast::ColumnDescriptor>> m_projected_columns;
     ProjectionMap m_projected_column_to_original_key_and_index;
@@ -406,13 +391,12 @@ auto QueryHandlerImpl::update_partially_resolved_columns(
         bool is_auto_generated,
         SchemaTree::NodeLocator const& node_locator,
         SchemaTree::Node::id_t node_id,
-        NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback
-) -> ystdlib::error_handling::Result<void> {
+        NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback)
+        -> ystdlib::error_handling::Result<void> {
     auto const parent_node_id{node_locator.get_parent_id()};
-    auto& partial_resolutions_to_update{
-            is_auto_generated ? m_auto_gen_namespace_partial_resolutions
-                              : m_user_gen_namespace_partial_resolutions
-    };
+    auto& partial_resolutions_to_update{is_auto_generated
+                                                ? m_auto_gen_namespace_partial_resolutions
+                                                : m_user_gen_namespace_partial_resolutions};
     if (false == partial_resolutions_to_update.contains(parent_node_id)) {
         return ystdlib::error_handling::success();
     }
@@ -425,8 +409,7 @@ auto QueryHandlerImpl::update_partially_resolved_columns(
                 node_id,
                 node_locator,
                 token_it,
-                new_projected_schema_tree_node_callback
-        ));
+                new_projected_schema_tree_node_callback));
 
         // Handle partial resolution updates
         if (SchemaTree::Node::Type::Obj != node_locator.get_type()) {
@@ -442,10 +425,8 @@ auto QueryHandlerImpl::update_partially_resolved_columns(
             //   match.
             new_partial_resolutions.emplace_back(node_id, token_it);
             if (false == token_it.is_last()) {
-                new_partial_resolutions.emplace_back(
-                        node_id,
-                        YSTDLIB_ERROR_HANDLING_TRYX(token_it.next())
-                );
+                new_partial_resolutions.emplace_back(node_id,
+                                                     YSTDLIB_ERROR_HANDLING_TRYX(token_it.next()));
             }
             continue;
         }
@@ -460,18 +441,15 @@ auto QueryHandlerImpl::update_partially_resolved_columns(
         new_partial_resolutions.emplace_back(node_id, next_token_it);
         if (false == next_token_it.is_last() && next_token_it.is_wildcard()) {
             // Handle the case where the wildcard matches nothing
-            new_partial_resolutions.emplace_back(
-                    node_id,
-                    YSTDLIB_ERROR_HANDLING_TRYX(next_token_it.next())
-            );
+            new_partial_resolutions.emplace_back(node_id,
+                                                 YSTDLIB_ERROR_HANDLING_TRYX(next_token_it.next()));
         }
     }
 
     for (auto const& [node_id, token_it] : new_partial_resolutions) {
         auto [it, inserted] = partial_resolutions_to_update.try_emplace(
                 node_id,
-                std::vector<ColumnDescriptorTokenIterator>{}
-        );
+                std::vector<ColumnDescriptorTokenIterator>{});
         it->second.emplace_back(token_it);
     }
 
@@ -484,8 +462,8 @@ auto QueryHandlerImpl::handle_column_resolution_on_new_schema_tree_node(
         SchemaTree::Node::id_t node_id,
         SchemaTree::NodeLocator const& node_locator,
         QueryHandlerImpl::ColumnDescriptorTokenIterator const& token_it,
-        NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback
-) -> ystdlib::error_handling::Result<void> {
+        NewProjectedSchemaTreeNodeCallbackType new_projected_schema_tree_node_callback)
+        -> ystdlib::error_handling::Result<void> {
     if ((false == token_it.is_last()
          && false == YSTDLIB_ERROR_HANDLING_TRYX(token_it.next()).is_trailing_wildcard())
         || false == token_it.match_schema_tree_node_type(node_locator.get_type())
@@ -506,15 +484,13 @@ auto QueryHandlerImpl::handle_column_resolution_on_new_schema_tree_node(
         YSTDLIB_ERROR_HANDLING_TRYV(new_projected_schema_tree_node_callback(
                 is_auto_generated,
                 node_id,
-                std::make_pair(original_key, projected_index)
-        ));
+                std::make_pair(original_key, projected_index)));
         return ystdlib::error_handling::success();
     }
 
     auto [it, inserted] = m_resolved_column_to_schema_tree_node_ids.try_emplace(
             col,
-            std::unordered_set<SchemaTree::Node::id_t>{}
-    );
+            std::unordered_set<SchemaTree::Node::id_t>{});
     it->second.emplace(node_id);
     return ystdlib::error_handling::success();
 }

@@ -46,11 +46,9 @@ public:
      * @param file_id
      * @param encoded_vars
      */
-    void append_to_table(
-            epochtime_t timestamp,
-            file_id_t file_id,
-            std::vector<encoded_variable_t> const& encoded_vars
-    );
+    void append_to_table(epochtime_t timestamp,
+                         file_id_t file_id,
+                         std::vector<encoded_variable_t> const& encoded_vars);
 
     size_t get_num_rows() const { return m_num_rows; }
 

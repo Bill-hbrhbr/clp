@@ -44,10 +44,8 @@ public:
      * @param should_create_table
      * @throw OperationFailed if `optional_db_config` is invalid.
      */
-    IndexManager(
-            std::optional<clp::GlobalMetadataDBConfig> const& optional_db_config,
-            bool should_create_table = false
-    );
+    IndexManager(std::optional<clp::GlobalMetadataDBConfig> const& optional_db_config,
+                 bool should_create_table = false);
 
     // Destructor
     ~IndexManager();
@@ -75,8 +73,7 @@ private:
      */
     void traverse_schema_tree_and_update_metadata(
             std::shared_ptr<SchemaTree> const& schema_tree,
-            std::shared_ptr<TimestampDictionaryReader> const& timestamp_dict
-    );
+            std::shared_ptr<TimestampDictionaryReader> const& timestamp_dict);
 
     OutputType m_output_type{OutputType::Database};
     std::shared_ptr<MySQLIndexStorage> m_mysql_index_storage;

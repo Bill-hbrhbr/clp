@@ -19,8 +19,8 @@ public:
      * @param file_paths
      * @return true if successful, false otherwise
      */
-    static bool
-    find_all_files_in_directory(std::string const& path, std::vector<std::string>& file_paths);
+    static bool find_all_files_in_directory(std::string const& path,
+                                            std::vector<std::string>& file_paths);
 
     /**
      * Finds all archives in a directory, including the directory itself
@@ -28,10 +28,8 @@ public:
      * @param archive_paths
      * @return true if successful, false otherwise
      */
-    static bool find_all_archives_in_directory(
-            std::string_view const path,
-            std::vector<std::string>& archive_paths
-    );
+    static bool find_all_archives_in_directory(std::string_view const path,
+                                               std::vector<std::string>& archive_paths);
 
     /**
      * Gets the last non-empty component of a path, accounting for trailing forward slashes.

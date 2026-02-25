@@ -61,11 +61,9 @@ static bool open_archive(string const& archive_path, Archive& archive_reader);
  * @param compressed_file
  * @return true on success, false otherwise
  */
-static bool open_compressed_file(
-        MetadataDB::FileIterator& file_metadata_ix,
-        Archive& archive,
-        File& compressed_file
-);
+static bool open_compressed_file(MetadataDB::FileIterator& file_metadata_ix,
+                                 Archive& archive,
+                                 File& compressed_file);
 /**
  * Searches all files referenced by a given database cursor
  * @param queries
@@ -74,12 +72,10 @@ static bool open_compressed_file(
  * @param file_metadata_ix
  * @return The total number of matches found across all files
  */
-static size_t search_files(
-        vector<Query>& queries,
-        CommandLineArguments::OutputMethod output_method,
-        Archive& archive,
-        MetadataDB::FileIterator& file_metadata_ix
-);
+static size_t search_files(vector<Query>& queries,
+                           CommandLineArguments::OutputMethod output_method,
+                           Archive& archive,
+                           MetadataDB::FileIterator& file_metadata_ix);
 /**
  * Prints search result to stdout in text format
  * @param orig_file_path
@@ -87,12 +83,10 @@ static size_t search_files(
  * @param decompressed_msg
  * @param custom_arg Unused
  */
-static void print_result_text(
-        string const& orig_file_path,
-        Message const& compressed_msg,
-        string const& decompressed_msg,
-        void* custom_arg
-);
+static void print_result_text(string const& orig_file_path,
+                              Message const& compressed_msg,
+                              string const& decompressed_msg,
+                              void* custom_arg);
 /**
  * Prints search result to stdout in binary format
  * @param orig_file_path
@@ -100,12 +94,10 @@ static void print_result_text(
  * @param decompressed_msg
  * @param custom_arg Unused
  */
-static void print_result_binary(
-        string const& orig_file_path,
-        Message const& compressed_msg,
-        string const& decompressed_msg,
-        void* custom_arg
-);
+static void print_result_binary(string const& orig_file_path,
+                                Message const& compressed_msg,
+                                string const& decompressed_msg,
+                                void* custom_arg);
 
 /**
  * Gets an archive iterator for the given file path or for all files if the file path is empty
@@ -115,19 +107,15 @@ static void print_result_binary(
  * @param end_ts
  * @return An archive iterator
  */
-static GlobalMetadataDB::ArchiveIterator* get_archive_iterator(
-        GlobalMetadataDB& global_metadata_db,
-        std::string const& file_path,
-        epochtime_t begin_ts,
-        epochtime_t end_ts
-);
+static GlobalMetadataDB::ArchiveIterator* get_archive_iterator(GlobalMetadataDB& global_metadata_db,
+                                                               std::string const& file_path,
+                                                               epochtime_t begin_ts,
+                                                               epochtime_t end_ts);
 
-static GlobalMetadataDB::ArchiveIterator* get_archive_iterator(
-        GlobalMetadataDB& global_metadata_db,
-        std::string const& file_path,
-        epochtime_t begin_ts,
-        epochtime_t end_ts
-) {
+static GlobalMetadataDB::ArchiveIterator* get_archive_iterator(GlobalMetadataDB& global_metadata_db,
+                                                               std::string const& file_path,
+                                                               epochtime_t begin_ts,
+                                                               epochtime_t end_ts) {
     if (!file_path.empty()) {
         return global_metadata_db.get_archive_iterator_for_file_path(file_path);
     } else if (begin_ts == clp::cEpochTimeMin && end_ts == clp::cEpochTimeMax) {
@@ -146,22 +134,18 @@ static bool open_archive(string const& archive_path, Archive& archive_reader) {
     } catch (TraceableException& e) {
         error_code = e.get_error_code();
         if (ErrorCode_errno == error_code) {
-            SPDLOG_ERROR(
-                    "Opening archive failed: {}:{} {}, errno={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    errno
-            );
+            SPDLOG_ERROR("Opening archive failed: {}:{} {}, errno={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         errno);
             return false;
         } else {
-            SPDLOG_ERROR(
-                    "Opening archive failed: {}:{} {}, error_code={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    error_code
-            );
+            SPDLOG_ERROR("Opening archive failed: {}:{} {}, error_code={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         error_code);
             return false;
         }
     }
@@ -171,22 +155,18 @@ static bool open_archive(string const& archive_path, Archive& archive_reader) {
     } catch (TraceableException& e) {
         error_code = e.get_error_code();
         if (ErrorCode_errno == error_code) {
-            SPDLOG_ERROR(
-                    "Reading dictionaries failed: {}:{} {}, errno={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    errno
-            );
+            SPDLOG_ERROR("Reading dictionaries failed: {}:{} {}, errno={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         errno);
             return false;
         } else {
-            SPDLOG_ERROR(
-                    "Reading dictionaries failed: {}:{} {}, error_code={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    error_code
-            );
+            SPDLOG_ERROR("Reading dictionaries failed: {}:{} {}, error_code={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         error_code);
             return false;
         }
     }
@@ -194,13 +174,11 @@ static bool open_archive(string const& archive_path, Archive& archive_reader) {
     return true;
 }
 
-static bool search(
-        vector<string> const& search_strings,
-        CommandLineArguments& command_line_args,
-        Archive& archive,
-        log_surgeon::lexers::ByteLexer& lexer,
-        bool use_heuristic
-) {
+static bool search(vector<string> const& search_strings,
+                   CommandLineArguments& command_line_args,
+                   Archive& archive,
+                   log_surgeon::lexers::ByteLexer& lexer,
+                   bool use_heuristic) {
     ErrorCode error_code;
     auto search_begin_ts = command_line_args.get_search_begin_ts();
     auto search_end_ts = command_line_args.get_search_end_ts();
@@ -213,16 +191,15 @@ static bool search(
         for (auto const& search_string : search_strings) {
             auto const& logtype_dict{archive.get_logtype_dictionary()};
             auto const& var_dict{archive.get_var_dictionary()};
-            auto query_processing_result = GrepCore::process_raw_query(
-                    logtype_dict,
-                    var_dict,
-                    search_string,
-                    search_begin_ts,
-                    search_end_ts,
-                    command_line_args.ignore_case(),
-                    lexer,
-                    use_heuristic
-            );
+            auto query_processing_result
+                    = GrepCore::process_raw_query(logtype_dict,
+                                                  var_dict,
+                                                  search_string,
+                                                  search_begin_ts,
+                                                  search_end_ts,
+                                                  command_line_args.ignore_case(),
+                                                  lexer,
+                                                  use_heuristic);
             if (query_processing_result.has_value()) {
                 auto& query = query_processing_result.value();
                 no_queries_match = false;
@@ -240,31 +217,26 @@ static bool search(
 
                 // Calculate the IDs of the segments that may contain results for each sub-query.
                 auto get_segments_containing_logtype_dict_id
-                        = [&logtype_dict](
-                                  logtype_dictionary_id_t logtype_id
-                          ) -> std::set<segment_id_t> const& {
+                        = [&logtype_dict](logtype_dictionary_id_t logtype_id)
+                        -> std::set<segment_id_t> const& {
                     return logtype_dict.get_entry(logtype_id)
                             .get_ids_of_segments_containing_entry();
                 };
-                auto get_segments_containing_var_dict_id = [&var_dict](
-                                                                   variable_dictionary_id_t var_id
-                                                           ) -> std::set<segment_id_t> const& {
+                auto get_segments_containing_var_dict_id =
+                        [&var_dict](
+                                variable_dictionary_id_t var_id) -> std::set<segment_id_t> const& {
                     return var_dict.get_entry(var_id).get_ids_of_segments_containing_entry();
                 };
-                query.calculate_ids_of_matching_segments(
-                        get_segments_containing_logtype_dict_id,
-                        get_segments_containing_var_dict_id
-                );
+                query.calculate_ids_of_matching_segments(get_segments_containing_logtype_dict_id,
+                                                         get_segments_containing_var_dict_id);
 
                 queries.push_back(query);
 
                 // Add query's matching segments to segments to search
                 for (auto& sub_query : query.get_sub_queries()) {
                     auto& ids_of_matching_segments = sub_query.get_ids_of_matching_segments();
-                    ids_of_segments_to_search.insert(
-                            ids_of_matching_segments.cbegin(),
-                            ids_of_matching_segments.cend()
-                    );
+                    ids_of_segments_to_search.insert(ids_of_matching_segments.cbegin(),
+                                                     ids_of_matching_segments.cend());
                 }
             }
         }
@@ -272,41 +244,32 @@ static bool search(
         if (!no_queries_match) {
             size_t num_matches;
             if (is_superseding_query) {
-                auto file_metadata_ix = archive.get_file_iterator(
-                        search_begin_ts,
-                        search_end_ts,
-                        command_line_args.get_file_path(),
-                        false
-                );
-                num_matches = search_files(
-                        queries,
-                        command_line_args.get_output_method(),
-                        archive,
-                        *file_metadata_ix
-                );
+                auto file_metadata_ix = archive.get_file_iterator(search_begin_ts,
+                                                                  search_end_ts,
+                                                                  command_line_args.get_file_path(),
+                                                                  false);
+                num_matches = search_files(queries,
+                                           command_line_args.get_output_method(),
+                                           archive,
+                                           *file_metadata_ix);
             } else {
-                auto file_metadata_ix_ptr = archive.get_file_iterator(
-                        search_begin_ts,
-                        search_end_ts,
-                        command_line_args.get_file_path(),
-                        clp::cInvalidSegmentId,
-                        false
-                );
+                auto file_metadata_ix_ptr
+                        = archive.get_file_iterator(search_begin_ts,
+                                                    search_end_ts,
+                                                    command_line_args.get_file_path(),
+                                                    clp::cInvalidSegmentId,
+                                                    false);
                 auto& file_metadata_ix = *file_metadata_ix_ptr;
-                num_matches = search_files(
-                        queries,
-                        command_line_args.get_output_method(),
-                        archive,
-                        file_metadata_ix
-                );
+                num_matches = search_files(queries,
+                                           command_line_args.get_output_method(),
+                                           archive,
+                                           file_metadata_ix);
                 for (auto segment_id : ids_of_segments_to_search) {
                     file_metadata_ix.set_segment_id(segment_id);
-                    num_matches += search_files(
-                            queries,
-                            command_line_args.get_output_method(),
-                            archive,
-                            file_metadata_ix
-                    );
+                    num_matches += search_files(queries,
+                                                command_line_args.get_output_method(),
+                                                archive,
+                                                file_metadata_ix);
                 }
             }
             SPDLOG_DEBUG("# matches found: {}", num_matches);
@@ -314,22 +277,18 @@ static bool search(
     } catch (TraceableException& e) {
         error_code = e.get_error_code();
         if (ErrorCode_errno == error_code) {
-            SPDLOG_ERROR(
-                    "Search failed: {}:{} {}, errno={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    errno
-            );
+            SPDLOG_ERROR("Search failed: {}:{} {}, errno={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         errno);
             return false;
         } else {
-            SPDLOG_ERROR(
-                    "Search failed: {}:{} {}, error_code={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    error_code
-            );
+            SPDLOG_ERROR("Search failed: {}:{} {}, error_code={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         error_code);
             return false;
         }
     }
@@ -337,11 +296,9 @@ static bool search(
     return true;
 }
 
-static bool open_compressed_file(
-        MetadataDB::FileIterator& file_metadata_ix,
-        Archive& archive,
-        File& compressed_file
-) {
+static bool open_compressed_file(MetadataDB::FileIterator& file_metadata_ix,
+                                 Archive& archive,
+                                 File& compressed_file) {
     ErrorCode error_code = archive.open_file(compressed_file, file_metadata_ix);
     if (clp::ErrorCode_Success == error_code) {
         return true;
@@ -358,12 +315,10 @@ static bool open_compressed_file(
     return false;
 }
 
-static size_t search_files(
-        vector<Query>& queries,
-        CommandLineArguments::OutputMethod const output_method,
-        Archive& archive,
-        MetadataDB::FileIterator& file_metadata_ix
-) {
+static size_t search_files(vector<Query>& queries,
+                           CommandLineArguments::OutputMethod const output_method,
+                           Archive& archive,
+                           MetadataDB::FileIterator& file_metadata_ix) {
     size_t num_matches = 0;
 
     File compressed_file;
@@ -391,14 +346,12 @@ static size_t search_files(
 
             for (auto const& query : queries) {
                 archive.reset_file_indices(compressed_file);
-                num_matches += Grep::search_and_output(
-                        query,
-                        SIZE_MAX,
-                        archive,
-                        compressed_file,
-                        output_func,
-                        output_func_arg
-                );
+                num_matches += Grep::search_and_output(query,
+                                                       SIZE_MAX,
+                                                       archive,
+                                                       compressed_file,
+                                                       output_func,
+                                                       output_func_arg);
             }
         }
         archive.close_file(compressed_file);
@@ -407,21 +360,17 @@ static size_t search_files(
     return num_matches;
 }
 
-static void print_result_text(
-        string const& orig_file_path,
-        Message const& compressed_msg,
-        string const& decompressed_msg,
-        void* custom_arg
-) {
+static void print_result_text(string const& orig_file_path,
+                              Message const& compressed_msg,
+                              string const& decompressed_msg,
+                              void* custom_arg) {
     printf("%s:%s", orig_file_path.c_str(), decompressed_msg.c_str());
 }
 
-static void print_result_binary(
-        string const& orig_file_path,
-        Message const& compressed_msg,
-        string const& decompressed_msg,
-        void* custom_arg
-) {
+static void print_result_binary(string const& orig_file_path,
+                                Message const& compressed_msg,
+                                string const& decompressed_msg,
+                                void* custom_arg) {
     bool write_successful = true;
     do {
         size_t length;
@@ -523,11 +472,9 @@ int main(int argc, char const* argv[]) {
     struct stat archives_dir_stat = {};
     auto archives_dir = std::filesystem::path(command_line_args.get_archives_dir());
     if (0 != stat(archives_dir.c_str(), &archives_dir_stat)) {
-        SPDLOG_ERROR(
-                "'{}' does not exist or cannot be accessed - {}.",
-                archives_dir.c_str(),
-                strerror(errno)
-        );
+        SPDLOG_ERROR("'{}' does not exist or cannot be accessed - {}.",
+                     archives_dir.c_str(),
+                     strerror(errno));
         return -1;
     } else if (S_ISDIR(archives_dir_stat.st_mode) == false) {
         SPDLOG_ERROR("'{}' is not a directory.", archives_dir.c_str());
@@ -550,12 +497,11 @@ int main(int argc, char const* argv[]) {
 
     string archive_id;
     Archive archive_reader;
-    for (auto archive_ix = std::unique_ptr<GlobalMetadataDB::ArchiveIterator>(get_archive_iterator(
-                 *global_metadata_db,
-                 command_line_args.get_file_path(),
-                 command_line_args.get_search_begin_ts(),
-                 command_line_args.get_search_end_ts()
-         ));
+    for (auto archive_ix = std::unique_ptr<GlobalMetadataDB::ArchiveIterator>(
+                 get_archive_iterator(*global_metadata_db,
+                                      command_line_args.get_file_path(),
+                                      command_line_args.get_search_begin_ts(),
+                                      command_line_args.get_search_end_ts()));
          archive_ix->contains_element();
          archive_ix->get_next())
     {
@@ -563,11 +509,9 @@ int main(int argc, char const* argv[]) {
         auto archive_path = archives_dir / archive_id;
 
         if (false == std::filesystem::exists(archive_path)) {
-            SPDLOG_WARN(
-                    "Archive {} does not exist in '{}'.",
-                    archive_id,
-                    command_line_args.get_archives_dir()
-            );
+            SPDLOG_WARN("Archive {} does not exist in '{}'.",
+                        archive_id,
+                        command_line_args.get_archives_dir());
             continue;
         }
 

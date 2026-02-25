@@ -22,19 +22,17 @@ constexpr std::string_view cMysqlDbName{"test-db"};
 constexpr std::string_view cMysqlDbTablePrefix{"test_prefix_"};
 constexpr std::string_view cMysqlDbUser{"test-user"};
 constexpr std::string_view cMysqlDbPass{"test-pass"};
-constexpr std::array cCommonMysqlArgv{
-        std::string_view{"test"},
-        std::string_view{"--db-type"},
-        cMysqlDbType,
-        std::string_view{"--db-host"},
-        cMysqlDbHost,
-        std::string_view{"--db-port"},
-        cMysqlDbPort,
-        std::string_view{"--db-name"},
-        cMysqlDbName,
-        std::string_view{"--db-table-prefix"},
-        cMysqlDbTablePrefix
-};
+constexpr std::array cCommonMysqlArgv{std::string_view{"test"},
+                                      std::string_view{"--db-type"},
+                                      cMysqlDbType,
+                                      std::string_view{"--db-host"},
+                                      cMysqlDbHost,
+                                      std::string_view{"--db-port"},
+                                      cMysqlDbPort,
+                                      std::string_view{"--db-name"},
+                                      cMysqlDbName,
+                                      std::string_view{"--db-table-prefix"},
+                                      cMysqlDbTablePrefix};
 constexpr size_t cArgIdxDbHost{4};
 constexpr size_t cArgIdxDbPort{6};
 constexpr size_t cArgIdxDbName{8};
@@ -81,18 +79,15 @@ auto parse_args(std::array<std::string_view, n> const& argv) -> GlobalMetadataDB
     }
     boost::program_options::store(
             boost::program_options::parse_command_line(cArgc, argv_c_strs.data(), options_desc),
-            vm
-    );
+            vm);
     boost::program_options::notify(vm);
 
     return config;
 }
 }  // namespace
 
-TEST_CASE(
-        "Test parsing command line arguments for GlobalMetadataDBConfig",
-        "[GlobalMetadataDBConfig]"
-) {
+TEST_CASE("Test parsing command line arguments for GlobalMetadataDBConfig",
+          "[GlobalMetadataDBConfig]") {
     auto const config{parse_args(cCommonMysqlArgv)};
 
     REQUIRE((config.get_metadata_db_type() == GlobalMetadataDBConfig::MetadataDBType::MySQL));

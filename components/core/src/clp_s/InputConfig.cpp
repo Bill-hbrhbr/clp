@@ -162,8 +162,7 @@ auto try_sign_url(std::string& url) -> bool {
         SPDLOG_ERROR(
                 "{} and {} environment variables not available for presigned url authentication.",
                 cAwsAccessKeyIdEnvVar,
-                cAwsSecretAccessKeyEnvVar
-        );
+                cAwsSecretAccessKeyEnvVar);
         return false;
     }
     std::optional<std::string> optional_aws_session_token{std::nullopt};
@@ -172,11 +171,9 @@ auto try_sign_url(std::string& url) -> bool {
         optional_aws_session_token = std::string{aws_session_token};
     }
 
-    clp::aws::AwsAuthenticationSigner signer{
-            aws_access_key,
-            aws_secret_access_key,
-            optional_aws_session_token
-    };
+    clp::aws::AwsAuthenticationSigner signer{aws_access_key,
+                                             aws_secret_access_key,
+                                             optional_aws_session_token};
 
     try {
         clp::aws::S3Url s3_url{url};
@@ -229,17 +226,13 @@ auto could_be_kvir(char const* peek_buf, size_t peek_size) -> bool {
     }
 
     return (0
-            == std::memcmp(
-                    peek_buf,
-                    clp::ffi::ir_stream::cProtocol::FourByteEncodingMagicNumber,
-                    clp::ffi::ir_stream::cProtocol::MagicNumberLength
-            ))
+            == std::memcmp(peek_buf,
+                           clp::ffi::ir_stream::cProtocol::FourByteEncodingMagicNumber,
+                           clp::ffi::ir_stream::cProtocol::MagicNumberLength))
            || (0
-               == std::memcmp(
-                       peek_buf,
-                       clp::ffi::ir_stream::cProtocol::EightByteEncodingMagicNumber,
-                       clp::ffi::ir_stream::cProtocol::MagicNumberLength
-               ));
+               == std::memcmp(peek_buf,
+                              clp::ffi::ir_stream::cProtocol::EightByteEncodingMagicNumber,
+                              clp::ffi::ir_stream::cProtocol::MagicNumberLength));
 }
 
 auto could_be_json(char const* peek_buf, size_t peek_size) -> bool {
@@ -277,11 +270,9 @@ auto could_be_logtext(char const* peek_buf, size_t peek_size) -> bool {
     constexpr size_t cMaxUtf8CodepointBytes = 4ULL;
     constexpr size_t cMaxRunWithoutFullUtf8Codepoint = 2 * cMaxUtf8CodepointBytes - 1;
 
-    size_t cur_byte{
-            peek_size < cMaxRunWithoutFullUtf8Codepoint
-                    ? size_t{0}
-                    : (peek_size - cMaxRunWithoutFullUtf8Codepoint)
-    };
+    size_t cur_byte{peek_size < cMaxRunWithoutFullUtf8Codepoint
+                            ? size_t{0}
+                            : (peek_size - cMaxRunWithoutFullUtf8Codepoint)};
 
     std::optional<size_t> legal_last_byte_index{std::nullopt};
     auto mark_last_legal_character = [&](size_t remaining_bytes_in_char) {
@@ -369,8 +360,7 @@ auto try_create_reader(Path const& path, NetworkAuthOption const& network_auth)
     std::vector<std::shared_ptr<clp::ReaderInterface>> readers{reader};
     for (size_t nesting_depth{0ULL}; nesting_depth < cMaxNestedFormatDepth; ++nesting_depth) {
         auto buffered_reader{
-                std::make_shared<clp::BufferedReader>(readers.back(), cFileReadBufferCapacity)
-        };
+                std::make_shared<clp::BufferedReader>(readers.back(), cFileReadBufferCapacity)};
         auto const rc{buffered_reader->try_refill_buffer_if_empty()};
         if (clp::ErrorCode::ErrorCode_Success != rc && clp::ErrorCode::ErrorCode_EndOfFile != rc) {
             return {{}, FileType::Unknown};
@@ -385,12 +375,10 @@ auto try_create_reader(Path const& path, NetworkAuthOption const& network_auth)
                 return {std::move(readers), type};
             case FileType::Zstd: {
                 readers.emplace_back(
-                        std::make_shared<clp::streaming_compression::zstd::Decompressor>()
-                );
+                        std::make_shared<clp::streaming_compression::zstd::Decompressor>());
                 try {
                     std::static_pointer_cast<clp::streaming_compression::zstd::Decompressor>(
-                            readers.back()
-                    )
+                            readers.back())
                             ->open(*buffered_reader, cFileReadBufferCapacity);
                 } catch (std::exception const&) {
                     return {{}, FileType::Unknown};

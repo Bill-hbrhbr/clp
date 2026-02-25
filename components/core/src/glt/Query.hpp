@@ -20,10 +20,8 @@ public:
     // Constructors
     explicit QueryVar(encoded_variable_t precise_non_dict_var);
     QueryVar(encoded_variable_t precise_dict_var, VariableDictionaryEntry const* var_dict_entry);
-    QueryVar(
-            std::unordered_set<encoded_variable_t> const& possible_dict_vars,
-            std::unordered_set<VariableDictionaryEntry const*> const& possible_var_dict_entries
-    );
+    QueryVar(std::unordered_set<encoded_variable_t> const& possible_dict_vars,
+             std::unordered_set<VariableDictionaryEntry const*> const& possible_var_dict_entries);
 
     // Methods
     /**
@@ -82,10 +80,8 @@ public:
      * @param precise_dict_var
      * @param var_dict_entry
      */
-    void add_dict_var(
-            encoded_variable_t precise_dict_var,
-            VariableDictionaryEntry const* var_dict_entry
-    );
+    void add_dict_var(encoded_variable_t precise_dict_var,
+                      VariableDictionaryEntry const* var_dict_entry);
     /**
      * Adds an imprecise dictionary variable (i.e., a set of possible precise dictionary variables)
      * to the subquery
@@ -94,15 +90,13 @@ public:
      */
     void add_imprecise_dict_var(
             std::unordered_set<encoded_variable_t> const& possible_dict_vars,
-            std::unordered_set<VariableDictionaryEntry const*> const& possible_var_dict_entries
-    );
+            std::unordered_set<VariableDictionaryEntry const*> const& possible_var_dict_entries);
     /**
      * Add a set of possible logtypes to the subquery
      * @param logtype_entries
      */
     void set_possible_logtypes(
-            std::unordered_set<LogTypeDictionaryEntry const*> const& logtype_entries
-    );
+            std::unordered_set<LogTypeDictionaryEntry const*> const& logtype_entries);
     void mark_wildcard_match_required();
 
     /**

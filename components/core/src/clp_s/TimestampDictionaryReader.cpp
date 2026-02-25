@@ -15,10 +15,8 @@
 #include "TimestampPattern.hpp"
 
 namespace clp_s {
-auto TimestampDictionaryReader::read(
-        ZstdDecompressor& decompressor,
-        bool has_deprecated_timestamp_format
-) -> ErrorCode {
+auto TimestampDictionaryReader::read(ZstdDecompressor& decompressor,
+                                     bool has_deprecated_timestamp_format) -> ErrorCode {
     ErrorCode error;
     uint64_t range_index_size;
     error = decompressor.try_read_numeric_value<uint64_t>(range_index_size);
@@ -35,11 +33,9 @@ auto TimestampDictionaryReader::read(
         }
 
         if (false
-            == clp_s::search::ast::tokenize_column_descriptor(
-                    entry.get_key_name(),
-                    tokens,
-                    descriptor_namespace
-            ))
+            == clp_s::search::ast::tokenize_column_descriptor(entry.get_key_name(),
+                                                              tokens,
+                                                              descriptor_namespace))
         {
             throw OperationFailed(ErrorCodeCorrupt, __FILENAME__, __LINE__);
         }
@@ -86,12 +82,10 @@ auto TimestampDictionaryReader::read(
         auto timestamp_pattern_result{timestamp_parser::TimestampPattern::create(pattern)};
         if (timestamp_pattern_result.has_error()) {
             auto const& timestamp_error{timestamp_pattern_result.error()};
-            SPDLOG_ERROR(
-                    "Error loading timestamp pattern `{}` - {} - {}",
-                    pattern,
-                    timestamp_error.category().name(),
-                    timestamp_error.message()
-            );
+            SPDLOG_ERROR("Error loading timestamp pattern `{}` - {} - {}",
+                         pattern,
+                         timestamp_error.category().name(),
+                         timestamp_error.message());
             return ErrorCodeCorrupt;
         }
         m_timestamp_patterns.emplace(id, std::move(timestamp_pattern_result.value()));
@@ -99,21 +93,18 @@ auto TimestampDictionaryReader::read(
     return ErrorCodeSuccess;
 }
 
-auto TimestampDictionaryReader::get_deprecated_timestamp_string_encoding(
-        epochtime_t epoch,
-        uint64_t format_id
-) const -> std::string {
+auto TimestampDictionaryReader::get_deprecated_timestamp_string_encoding(epochtime_t epoch,
+                                                                         uint64_t format_id) const
+        -> std::string {
     std::string ret;
     m_deprecated_patterns.at(format_id).insert_formatted_timestamp(epoch, ret);
 
     return ret;
 }
 
-void TimestampDictionaryReader::append_timestamp_to_buffer(
-        epochtime_t timestamp,
-        uint64_t format_id,
-        std::string& buffer
-) const {
+void TimestampDictionaryReader::append_timestamp_to_buffer(epochtime_t timestamp,
+                                                           uint64_t format_id,
+                                                           std::string& buffer) const {
     auto const& pattern{m_timestamp_patterns.at(format_id)};
     auto const marshal_result{timestamp_parser::marshal_timestamp(timestamp, pattern, buffer)};
     if (marshal_result.has_error()) {

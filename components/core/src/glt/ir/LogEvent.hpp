@@ -16,12 +16,10 @@ template <typename encoded_variable_t>
 class LogEvent {
 public:
     // Constructors
-    LogEvent(
-            epoch_time_ms_t timestamp,
-            std::string logtype,
-            std::vector<std::string> dict_vars,
-            std::vector<encoded_variable_t> encoded_vars
-    )
+    LogEvent(epoch_time_ms_t timestamp,
+             std::string logtype,
+             std::vector<std::string> dict_vars,
+             std::vector<encoded_variable_t> encoded_vars)
             : m_timestamp{timestamp},
               m_logtype{std::move(logtype)},
               m_dict_vars{std::move(dict_vars)},

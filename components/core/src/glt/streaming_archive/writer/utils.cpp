@@ -18,12 +18,10 @@ auto split_archive(Archive::UserConfig& archive_user_config, Archive& archive_wr
     archive_writer.open(archive_user_config);
 }
 
-auto split_file(
-        string const& path_for_compression,
-        group_id_t group_id,
-        TimestampPattern const* last_timestamp_pattern,
-        Archive& archive_writer
-) -> void {
+auto split_file(string const& path_for_compression,
+                group_id_t group_id,
+                TimestampPattern const* last_timestamp_pattern,
+                Archive& archive_writer) -> void {
     auto const& encoded_file = archive_writer.get_file();
     auto orig_file_id = encoded_file.get_orig_file_id();
     auto split_ix = encoded_file.get_split_ix();
@@ -35,13 +33,11 @@ auto split_file(
     archive_writer.change_ts_pattern(last_timestamp_pattern);
 }
 
-auto split_file_and_archive(
-        Archive::UserConfig& archive_user_config,
-        string const& path_for_compression,
-        group_id_t group_id,
-        TimestampPattern const* last_timestamp_pattern,
-        Archive& archive_writer
-) -> void {
+auto split_file_and_archive(Archive::UserConfig& archive_user_config,
+                            string const& path_for_compression,
+                            group_id_t group_id,
+                            TimestampPattern const* last_timestamp_pattern,
+                            Archive& archive_writer) -> void {
     auto const& encoded_file = archive_writer.get_file();
     auto orig_file_id = encoded_file.get_orig_file_id();
     auto split_ix = encoded_file.get_split_ix();

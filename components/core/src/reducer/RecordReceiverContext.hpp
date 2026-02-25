@@ -27,8 +27,7 @@ public:
     RecordReceiverContext const& operator=(RecordReceiverContext const&&) = delete;
 
     static std::shared_ptr<RecordReceiverContext> new_receiver(
-            std::shared_ptr<ServerContext> const& ctx
-    ) {
+            std::shared_ptr<ServerContext> const& ctx) {
         auto receiver = std::make_shared<RecordReceiverContext>(ctx);
 
         // Clear the v6_only flag to allow ipv4 and ipv6 connections, but only on Linux. For full

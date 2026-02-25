@@ -40,28 +40,26 @@ static bool file_group_id_comparator(FileToCompress const& lhs, FileToCompress c
  * @param rhs
  * @return true if lhs' last write time is greater than rhs' last write time, false otherwise
  */
-static bool
-file_gt_last_write_time_comparator(FileToCompress const& lhs, FileToCompress const& rhs);
+static bool file_gt_last_write_time_comparator(FileToCompress const& lhs,
+                                               FileToCompress const& rhs);
 
 static bool file_group_id_comparator(FileToCompress const& lhs, FileToCompress const& rhs) {
     return lhs.get_group_id() < rhs.get_group_id();
 }
 
-static bool
-file_gt_last_write_time_comparator(FileToCompress const& lhs, FileToCompress const& rhs) {
+static bool file_gt_last_write_time_comparator(FileToCompress const& lhs,
+                                               FileToCompress const& rhs) {
     return boost::filesystem::last_write_time(lhs.get_path())
            > boost::filesystem::last_write_time(rhs.get_path());
 }
 
-bool compress(
-        CommandLineArguments& command_line_args,
-        vector<FileToCompress>& files_to_compress,
-        vector<string> const& empty_directory_paths,
-        vector<FileToCompress>& grouped_files_to_compress,
-        size_t target_encoded_file_size,
-        std::unique_ptr<log_surgeon::ReaderParser> reader_parser,
-        bool use_heuristic
-) {
+bool compress(CommandLineArguments& command_line_args,
+              vector<FileToCompress>& files_to_compress,
+              vector<string> const& empty_directory_paths,
+              vector<FileToCompress>& grouped_files_to_compress,
+              size_t target_encoded_file_size,
+              std::unique_ptr<log_surgeon::ReaderParser> reader_parser,
+              bool use_heuristic) {
     auto output_dir = std::filesystem::path(command_line_args.get_output_dir());
 
     // Create output directory in case it doesn't exist
@@ -124,14 +122,12 @@ bool compress(
             split_archive(archive_user_config, archive_writer);
         }
         if (false
-            == file_compressor.compress_file(
-                    target_data_size_of_dictionaries,
-                    archive_user_config,
-                    target_encoded_file_size,
-                    *it,
-                    archive_writer,
-                    use_heuristic
-            ))
+            == file_compressor.compress_file(target_data_size_of_dictionaries,
+                                             archive_user_config,
+                                             target_encoded_file_size,
+                                             *it,
+                                             archive_writer,
+                                             use_heuristic))
         {
             all_files_compressed_successfully = false;
         }
@@ -152,14 +148,12 @@ bool compress(
             split_archive(archive_user_config, archive_writer);
         }
         if (false
-            == file_compressor.compress_file(
-                    target_data_size_of_dictionaries,
-                    archive_user_config,
-                    target_encoded_file_size,
-                    file_to_compress,
-                    archive_writer,
-                    use_heuristic
-            ))
+            == file_compressor.compress_file(target_data_size_of_dictionaries,
+                                             archive_user_config,
+                                             target_encoded_file_size,
+                                             file_to_compress,
+                                             archive_writer,
+                                             use_heuristic))
         {
             all_files_compressed_successfully = false;
         }
@@ -175,11 +169,9 @@ bool compress(
     return all_files_compressed_successfully;
 }
 
-bool read_and_validate_grouped_file_list(
-        boost::filesystem::path const& path_prefix_to_remove,
-        string const& list_path,
-        vector<FileToCompress>& grouped_files
-) {
+bool read_and_validate_grouped_file_list(boost::filesystem::path const& path_prefix_to_remove,
+                                         string const& list_path,
+                                         vector<FileToCompress>& grouped_files) {
     unique_ptr<FileReader> grouped_file_path_reader;
     try {
         grouped_file_path_reader = make_unique<FileReader>(list_path);
@@ -206,11 +198,9 @@ bool read_and_validate_grouped_file_list(
         } else if (ErrorCode_errno == error_code) {
             SPDLOG_ERROR("Failed to read '{}', errno={}", grouped_file_ids_path.c_str(), errno);
         } else {
-            SPDLOG_ERROR(
-                    "Failed to read '{}', error_code={}",
-                    grouped_file_ids_path.c_str(),
-                    error_code
-            );
+            SPDLOG_ERROR("Failed to read '{}', error_code={}",
+                         grouped_file_ids_path.c_str(),
+                         error_code);
         }
         return false;
     }
@@ -253,11 +243,9 @@ bool read_and_validate_grouped_file_list(
 
         // Validate path is not a directory
         if (boost::filesystem::is_directory(path)) {
-            SPDLOG_ERROR(
-                    "Directory '{}' found in list of grouped files. If the directory contains "
-                    "grouped files, please specify them individually.",
-                    path.c_str()
-            );
+            SPDLOG_ERROR("Directory '{}' found in list of grouped files. If the directory contains "
+                         "grouped files, please specify them individually.",
+                         path.c_str());
             all_paths_valid = false;
             continue;
         }
@@ -265,11 +253,9 @@ bool read_and_validate_grouped_file_list(
         if (false
             == remove_prefix_and_clean_up_path(path_prefix_to_remove, path, path_without_prefix))
         {
-            SPDLOG_ERROR(
-                    "'{}' does not contain prefix '{}'.",
-                    path.c_str(),
-                    path_prefix_to_remove.c_str()
-            );
+            SPDLOG_ERROR("'{}' does not contain prefix '{}'.",
+                         path.c_str(),
+                         path_prefix_to_remove.c_str());
             all_paths_valid = false;
             continue;
         }

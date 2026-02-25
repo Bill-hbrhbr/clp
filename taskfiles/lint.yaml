@@ -128,12 +128,13 @@ tasks:
 
   check-cpp-format:
     sources: &cpp_source_files
-      - "{{.ROOT_DIR}}/.clang-format"
-      - "{{.ROOT_DIR}}/.clang-tidy"
-      - "{{.TASKFILE}}"
+      - "lint-requirements.txt"
       - "{{.G_CORE_COMPONENT_DIR}}/.clang-format"
       - "{{.G_CORE_COMPONENT_DIR}}/src/**/*"
       - "{{.G_CORE_COMPONENT_DIR}}/tests/**/*"
+      - "{{.ROOT_DIR}}/.clang-format"
+      - "{{.ROOT_DIR}}/.clang-tidy"
+      - "{{.TASKFILE}}"
     deps: ["cpp-lint-configs", "venv"]
     cmds:
       - task: ":utils:cpp-lint:clang-format"

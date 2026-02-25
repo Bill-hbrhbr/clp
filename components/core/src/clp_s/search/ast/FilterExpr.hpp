@@ -28,12 +28,10 @@ public:
      * @param parent parent this expression is attached to
      * @return Newly created Or expression
      */
-    [[nodiscard]] static auto create(
-            std::shared_ptr<ColumnDescriptor>& column,
-            FilterOperation op,
-            bool inverted = false,
-            Expression* parent = nullptr
-    ) -> std::shared_ptr<Expression>;
+    [[nodiscard]] static auto create(std::shared_ptr<ColumnDescriptor>& column,
+                                     FilterOperation op,
+                                     bool inverted = false,
+                                     Expression* parent = nullptr) -> std::shared_ptr<Expression>;
 
     /**
      * Create a Filter expression with a Column, FilterOperation and Literal
@@ -43,13 +41,11 @@ public:
      * @param parent parent this expression is attached to
      * @return newly created Or expression
      */
-    [[nodiscard]] static auto create(
-            std::shared_ptr<ColumnDescriptor>& column,
-            FilterOperation op,
-            std::shared_ptr<Literal>& operand,
-            bool inverted = false,
-            Expression* parent = nullptr
-    ) -> std::shared_ptr<Expression>;
+    [[nodiscard]] static auto create(std::shared_ptr<ColumnDescriptor>& column,
+                                     FilterOperation op,
+                                     std::shared_ptr<Literal>& operand,
+                                     bool inverted = false,
+                                     Expression* parent = nullptr) -> std::shared_ptr<Expression>;
 
     /**
      * Helper function to turn FilterOperation into string for printing
@@ -96,12 +92,10 @@ public:
 
 private:
     // Constructor
-    FilterExpr(
-            std::shared_ptr<ColumnDescriptor> const& column,
-            FilterOperation op,
-            bool inverted = false,
-            Expression* parent = nullptr
-    );
+    FilterExpr(std::shared_ptr<ColumnDescriptor> const& column,
+               FilterOperation op,
+               bool inverted = false,
+               Expression* parent = nullptr);
 
     // Default copy constructor
     FilterExpr(FilterExpr const&) = default;

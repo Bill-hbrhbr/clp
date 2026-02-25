@@ -24,19 +24,18 @@ static char const* cAbbrevDaysOfWeek[cNumDaysInWeek]
 static constexpr int cNumMonths = 12;
 static char const* cAbbrevMonthNames[cNumMonths]
         = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-static char const* cMonthNames[cNumMonths]
-        = {"January",
-           "February",
-           "March",
-           "April",
-           "May",
-           "June",
-           "July",
-           "August",
-           "September",
-           "October",
-           "November",
-           "December"};
+static char const* cMonthNames[cNumMonths] = {"January",
+                                              "February",
+                                              "March",
+                                              "April",
+                                              "May",
+                                              "June",
+                                              "July",
+                                              "August",
+                                              "September",
+                                              "October",
+                                              "November",
+                                              "December"};
 
 // File-scope functions
 /**
@@ -67,13 +66,11 @@ append_padded_value_notz(int value, char padding_character, size_t max_length, s
  * @param value String as a number
  * @return true if conversion succeeds, false otherwise
  */
-static bool convert_string_to_number(
-        string_view str,
-        size_t begin_ix,
-        size_t end_ix,
-        char padding_character,
-        int& value
-);
+static bool convert_string_to_number(string_view str,
+                                     size_t begin_ix,
+                                     size_t end_ix,
+                                     char padding_character,
+                                     int& value);
 
 /**
  * Converts a padded decimal integer string with no trailing zeros (from a larger string) to an
@@ -85,13 +82,11 @@ static bool convert_string_to_number(
  * @param value String as a number
  * @return true if conversion succeeds, false otherwise
  */
-static bool convert_string_to_number_notz(
-        string_view str,
-        size_t max_digits,
-        size_t begin_ix,
-        size_t& end_ix,
-        int& value
-);
+static bool convert_string_to_number_notz(string_view str,
+                                          size_t max_digits,
+                                          size_t begin_ix,
+                                          size_t& end_ix,
+                                          int& value);
 
 static void append_padded_value(int value, char padding_character, size_t length, string& str) {
     string value_str = to_string(value);
@@ -121,13 +116,11 @@ append_padded_value_notz(int value, char padding_character, size_t max_length, s
     str += value_str;
 }
 
-static bool convert_string_to_number(
-        string_view str,
-        size_t begin_ix,
-        size_t end_ix,
-        char padding_character,
-        int& value
-) {
+static bool convert_string_to_number(string_view str,
+                                     size_t begin_ix,
+                                     size_t end_ix,
+                                     char padding_character,
+                                     int& value) {
     // Consume padding characters
     size_t ix = begin_ix;
     while (ix < end_ix && padding_character == str[ix]) {
@@ -150,13 +143,11 @@ static bool convert_string_to_number(
     return true;
 }
 
-static bool convert_string_to_number_notz(
-        string_view str,
-        size_t max_digits,
-        size_t begin_ix,
-        size_t& end_ix,
-        int& value
-) {
+static bool convert_string_to_number_notz(string_view str,
+                                          size_t max_digits,
+                                          size_t begin_ix,
+                                          size_t& end_ix,
+                                          int& value) {
     value = 0;
     size_t num_digits = 0;
 
@@ -213,12 +204,10 @@ void TimestampPattern::clear() {
     m_format.clear();
 }
 
-bool TimestampPattern::parse_timestamp(
-        string_view line,
-        epochtime_t& timestamp,
-        size_t& timestamp_begin_pos,
-        size_t& timestamp_end_pos
-) const {
+bool TimestampPattern::parse_timestamp(string_view line,
+                                       epochtime_t& timestamp,
+                                       size_t& timestamp_begin_pos,
+                                       size_t& timestamp_end_pos) const {
     size_t line_ix = 0;
     size_t const line_length = line.length();
 
@@ -279,13 +268,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 0 || value > 99)
                     {
                         return false;
@@ -311,13 +298,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 0 || value > 9999)
                     {
                         return false;
@@ -371,13 +356,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 1 || value > 12)
                     {
                         return false;
@@ -397,13 +380,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 1 || value > 31)
                     {
                         return false;
@@ -423,13 +404,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        ' ',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            ' ',
+                                                            value)
                         || value < 1 || value > 31)
                     {
                         return false;
@@ -480,13 +459,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 0 || value > 23)
                     {
                         return false;
@@ -506,13 +483,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        ' ',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            ' ',
+                                                            value)
                         || value < 0 || value > 23)
                     {
                         return false;
@@ -532,13 +507,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 1 || value > 12)
                     {
                         return false;
@@ -559,13 +532,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        ' ',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            ' ',
+                                                            value)
                         || value < 1 || value > 12)
                     {
                         return false;
@@ -586,13 +557,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 0 || value > 59)
                     {
                         return false;
@@ -612,13 +581,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 0 || value > 60)
                     {
                         return false;
@@ -638,13 +605,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     if (false
-                                == convert_string_to_number(
-                                        line,
-                                        line_ix,
-                                        line_ix + cFieldLength,
-                                        '0',
-                                        value
-                                )
+                                == convert_string_to_number(line,
+                                                            line_ix,
+                                                            line_ix + cFieldLength,
+                                                            '0',
+                                                            value)
                         || value < 0 || value > 999)
                     {
                         return false;
@@ -660,13 +625,11 @@ bool TimestampPattern::parse_timestamp(
 
                     int value;
                     size_t new_line_ix = line_ix + cMaxFieldLength;
-                    if (!convert_string_to_number_notz(
-                                line,
-                                cMaxFieldLength,
-                                line_ix,
-                                new_line_ix,
-                                value
-                        )
+                    if (!convert_string_to_number_notz(line,
+                                                       cMaxFieldLength,
+                                                       line_ix,
+                                                       new_line_ix,
+                                                       value)
                         || value < 0 || value > 999)
                     {
                         return false;
@@ -711,10 +674,8 @@ bool TimestampPattern::parse_timestamp(
 
                     epochtime_t timestamp_nanoseconds;
                     if (false
-                        == convert_string_to_int(
-                                line.substr(nanosecond_start, cNanosecondDigits),
-                                timestamp_nanoseconds
-                        ))
+                        == convert_string_to_int(line.substr(nanosecond_start, cNanosecondDigits),
+                                                 timestamp_nanoseconds))
                     {
                         return false;
                     }
@@ -793,12 +754,10 @@ void TimestampPattern::insert_formatted_timestamp(epochtime_t timestamp, string&
         }
     }
     if (num_spaces_found < m_num_spaces_before_ts) {
-        SPDLOG_ERROR(
-                "{} has {} spaces, but pattern has {}",
-                msg.c_str(),
-                num_spaces_found,
-                m_num_spaces_before_ts
-        );
+        SPDLOG_ERROR("{} has {} spaces, but pattern has {}",
+                     msg.c_str(),
+                     num_spaces_found,
+                     m_num_spaces_before_ts);
         throw OperationFailed(ErrorCodeFailure, __FILENAME__, __LINE__);
     }
 

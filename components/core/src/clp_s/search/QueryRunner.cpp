@@ -120,8 +120,7 @@ std::string& QueryRunner::get_cached_decompressed_unstructured_array(int32_t col
     // in the current implementation.
     auto rit = m_extracted_unstructured_arrays.emplace(
             column_id,
-            std::get<std::string>(m_basic_readers[column_id][0]->extract_value(m_cur_message))
-    );
+            std::get<std::string>(m_basic_readers[column_id][0]->extract_value(m_cur_message)));
     return rit.first->second;
 }
 
@@ -210,9 +209,8 @@ bool QueryRunner::evaluate_wildcard_filter(FilterExpr* expr, int32_t schema) {
     auto* column = expr->get_column().get();
     auto op = expr->get_operation();
     auto const& subtree_type{column->get_subtree_type()};
-    auto const matches_metadata{
-            subtree_type.has_value() && constants::cMetadataSubtreeType == subtree_type.value()
-    };
+    auto const matches_metadata{subtree_type.has_value()
+                                && constants::cMetadataSubtreeType == subtree_type.value()};
     if (column->matches_type(LiteralType::ClpStringT)) {
         auto* q = m_expr_clp_query.at(expr);
         for (auto const& entry : m_clp_string_readers) {
@@ -274,8 +272,7 @@ bool QueryRunner::evaluate_wildcard_filter(FilterExpr* expr, int32_t schema) {
                 ret = evaluate_wildcard_array_filter(
                         op,
                         get_cached_decompressed_unstructured_array(column_id),
-                        literal
-                );
+                        literal);
                 break;
             default:
                 break;
@@ -302,42 +299,32 @@ bool QueryRunner::evaluate_filter(FilterExpr* expr, int32_t schema) {
             return evaluate_float_filter(expr->get_operation(), column_id, literal);
         case LiteralType::ClpStringT:
             q = m_expr_clp_query.at(expr);
-            return evaluate_clp_string_filter(
-                    expr->get_operation(),
-                    q,
-                    m_clp_string_readers[column_id]
-            );
+            return evaluate_clp_string_filter(expr->get_operation(),
+                                              q,
+                                              m_clp_string_readers[column_id]);
         case LiteralType::VarStringT:
             matching_vars = m_expr_var_match_map.at(expr);
-            return evaluate_var_string_filter(
-                    expr->get_operation(),
-                    m_var_string_readers[column_id],
-                    matching_vars
-            );
+            return evaluate_var_string_filter(expr->get_operation(),
+                                              m_var_string_readers[column_id],
+                                              matching_vars);
         case LiteralType::BooleanT:
             return evaluate_bool_filter(expr->get_operation(), column_id, literal);
         case LiteralType::ArrayT:
-            return evaluate_array_filter(
-                    expr->get_operation(),
-                    column->get_unresolved_tokens(),
-                    get_cached_decompressed_unstructured_array(column_id),
-                    literal
-            );
+            return evaluate_array_filter(expr->get_operation(),
+                                         column->get_unresolved_tokens(),
+                                         get_cached_decompressed_unstructured_array(column_id),
+                                         literal);
         case LiteralType::TimestampT: {
             if (nullptr != m_deprecated_datestring_reader
                 && m_deprecated_datestring_reader->get_id() == column_id)
             {
-                return evaluate_epoch_date_filter(
-                        expr->get_operation(),
-                        m_deprecated_datestring_reader,
-                        literal
-                );
+                return evaluate_epoch_date_filter(expr->get_operation(),
+                                                  m_deprecated_datestring_reader,
+                                                  literal);
             }
-            return evaluate_timestamp_filter(
-                    expr->get_operation(),
-                    m_timestamp_readers.at(column_id),
-                    literal
-            );
+            return evaluate_timestamp_filter(expr->get_operation(),
+                                             m_timestamp_readers.at(column_id),
+                                             literal);
         }
             // case LiteralType::NullT:
             //  null checks are always turned into existence operators --
@@ -347,11 +334,9 @@ bool QueryRunner::evaluate_filter(FilterExpr* expr, int32_t schema) {
     }
 }
 
-bool QueryRunner::evaluate_int_filter(
-        FilterOperation op,
-        int32_t column_id,
-        std::shared_ptr<Literal> const& operand
-) {
+bool QueryRunner::evaluate_int_filter(FilterOperation op,
+                                      int32_t column_id,
+                                      std::shared_ptr<Literal> const& operand) {
     if (FilterOperation::EXISTS == op || FilterOperation::NEXISTS == op) {
         return true;
     }
@@ -389,11 +374,9 @@ bool QueryRunner::evaluate_int_filter_core(FilterOperation op, int64_t value, in
     }
 }
 
-bool QueryRunner::evaluate_float_filter(
-        FilterOperation op,
-        int32_t column_id,
-        std::shared_ptr<Literal> const& operand
-) {
+bool QueryRunner::evaluate_float_filter(FilterOperation op,
+                                        int32_t column_id,
+                                        std::shared_ptr<Literal> const& operand) {
     if (FilterOperation::EXISTS == op || FilterOperation::NEXISTS == op) {
         return true;
     }
@@ -434,8 +417,7 @@ bool QueryRunner::evaluate_float_filter_core(FilterOperation op, double value, d
 bool QueryRunner::evaluate_clp_string_filter(
         FilterOperation op,
         clp::Query* q,
-        std::vector<ClpStringColumnReader*> const& readers
-) const {
+        std::vector<ClpStringColumnReader*> const& readers) const {
     if (FilterOperation::EXISTS == op || FilterOperation::NEXISTS == op) {
         return true;
     }
@@ -463,8 +445,7 @@ bool QueryRunner::evaluate_clp_string_filter(
                         matched = clp::string_utils::wildcard_match_unsafe(
                                 std::get<std::string>(reader->extract_value(m_cur_message)),
                                 q->get_search_string(),
-                                !q->get_ignore_case()
-                        );
+                                !q->get_ignore_case());
                     } else {
                         matched = true;
                     }
@@ -475,8 +456,7 @@ bool QueryRunner::evaluate_clp_string_filter(
             matched = clp::string_utils::wildcard_match_unsafe(
                     std::get<std::string>(reader->extract_value(m_cur_message)),
                     q->get_search_string(),
-                    !q->get_ignore_case()
-            );
+                    !q->get_ignore_case());
         }
 
         if ((op == FilterOperation::EQ) == matched) {
@@ -489,8 +469,7 @@ bool QueryRunner::evaluate_clp_string_filter(
 bool QueryRunner::evaluate_var_string_filter(
         FilterOperation op,
         std::vector<VariableStringColumnReader*> const& readers,
-        std::unordered_set<int64_t>* matching_vars
-) const {
+        std::unordered_set<int64_t>* matching_vars) const {
     if (FilterOperation::EXISTS == op || FilterOperation::NEXISTS == op) {
         return true;
     }
@@ -510,12 +489,10 @@ bool QueryRunner::evaluate_var_string_filter(
     return false;
 }
 
-bool QueryRunner::evaluate_array_filter(
-        FilterOperation op,
-        DescriptorList const& unresolved_tokens,
-        std::string& value,
-        std::shared_ptr<Literal> const& operand
-) {
+bool QueryRunner::evaluate_array_filter(FilterOperation op,
+                                        DescriptorList const& unresolved_tokens,
+                                        std::string& value,
+                                        std::shared_ptr<Literal> const& operand) {
     if (value.capacity() < (value.size() + simdjson::SIMDJSON_PADDING)) {
         value.reserve(value.size() + simdjson::SIMDJSON_PADDING);
     }
@@ -535,24 +512,20 @@ bool QueryRunner::evaluate_array_filter(
     return evaluate_array_filter_array(array, op, unresolved_tokens, 0, operand);
 }
 
-bool QueryRunner::evaluate_array_filter_value(
-        simdjson::ondemand::value& item,
-        FilterOperation op,
-        DescriptorList const& unresolved_tokens,
-        size_t cur_idx,
-        std::shared_ptr<Literal> const& operand
-) const {
+bool QueryRunner::evaluate_array_filter_value(simdjson::ondemand::value& item,
+                                              FilterOperation op,
+                                              DescriptorList const& unresolved_tokens,
+                                              size_t cur_idx,
+                                              std::shared_ptr<Literal> const& operand) const {
     bool match = false;
     switch (item.type()) {
         case simdjson::ondemand::json_type::object: {
             simdjson::ondemand::object nested_object = item.get_object();
-            if (evaluate_array_filter_object(
-                        nested_object,
-                        op,
-                        unresolved_tokens,
-                        cur_idx,
-                        operand
-                ))
+            if (evaluate_array_filter_object(nested_object,
+                                             op,
+                                             unresolved_tokens,
+                                             cur_idx,
+                                             operand))
             {
                 match = true;
             }
@@ -566,11 +539,9 @@ bool QueryRunner::evaluate_array_filter_value(
         } break;
         case simdjson::ondemand::json_type::string: {
             if (true == m_maybe_string && unresolved_tokens.size() == cur_idx
-                && clp::string_utils::wildcard_match_unsafe(
-                        item.get_string().value(),
-                        m_array_search_string,
-                        false == m_ignore_case
-                ))
+                && clp::string_utils::wildcard_match_unsafe(item.get_string().value(),
+                                                            m_array_search_string,
+                                                            false == m_ignore_case))
             {
                 match = op == FilterOperation::EQ;
             }
@@ -619,13 +590,11 @@ bool QueryRunner::evaluate_array_filter_value(
     return match;
 }
 
-bool QueryRunner::evaluate_array_filter_array(
-        simdjson::ondemand::array& array,
-        FilterOperation op,
-        DescriptorList const& unresolved_tokens,
-        size_t cur_idx,
-        std::shared_ptr<Literal> const& operand
-) const {
+bool QueryRunner::evaluate_array_filter_array(simdjson::ondemand::array& array,
+                                              FilterOperation op,
+                                              DescriptorList const& unresolved_tokens,
+                                              size_t cur_idx,
+                                              std::shared_ptr<Literal> const& operand) const {
     for (simdjson::ondemand::value item : array) {
         if (evaluate_array_filter_value(item, op, unresolved_tokens, cur_idx, operand)) {
             return true;
@@ -634,13 +603,11 @@ bool QueryRunner::evaluate_array_filter_array(
     return false;
 }
 
-bool QueryRunner::evaluate_array_filter_object(
-        simdjson::ondemand::object& object,
-        FilterOperation op,
-        DescriptorList const& unresolved_tokens,
-        size_t cur_idx,
-        std::shared_ptr<Literal> const& operand
-) const {
+bool QueryRunner::evaluate_array_filter_object(simdjson::ondemand::object& object,
+                                               FilterOperation op,
+                                               DescriptorList const& unresolved_tokens,
+                                               size_t cur_idx,
+                                               std::shared_ptr<Literal> const& operand) const {
     if (cur_idx >= unresolved_tokens.size()) {
         return false;
     }
@@ -663,11 +630,9 @@ bool QueryRunner::evaluate_array_filter_object(
     return false;
 }
 
-bool QueryRunner::evaluate_wildcard_array_filter(
-        FilterOperation op,
-        std::string& value,
-        std::shared_ptr<Literal> const& operand
-) {
+bool QueryRunner::evaluate_wildcard_array_filter(FilterOperation op,
+                                                 std::string& value,
+                                                 std::shared_ptr<Literal> const& operand) {
     if (value.capacity() < (value.size() + simdjson::SIMDJSON_PADDING)) {
         value.reserve(value.size() + simdjson::SIMDJSON_PADDING);
     }
@@ -682,11 +647,9 @@ bool QueryRunner::evaluate_wildcard_array_filter(
     return evaluate_wildcard_array_filter(array, op, operand);
 }
 
-bool QueryRunner::evaluate_wildcard_array_filter(
-        simdjson::ondemand::array& array,
-        FilterOperation op,
-        std::shared_ptr<Literal> const& operand
-) const {
+bool QueryRunner::evaluate_wildcard_array_filter(simdjson::ondemand::array& array,
+                                                 FilterOperation op,
+                                                 std::shared_ptr<Literal> const& operand) const {
     bool match = false;
     for (auto item : array) {
         switch (item.type()) {
@@ -706,11 +669,9 @@ bool QueryRunner::evaluate_wildcard_array_filter(
                 if (false == m_maybe_string) {
                     break;
                 }
-                if (clp::string_utils::wildcard_match_unsafe(
-                            item.get_string().value(),
-                            m_array_search_string,
-                            false == m_ignore_case
-                    ))
+                if (clp::string_utils::wildcard_match_unsafe(item.get_string().value(),
+                                                             m_array_search_string,
+                                                             false == m_ignore_case))
                 {
                     match |= op == FilterOperation::EQ;
                 }
@@ -755,11 +716,9 @@ bool QueryRunner::evaluate_wildcard_array_filter(
     return false;
 }
 
-bool QueryRunner::evaluate_wildcard_array_filter(
-        simdjson::ondemand::object& object,
-        FilterOperation op,
-        std::shared_ptr<Literal> const& operand
-) const {
+bool QueryRunner::evaluate_wildcard_array_filter(simdjson::ondemand::object& object,
+                                                 FilterOperation op,
+                                                 std::shared_ptr<Literal> const& operand) const {
     bool match = false;
     for (auto field : object) {
         simdjson::ondemand::value item = field.value();
@@ -780,11 +739,9 @@ bool QueryRunner::evaluate_wildcard_array_filter(
                 if (false == m_maybe_string) {
                     break;
                 }
-                if (clp::string_utils::wildcard_match_unsafe(
-                            item.get_string().value(),
-                            m_array_search_string,
-                            false == m_ignore_case
-                    ))
+                if (clp::string_utils::wildcard_match_unsafe(item.get_string().value(),
+                                                             m_array_search_string,
+                                                             false == m_ignore_case))
                 {
                     match |= op == FilterOperation::EQ;
                 }
@@ -829,11 +786,9 @@ bool QueryRunner::evaluate_wildcard_array_filter(
     return false;
 }
 
-bool QueryRunner::evaluate_bool_filter(
-        FilterOperation op,
-        int32_t column_id,
-        std::shared_ptr<Literal> const& operand
-) {
+bool QueryRunner::evaluate_bool_filter(FilterOperation op,
+                                       int32_t column_id,
+                                       std::shared_ptr<Literal> const& operand) {
     if (FilterOperation::EXISTS == op || FilterOperation::NEXISTS == op) {
         return true;
     }
@@ -888,19 +843,15 @@ void QueryRunner::populate_string_queries(std::shared_ptr<Expression> const& exp
             // search on log type dictionary
             clp::epochtime_t placeholder_timestamp{};
             log_surgeon::lexers::ByteLexer placeholder_lexer;
-            m_string_query_map.emplace(
-                    query_string,
-                    clp::GrepCore::process_raw_query(
-                            *m_log_dict,
-                            *m_var_dict,
-                            query_string,
-                            placeholder_timestamp,
-                            placeholder_timestamp,
-                            m_ignore_case,
-                            placeholder_lexer,
-                            true
-                    )
-            );
+            m_string_query_map.emplace(query_string,
+                                       clp::GrepCore::process_raw_query(*m_log_dict,
+                                                                        *m_var_dict,
+                                                                        query_string,
+                                                                        placeholder_timestamp,
+                                                                        placeholder_timestamp,
+                                                                        m_ignore_case,
+                                                                        placeholder_lexer,
+                                                                        true));
         }
 
         if (filter->get_column()->matches_type(LiteralType::VarStringT)) {
@@ -913,21 +864,17 @@ void QueryRunner::populate_string_queries(std::shared_ptr<Expression> const& exp
             std::unordered_set<int64_t>& matching_vars = m_string_var_match_map[query_string];
             if (false == ast::has_unescaped_wildcards(query_string)) {
                 auto const unescaped_query_string{clp::string_utils::unescape_string(query_string)};
-                auto const entries = m_var_dict->get_entry_matching_value(
-                        unescaped_query_string,
-                        m_ignore_case
-                );
+                auto const entries = m_var_dict->get_entry_matching_value(unescaped_query_string,
+                                                                          m_ignore_case);
 
                 for (auto const& entry : entries) {
                     matching_vars.insert(entry->get_id());
                 }
             } else {
                 std::unordered_set<VariableDictionaryEntry const*> matching_entries;
-                m_var_dict->get_entries_matching_wildcard_string(
-                        query_string,
-                        m_ignore_case,
-                        matching_entries
-                );
+                m_var_dict->get_entries_matching_wildcard_string(query_string,
+                                                                 m_ignore_case,
+                                                                 matching_entries);
                 for (auto const& entry : matching_entries) {
                     matching_vars.emplace(entry->get_id());
                 }
@@ -1064,9 +1011,8 @@ EvaluatedValue QueryRunner::constant_propagate(std::shared_ptr<Expression> const
             // FIXME: have an edgecase to handle with NEXISTS on pure wildcard columns
             return EvaluatedValue::True;
         } else if (filter->get_column()->is_pure_wildcard()
-                   && filter->get_column()->matches_any(
-                           LiteralType::ClpStringT | LiteralType::VarStringT
-                   ))
+                   && filter->get_column()->matches_any(LiteralType::ClpStringT
+                                                        | LiteralType::VarStringT))
         {
             auto wildcard = filter->get_column().get();
             bool has_var_string = false;
@@ -1080,10 +1026,8 @@ EvaluatedValue QueryRunner::constant_propagate(std::shared_ptr<Expression> const
             std::string filter_string;
             bool valid
                     = filter->get_operand()->as_var_string(filter_string, filter->get_operation())
-                      || filter->get_operand()->as_clp_string(
-                              filter_string,
-                              filter->get_operation()
-                      );
+                      || filter->get_operand()->as_clp_string(filter_string,
+                                                              filter->get_operation());
             if (false == valid) {
                 // FIXME: throw
                 return EvaluatedValue::False;
@@ -1186,11 +1130,9 @@ EvaluatedValue QueryRunner::constant_propagate(std::shared_ptr<Expression> const
     return EvaluatedValue::Unknown;
 }
 
-bool QueryRunner::evaluate_epoch_date_filter(
-        FilterOperation op,
-        DeprecatedDateStringColumnReader* reader,
-        std::shared_ptr<Literal>& operand
-) {
+bool QueryRunner::evaluate_epoch_date_filter(FilterOperation op,
+                                             DeprecatedDateStringColumnReader* reader,
+                                             std::shared_ptr<Literal>& operand) {
     if (FilterOperation::EXISTS == op || FilterOperation::NEXISTS == op) {
         return true;
     }
@@ -1203,11 +1145,9 @@ bool QueryRunner::evaluate_epoch_date_filter(
     return evaluate_int_filter_core(op, reader->get_encoded_time(m_cur_message), op_value);
 }
 
-auto QueryRunner::evaluate_timestamp_filter(
-        ast::FilterOperation op,
-        TimestampColumnReader* reader,
-        std::shared_ptr<ast::Literal>& operand
-) -> bool {
+auto QueryRunner::evaluate_timestamp_filter(ast::FilterOperation op,
+                                            TimestampColumnReader* reader,
+                                            std::shared_ptr<ast::Literal>& operand) -> bool {
     if (FilterOperation::EXISTS == op || FilterOperation::NEXISTS == op) {
         return true;
     }

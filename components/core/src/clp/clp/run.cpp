@@ -80,16 +80,13 @@ int run(int argc, char const* argv[]) {
                     continue;
                 }
 
-                throw std::runtime_error(
-                        schema_file_path + ": error: the schema rule '" + rule_name
-                        + "' has a regex pattern containing capture groups.\n"
-                );
+                throw std::runtime_error(schema_file_path + ": error: the schema rule '" + rule_name
+                                         + "' has a regex pattern containing capture groups.\n");
             }
         }
 
         boost::filesystem::path path_prefix_to_remove(
-                command_line_args.get_path_prefix_to_remove()
-        );
+                command_line_args.get_path_prefix_to_remove());
 
         // Validate input paths exist
         if (false == validate_paths_exist(input_paths)) {
@@ -101,12 +98,10 @@ int run(int argc, char const* argv[]) {
         vector<string> empty_directory_paths;
         for (auto const& input_path : input_paths) {
             if (false
-                == find_all_files_and_empty_directories(
-                        path_prefix_to_remove,
-                        input_path,
-                        files_to_compress,
-                        empty_directory_paths
-                ))
+                == find_all_files_and_empty_directories(path_prefix_to_remove,
+                                                        input_path,
+                                                        files_to_compress,
+                                                        empty_directory_paths))
             {
                 return -1;
             }
@@ -123,34 +118,28 @@ int run(int argc, char const* argv[]) {
 
         bool compression_successful;
         try {
-            compression_successful = compress(
-                    command_line_args,
-                    files_to_compress,
-                    empty_directory_paths,
-                    grouped_files_to_compress,
-                    command_line_args.get_target_encoded_file_size(),
-                    std::move(reader_parser),
-                    command_line_args.get_use_heuristic()
-            );
+            compression_successful = compress(command_line_args,
+                                              files_to_compress,
+                                              empty_directory_paths,
+                                              grouped_files_to_compress,
+                                              command_line_args.get_target_encoded_file_size(),
+                                              std::move(reader_parser),
+                                              command_line_args.get_use_heuristic());
         } catch (TraceableException& e) {
             ErrorCode error_code = e.get_error_code();
             if (ErrorCode_errno == error_code) {
-                SPDLOG_ERROR(
-                        "Compression failed: {}:{} {}, errno={}",
-                        e.get_filename(),
-                        e.get_line_number(),
-                        e.what(),
-                        errno
-                );
+                SPDLOG_ERROR("Compression failed: {}:{} {}, errno={}",
+                             e.get_filename(),
+                             e.get_line_number(),
+                             e.what(),
+                             errno);
                 compression_successful = false;
             } else {
-                SPDLOG_ERROR(
-                        "Compression failed: {}:{} {}, error_code={}",
-                        e.get_filename(),
-                        e.get_line_number(),
-                        e.what(),
-                        error_code
-                );
+                SPDLOG_ERROR("Compression failed: {}:{} {}, error_code={}",
+                             e.get_filename(),
+                             e.get_line_number(),
+                             e.what(),
+                             error_code);
                 compression_successful = false;
             }
         } catch (std::exception& e) {

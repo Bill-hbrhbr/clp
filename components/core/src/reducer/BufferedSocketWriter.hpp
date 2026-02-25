@@ -24,13 +24,10 @@ public:
      * @param data The data to write
      * @return Whether the write was successful
      */
-    template <
-            typename T,
-            typename = std::enable_if_t<
-                    std::is_trivial_v<T> && std::is_standard_layout_v<T>
-                    && std::is_trivially_copyable_v<T> && sizeof(T) == sizeof(char)
-            >
-    >
+    template <typename T,
+              typename
+              = std::enable_if_t<std::is_trivial_v<T> && std::is_standard_layout_v<T>
+                                 && std::is_trivially_copyable_v<T> && sizeof(T) == sizeof(char)>>
     bool write(std::vector<T> const& data) {
         return write(reinterpret_cast<char const*>(data.data()), data.size());
     }

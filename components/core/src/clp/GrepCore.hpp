@@ -45,20 +45,16 @@ public:
      * @param use_heuristic
      * @return Query if it may match a message, std::nullopt otherwise
      */
-    template <
-            LogTypeDictionaryReaderReq LogTypeDictionaryReaderType,
-            VariableDictionaryReaderReq VariableDictionaryReaderType
-    >
-    static std::optional<Query> process_raw_query(
-            LogTypeDictionaryReaderType const& logtype_dict,
-            VariableDictionaryReaderType const& var_dict,
-            std::string const& search_string,
-            epochtime_t search_begin_ts,
-            epochtime_t search_end_ts,
-            bool ignore_case,
-            log_surgeon::lexers::ByteLexer& lexer,
-            bool use_heuristic
-    );
+    template <LogTypeDictionaryReaderReq LogTypeDictionaryReaderType,
+              VariableDictionaryReaderReq VariableDictionaryReaderType>
+    static std::optional<Query> process_raw_query(LogTypeDictionaryReaderType const& logtype_dict,
+                                                  VariableDictionaryReaderType const& var_dict,
+                                                  std::string const& search_string,
+                                                  epochtime_t search_begin_ts,
+                                                  epochtime_t search_end_ts,
+                                                  bool ignore_case,
+                                                  log_surgeon::lexers::ByteLexer& lexer,
+                                                  bool use_heuristic);
 
     /**
      * Returns bounds of next potential variable (either a definite variable or a token with
@@ -69,12 +65,10 @@ public:
      * @param is_var Whether the token is definitely a variable
      * @return true if another potential variable was found, false otherwise
      */
-    static bool get_bounds_of_next_potential_var(
-            std::string const& value,
-            size_t& begin_pos,
-            size_t& end_pos,
-            bool& is_var
-    );
+    static bool get_bounds_of_next_potential_var(std::string const& value,
+                                                 size_t& begin_pos,
+                                                 size_t& end_pos,
+                                                 bool& is_var);
 
 private:
     // Types
@@ -96,13 +90,11 @@ private:
      * @return true if this token might match a message, false otherwise
      */
     template <VariableDictionaryReaderReq VariableDictionaryReaderType>
-    static bool process_var_token(
-            QueryToken const& query_token,
-            VariableDictionaryReaderType const& var_dict,
-            bool ignore_case,
-            SubQuery& sub_query,
-            std::string& logtype
-    );
+    static bool process_var_token(QueryToken const& query_token,
+                                  VariableDictionaryReaderType const& var_dict,
+                                  bool ignore_case,
+                                  SubQuery& sub_query,
+                                  std::string& logtype);
 
     /**
      * Generates logtypes and variables for subquery.
@@ -118,34 +110,27 @@ private:
      * @return SubQueryMatchabilityResult::WontMatch
      * @return SubQueryMatchabilityResult::MayMatch
      */
-    template <
-            LogTypeDictionaryReaderReq LogTypeDictionaryReaderType,
-            VariableDictionaryReaderReq VariableDictionaryReaderType
-    >
+    template <LogTypeDictionaryReaderReq LogTypeDictionaryReaderType,
+              VariableDictionaryReaderReq VariableDictionaryReaderType>
     static SubQueryMatchabilityResult generate_logtypes_and_vars_for_subquery(
             LogTypeDictionaryReaderType const& logtype_dict,
             VariableDictionaryReaderType const& var_dict,
             std::string& processed_search_string,
             std::vector<QueryToken>& query_tokens,
             bool ignore_case,
-            SubQuery& sub_query
-    );
+            SubQuery& sub_query);
 };
 
-template <
-        LogTypeDictionaryReaderReq LogTypeDictionaryReaderType,
-        VariableDictionaryReaderReq VariableDictionaryReaderType
->
-std::optional<Query> GrepCore::process_raw_query(
-        LogTypeDictionaryReaderType const& logtype_dict,
-        VariableDictionaryReaderType const& var_dict,
-        std::string const& search_string,
-        epochtime_t search_begin_ts,
-        epochtime_t search_end_ts,
-        bool ignore_case,
-        log_surgeon::lexers::ByteLexer& lexer,
-        bool use_heuristic
-) {
+template <LogTypeDictionaryReaderReq LogTypeDictionaryReaderType,
+          VariableDictionaryReaderReq VariableDictionaryReaderType>
+std::optional<Query> GrepCore::process_raw_query(LogTypeDictionaryReaderType const& logtype_dict,
+                                                 VariableDictionaryReaderType const& var_dict,
+                                                 std::string const& search_string,
+                                                 epochtime_t search_begin_ts,
+                                                 epochtime_t search_end_ts,
+                                                 bool ignore_case,
+                                                 log_surgeon::lexers::ByteLexer& lexer,
+                                                 bool use_heuristic) {
     std::vector<SubQuery> sub_queries;
     if (false == use_heuristic) {
         sub_queries
@@ -161,22 +146,18 @@ std::optional<Query> GrepCore::process_raw_query(
         // Replace unescaped '?' wildcards with '*' wildcards since we currently have no support for
         // generating sub-queries with '?' wildcards. The final wildcard match on the decompressed
         // message uses the original wildcards, so correctness will be maintained.
-        string_utils::replace_unescaped_char(
-                string_utils::cWildcardEscapeChar,
-                string_utils::cSingleCharWildcard,
-                string_utils::cZeroOrMoreCharsWildcard,
-                search_string_for_sub_queries
-        );
+        string_utils::replace_unescaped_char(string_utils::cWildcardEscapeChar,
+                                             string_utils::cSingleCharWildcard,
+                                             string_utils::cZeroOrMoreCharsWildcard,
+                                             search_string_for_sub_queries);
 
         // Clean-up in case any instances of "?*" or "*?" were changed into "**"
         search_string_for_sub_queries
                 = string_utils::clean_up_wildcard_search_string(search_string_for_sub_queries);
-        while (get_bounds_of_next_potential_var(
-                search_string_for_sub_queries,
-                begin_pos,
-                end_pos,
-                is_var
-        ))
+        while (get_bounds_of_next_potential_var(search_string_for_sub_queries,
+                                                begin_pos,
+                                                end_pos,
+                                                is_var))
         {
             query_tokens.emplace_back(search_string_for_sub_queries, begin_pos, end_pos, is_var);
         }
@@ -201,14 +182,12 @@ std::optional<Query> GrepCore::process_raw_query(
         bool type_of_one_token_changed{true};
         while (type_of_one_token_changed) {
             SubQuery sub_query;
-            auto matchability{generate_logtypes_and_vars_for_subquery(
-                    logtype_dict,
-                    var_dict,
-                    search_string_for_sub_queries,
-                    query_tokens,
-                    ignore_case,
-                    sub_query
-            )};
+            auto matchability{generate_logtypes_and_vars_for_subquery(logtype_dict,
+                                                                      var_dict,
+                                                                      search_string_for_sub_queries,
+                                                                      query_tokens,
+                                                                      ignore_case,
+                                                                      sub_query)};
             switch (matchability) {
                 case SubQueryMatchabilityResult::SupercedesAllSubQueries:
                     // Since other sub-queries will be superceded by this one, we can stop
@@ -237,36 +216,30 @@ std::optional<Query> GrepCore::process_raw_query(
         return std::nullopt;
     }
 
-    return Query{
-            search_begin_ts,
-            search_end_ts,
-            ignore_case,
-            search_string,
-            std::move(sub_queries)
-    };
+    return Query{search_begin_ts,
+                 search_end_ts,
+                 ignore_case,
+                 search_string,
+                 std::move(sub_queries)};
 }
 
 template <VariableDictionaryReaderReq VariableDictionaryReaderType>
-bool GrepCore::process_var_token(
-        QueryToken const& query_token,
-        VariableDictionaryReaderType const& var_dict,
-        bool ignore_case,
-        SubQuery& sub_query,
-        std::string& logtype
-) {
+bool GrepCore::process_var_token(QueryToken const& query_token,
+                                 VariableDictionaryReaderType const& var_dict,
+                                 bool ignore_case,
+                                 SubQuery& sub_query,
+                                 std::string& logtype) {
     // Even though we may have a precise variable, we still fallback to decompressing to ensure that
     // it is in the right place in the message
     sub_query.mark_wildcard_match_required();
 
     // Create QueryVar corresponding to token
     if (!query_token.contains_wildcards()) {
-        if (EncodedVariableInterpreter::encode_and_search_dictionary(
-                    query_token.get_value(),
-                    var_dict,
-                    ignore_case,
-                    logtype,
-                    sub_query
-            )
+        if (EncodedVariableInterpreter::encode_and_search_dictionary(query_token.get_value(),
+                                                                     var_dict,
+                                                                     ignore_case,
+                                                                     logtype,
+                                                                     sub_query)
             == false)
         {
             // Variable doesn't exist in dictionary
@@ -290,8 +263,7 @@ bool GrepCore::process_var_token(
                             query_token.get_value(),
                             var_dict,
                             ignore_case,
-                            sub_query
-                    ))
+                            sub_query))
                 {
                     // Variable doesn't exist in dictionary
                     return false;
@@ -307,18 +279,15 @@ bool GrepCore::process_var_token(
     return true;
 }
 
-template <
-        LogTypeDictionaryReaderReq LogTypeDictionaryReaderType,
-        VariableDictionaryReaderReq VariableDictionaryReaderType
->
+template <LogTypeDictionaryReaderReq LogTypeDictionaryReaderType,
+          VariableDictionaryReaderReq VariableDictionaryReaderType>
 GrepCore::SubQueryMatchabilityResult GrepCore::generate_logtypes_and_vars_for_subquery(
         LogTypeDictionaryReaderType const& logtype_dict,
         VariableDictionaryReaderType const& var_dict,
         std::string& processed_search_string,
         std::vector<QueryToken>& query_tokens,
         bool ignore_case,
-        SubQuery& sub_query
-) {
+        SubQuery& sub_query) {
     size_t last_token_end_pos = 0;
     std::string logtype;
     auto escape_handler =
@@ -343,8 +312,7 @@ GrepCore::SubQueryMatchabilityResult GrepCore::generate_logtypes_and_vars_for_su
                         .substr(last_token_end_pos,
                                 query_token.get_begin_pos() - last_token_end_pos),
                 escape_handler,
-                logtype
-        );
+                logtype);
         last_token_end_pos = query_token.get_end_pos();
 
         if (query_token.is_wildcard()) {
@@ -372,12 +340,10 @@ GrepCore::SubQueryMatchabilityResult GrepCore::generate_logtypes_and_vars_for_su
 
     if (last_token_end_pos < processed_search_string.length()) {
         // Append from end of last token to end
-        ir::append_constant_to_logtype(
-                static_cast<std::string_view>(processed_search_string)
-                        .substr(last_token_end_pos, std::string::npos),
-                escape_handler,
-                logtype
-        );
+        ir::append_constant_to_logtype(static_cast<std::string_view>(processed_search_string)
+                                               .substr(last_token_end_pos, std::string::npos),
+                                       escape_handler,
+                                       logtype);
         last_token_end_pos = processed_search_string.length();
     }
 
@@ -388,8 +354,9 @@ GrepCore::SubQueryMatchabilityResult GrepCore::generate_logtypes_and_vars_for_su
 
     // Find matching logtypes
     std::unordered_set<typename LogTypeDictionaryReaderType::Entry const*> possible_logtype_entries;
-    logtype_dict
-            .get_entries_matching_wildcard_string(logtype, ignore_case, possible_logtype_entries);
+    logtype_dict.get_entries_matching_wildcard_string(logtype,
+                                                      ignore_case,
+                                                      possible_logtype_entries);
     if (possible_logtype_entries.empty()) {
         return SubQueryMatchabilityResult::WontMatch;
     }

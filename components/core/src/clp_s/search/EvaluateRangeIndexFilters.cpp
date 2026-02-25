@@ -61,8 +61,7 @@ auto EvaluateRangeIndexFilters::run(std::shared_ptr<ast::Expression>& expr)
 void EvaluateRangeIndexFilters::evaluate_and_rewrite_filter(
         ast::FilterExpr* filter_expr,
         std::optional<ast::OpList::iterator> parent_it,
-        std::shared_ptr<ast::Expression>& ast_root
-) const {
+        std::shared_ptr<ast::Expression>& ast_root) const {
     std::vector<std::pair<size_t, size_t>> matching_ranges;
     for (auto const& range : m_range_index) {
         if (evaluate_filter(filter_expr, range.fields)) {
@@ -74,8 +73,7 @@ void EvaluateRangeIndexFilters::evaluate_and_rewrite_filter(
     if (false == matching_ranges.empty()) {
         auto log_event_idx_col{ast::ColumnDescriptor::create_from_escaped_tokens(
                 {std::string{constants::cLogEventIdxName}},
-                constants::cDefaultNamespace
-        )};
+                constants::cDefaultNamespace)};
         log_event_idx_col->set_subtree_type(std::string{constants::cMetadataSubtreeType});
         log_event_idx_col->set_matching_type(ast::LiteralType::IntegerT);
         replacement_expr = ast::OrExpr::create();
@@ -83,16 +81,12 @@ void EvaluateRangeIndexFilters::evaluate_and_rewrite_filter(
         auto add_range_to_filter = [&](std::pair<size_t, size_t> const& range) {
             auto begin_literal{ast::Integral::create_from_int(range.first)};
             auto end_literal{ast::Integral::create_from_int(range.second)};
-            auto begin_filter{ast::FilterExpr::create(
-                    log_event_idx_col,
-                    ast::FilterOperation::GTE,
-                    begin_literal
-            )};
-            auto end_filter{ast::FilterExpr::create(
-                    log_event_idx_col,
-                    ast::FilterOperation::LT,
-                    end_literal
-            )};
+            auto begin_filter{ast::FilterExpr::create(log_event_idx_col,
+                                                      ast::FilterOperation::GTE,
+                                                      begin_literal)};
+            auto end_filter{ast::FilterExpr::create(log_event_idx_col,
+                                                    ast::FilterOperation::LT,
+                                                    end_literal)};
             auto range_filter{ast::AndExpr::create(begin_filter, end_filter)};
             range_filter->copy_append(replacement_expr.get());
         };
@@ -125,10 +119,8 @@ void EvaluateRangeIndexFilters::evaluate_and_rewrite_filter(
     }
 }
 
-auto EvaluateRangeIndexFilters::evaluate_filter(
-        ast::FilterExpr* filter_expr,
-        nlohmann::json const& fields
-) const -> bool {
+auto EvaluateRangeIndexFilters::evaluate_filter(ast::FilterExpr* filter_expr,
+                                                nlohmann::json const& fields) const -> bool {
     auto const col{filter_expr->get_column()};
     auto const operand{filter_expr->get_operand()};
     std::vector<std::pair<ast::DescriptorList::iterator, nlohmann::json const&>> work_list;
@@ -140,12 +132,10 @@ auto EvaluateRangeIndexFilters::evaluate_filter(
 
     auto evaluate_expr
             = [&](ast::LiteralType type, std::optional<clp::ffi::Value> const& value) -> bool {
-        auto ret{evaluate_filter_against_literal_type_value_pair(
-                filter_expr,
-                type,
-                value,
-                m_case_sensitive_match
-        )};
+        auto ret{evaluate_filter_against_literal_type_value_pair(filter_expr,
+                                                                 type,
+                                                                 value,
+                                                                 m_case_sensitive_match)};
         return false == ret.has_error() && filter_expr->is_inverted() != ret.value();
     };
 
@@ -157,8 +147,7 @@ auto EvaluateRangeIndexFilters::evaluate_filter(
                 case nlohmann::json::value_t::boolean:
                     if (col->matches_type(ast::LiteralType::BooleanT)) {
                         std::optional<clp::ffi::Value> bool_value{
-                                clp::ffi::Value{cur_field.template get<bool>()}
-                        };
+                                clp::ffi::Value{cur_field.template get<bool>()}};
                         if (evaluate_expr(ast::LiteralType::BooleanT, bool_value)) {
                             return true;
                         }
@@ -167,8 +156,7 @@ auto EvaluateRangeIndexFilters::evaluate_filter(
                 case nlohmann::json::value_t::number_integer:
                     if (col->matches_type(ast::LiteralType::IntegerT)) {
                         std::optional<clp::ffi::Value> int_value{
-                                clp::ffi::Value{cur_field.template get<int64_t>()}
-                        };
+                                clp::ffi::Value{cur_field.template get<int64_t>()}};
                         if (evaluate_expr(ast::LiteralType::IntegerT, int_value)) {
                             return true;
                         }
@@ -179,8 +167,7 @@ auto EvaluateRangeIndexFilters::evaluate_filter(
                         // TODO: Remove static cast once we add full support for large unsigned
                         // values.
                         std::optional<clp::ffi::Value> int_value{clp::ffi::Value{
-                                static_cast<int64_t>(cur_field.template get<uint64_t>())
-                        }};
+                                static_cast<int64_t>(cur_field.template get<uint64_t>())}};
                         if (evaluate_expr(ast::LiteralType::IntegerT, int_value)) {
                             return true;
                         }
@@ -189,8 +176,7 @@ auto EvaluateRangeIndexFilters::evaluate_filter(
                 case nlohmann::json::value_t::number_float:
                     if (col->matches_type(ast::LiteralType::FloatT)) {
                         std::optional<clp::ffi::Value> float_value{
-                                clp::ffi::Value{cur_field.template get<double>()}
-                        };
+                                clp::ffi::Value{cur_field.template get<double>()}};
                         if (evaluate_expr(ast::LiteralType::FloatT, float_value)) {
                             return true;
                         }
@@ -198,9 +184,8 @@ auto EvaluateRangeIndexFilters::evaluate_filter(
                     break;
                 case nlohmann::json::value_t::string: {
                     if (false
-                        == col->matches_any(
-                                ast::LiteralType::VarStringT | ast::LiteralType::ClpStringT
-                        ))
+                        == col->matches_any(ast::LiteralType::VarStringT
+                                            | ast::LiteralType::ClpStringT))
                     {
                         break;
                     }
@@ -208,16 +193,14 @@ auto EvaluateRangeIndexFilters::evaluate_filter(
                     bool contains_space{std::string::npos != tmp_string.find(' ')};
                     if (false == contains_space) {
                         std::optional<clp::ffi::Value> str_value{
-                                clp::ffi::Value{std::move(tmp_string)}
-                        };
+                                clp::ffi::Value{std::move(tmp_string)}};
                         if (evaluate_expr(ast::LiteralType::VarStringT, str_value)) {
                             return true;
                         }
                     } else {
                         std::optional<clp::ffi::Value> const str_value{clp::ffi::Value{
                                 clp::ffi::EncodedTextAst<clp::ir::four_byte_encoded_variable_t>::
-                                        parse_and_encode_from(tmp_string)
-                        }};
+                                        parse_and_encode_from(tmp_string)}};
                         if (evaluate_expr(ast::LiteralType::ClpStringT, str_value)) {
                             return true;
                         }

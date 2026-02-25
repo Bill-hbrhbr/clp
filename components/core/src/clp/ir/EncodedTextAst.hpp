@@ -17,11 +17,9 @@ template <typename encoded_variable_t>
 class EncodedTextAst {
 public:
     // Constructor
-    explicit EncodedTextAst(
-            std::string logtype,
-            std::vector<std::string> dict_vars,
-            std::vector<encoded_variable_t> encoded_vars
-    )
+    explicit EncodedTextAst(std::string logtype,
+                            std::vector<std::string> dict_vars,
+                            std::vector<encoded_variable_t> encoded_vars)
             : m_logtype{std::move(logtype)},
               m_dict_vars{std::move(dict_vars)},
               m_encoded_vars{std::move(encoded_vars)} {}

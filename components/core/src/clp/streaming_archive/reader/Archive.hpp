@@ -73,12 +73,10 @@ public:
     /**
      * Wrapper for streaming_archive::reader::File::find_message_in_time_range
      */
-    bool find_message_in_time_range(
-            File& file,
-            epochtime_t search_begin_timestamp,
-            epochtime_t search_end_timestamp,
-            Message& msg
-    );
+    bool find_message_in_time_range(File& file,
+                                    epochtime_t search_begin_timestamp,
+                                    epochtime_t search_end_timestamp,
+                                    Message& msg);
     /**
      * Wrapper for streaming_archive::reader::File::find_message_matching_query
      */
@@ -97,8 +95,9 @@ public:
      * @return true if message was successfully decompressed, false otherwise
      * @throw TimestampPattern::OperationFailed if failed to insert timestamp
      */
-    bool
-    decompress_message(File& file, Message const& compressed_msg, std::string& decompressed_msg);
+    bool decompress_message(File& file,
+                            Message const& compressed_msg,
+                            std::string& decompressed_msg);
 
     /**
      * Decompresses the given message without inserting its timestamp.
@@ -106,84 +105,68 @@ public:
      * @param decompressed_msg
      * @return Whether the message was successfully decompressed
      */
-    bool
-    decompress_message_without_ts(Message const& compressed_msg, std::string& decompressed_msg);
+    bool decompress_message_without_ts(Message const& compressed_msg,
+                                       std::string& decompressed_msg);
 
     void decompress_empty_directories(std::string const& output_dir);
 
     std::unique_ptr<MetadataDB::FileIterator> get_file_iterator_by_split_id(
-            std::string const& file_split_id
-    ) {
-        return m_metadata_db.get_file_iterator(
-                cEpochTimeMin,
-                cEpochTimeMax,
-                "",
-                file_split_id,
-                false,
-                cInvalidSegmentId,
-                false
-        );
+            std::string const& file_split_id) {
+        return m_metadata_db.get_file_iterator(cEpochTimeMin,
+                                               cEpochTimeMax,
+                                               "",
+                                               file_split_id,
+                                               false,
+                                               cInvalidSegmentId,
+                                               false);
     }
 
     std::unique_ptr<MetadataDB::FileIterator> get_file_iterator_by_path(
-            std::string const& file_path
-    ) {
-        return m_metadata_db.get_file_iterator(
-                cEpochTimeMin,
-                cEpochTimeMax,
-                file_path,
-                "",
-                false,
-                cInvalidSegmentId,
-                false
-        );
+            std::string const& file_path) {
+        return m_metadata_db.get_file_iterator(cEpochTimeMin,
+                                               cEpochTimeMax,
+                                               file_path,
+                                               "",
+                                               false,
+                                               cInvalidSegmentId,
+                                               false);
     }
 
     std::unique_ptr<MetadataDB::FileIterator> get_file_iterator() {
-        return m_metadata_db.get_file_iterator(
-                cEpochTimeMin,
-                cEpochTimeMax,
-                "",
-                "",
-                false,
-                cInvalidSegmentId,
-                false
-        );
+        return m_metadata_db.get_file_iterator(cEpochTimeMin,
+                                               cEpochTimeMax,
+                                               "",
+                                               "",
+                                               false,
+                                               cInvalidSegmentId,
+                                               false);
     }
 
-    std::unique_ptr<MetadataDB::FileIterator> get_file_iterator(
-            epochtime_t begin_ts,
-            epochtime_t end_ts,
-            std::string const& file_path,
-            bool order_by_segment_end_ts
-    ) {
-        return m_metadata_db.get_file_iterator(
-                begin_ts,
-                end_ts,
-                file_path,
-                "",
-                false,
-                cInvalidSegmentId,
-                order_by_segment_end_ts
-        );
+    std::unique_ptr<MetadataDB::FileIterator> get_file_iterator(epochtime_t begin_ts,
+                                                                epochtime_t end_ts,
+                                                                std::string const& file_path,
+                                                                bool order_by_segment_end_ts) {
+        return m_metadata_db.get_file_iterator(begin_ts,
+                                               end_ts,
+                                               file_path,
+                                               "",
+                                               false,
+                                               cInvalidSegmentId,
+                                               order_by_segment_end_ts);
     }
 
-    std::unique_ptr<MetadataDB::FileIterator> get_file_iterator(
-            epochtime_t begin_ts,
-            epochtime_t end_ts,
-            std::string const& file_path,
-            segment_id_t segment_id,
-            bool order_by_segment_end_ts
-    ) {
-        return m_metadata_db.get_file_iterator(
-                begin_ts,
-                end_ts,
-                file_path,
-                "",
-                true,
-                segment_id,
-                order_by_segment_end_ts
-        );
+    std::unique_ptr<MetadataDB::FileIterator> get_file_iterator(epochtime_t begin_ts,
+                                                                epochtime_t end_ts,
+                                                                std::string const& file_path,
+                                                                segment_id_t segment_id,
+                                                                bool order_by_segment_end_ts) {
+        return m_metadata_db.get_file_iterator(begin_ts,
+                                               end_ts,
+                                               file_path,
+                                               "",
+                                               true,
+                                               segment_id,
+                                               order_by_segment_end_ts);
     }
 
 private:

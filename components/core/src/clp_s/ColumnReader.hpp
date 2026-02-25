@@ -62,8 +62,8 @@ public:
      * @param cur_message
      * @param buffer
      */
-    virtual void
-    extract_escaped_string_value_into_buffer(uint64_t cur_message, std::string& buffer) {
+    virtual void extract_escaped_string_value_into_buffer(uint64_t cur_message,
+                                                          std::string& buffer) {
         extract_string_value_into_buffer(cur_message, buffer);
     }
 
@@ -85,8 +85,7 @@ public:
     NodeType get_type() override { return NodeType::Integer; }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     void extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
 
@@ -108,8 +107,7 @@ public:
     NodeType get_type() override { return NodeType::DeltaInteger; }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     void extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
 
@@ -141,8 +139,7 @@ public:
     NodeType get_type() override { return NodeType::Float; }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     void extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
 
@@ -164,8 +161,7 @@ public:
     NodeType get_type() override { return NodeType::FormattedFloat; }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     /**
      * Appends the floating point value to the buffer in its original format by decoding the stored
@@ -184,10 +180,8 @@ private:
 class DictionaryFloatColumnReader : public BaseColumnReader {
 public:
     // Constructor
-    explicit DictionaryFloatColumnReader(
-            int32_t id,
-            std::shared_ptr<VariableDictionaryReader> var_dict
-    )
+    explicit DictionaryFloatColumnReader(int32_t id,
+                                         std::shared_ptr<VariableDictionaryReader> var_dict)
             : BaseColumnReader(id),
               m_var_dict{std::move(var_dict)} {}
 
@@ -200,8 +194,7 @@ public:
     NodeType get_type() override { return NodeType::DictionaryFloat; }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     void extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
 
@@ -224,8 +217,7 @@ public:
     NodeType get_type() override { return NodeType::Boolean; }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     void extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
 
@@ -236,12 +228,10 @@ private:
 class ClpStringColumnReader : public BaseColumnReader {
 public:
     // Constructor
-    ClpStringColumnReader(
-            int32_t id,
-            std::shared_ptr<VariableDictionaryReader> var_dict,
-            std::shared_ptr<LogTypeDictionaryReader> log_dict,
-            bool is_array = false
-    )
+    ClpStringColumnReader(int32_t id,
+                          std::shared_ptr<VariableDictionaryReader> var_dict,
+                          std::shared_ptr<LogTypeDictionaryReader> log_dict,
+                          bool is_array = false)
             : BaseColumnReader(id),
               m_var_dict(std::move(var_dict)),
               m_log_dict(std::move(log_dict)),
@@ -258,13 +248,12 @@ public:
     }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     void extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
 
-    void
-    extract_escaped_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
+    void extract_escaped_string_value_into_buffer(uint64_t cur_message,
+                                                  std::string& buffer) override;
 
     /**
      * Gets the encoded id of the variable
@@ -306,13 +295,12 @@ public:
     NodeType get_type() override { return NodeType::VarString; }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     void extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
 
-    void
-    extract_escaped_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
+    void extract_escaped_string_value_into_buffer(uint64_t cur_message,
+                                                  std::string& buffer) override;
 
     /**
      * Gets the encoded id of the variable
@@ -330,10 +318,8 @@ private:
 class DeprecatedDateStringColumnReader : public BaseColumnReader {
 public:
     // Constructor
-    DeprecatedDateStringColumnReader(
-            int32_t id,
-            std::shared_ptr<TimestampDictionaryReader> timestamp_dict
-    )
+    DeprecatedDateStringColumnReader(int32_t id,
+                                     std::shared_ptr<TimestampDictionaryReader> timestamp_dict)
             : BaseColumnReader(id),
               m_timestamp_dict(std::move(timestamp_dict)) {}
 
@@ -346,8 +332,7 @@ public:
     NodeType get_type() override { return NodeType::DeprecatedDateString; }
 
     std::variant<int64_t, double, std::string, uint8_t> extract_value(
-            uint64_t cur_message
-    ) override;
+            uint64_t cur_message) override;
 
     void extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) override;
 

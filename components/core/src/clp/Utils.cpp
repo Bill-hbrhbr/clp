@@ -117,8 +117,8 @@ ErrorCode read_list_of_paths(string const& list_path, vector<string>& paths) {
 // TODO: duplicates code in log_surgeon/parser.tpp, should implement a
 // SearchParser in log_surgeon instead and use it here. Specifically, initialization of
 // lexer.m_symbol_id, contains_delimiter error, and add_rule logic.
-void
-load_lexer_from_file(std::string const& schema_file_path, log_surgeon::lexers::ByteLexer& lexer) {
+void load_lexer_from_file(std::string const& schema_file_path,
+                          log_surgeon::lexers::ByteLexer& lexer) {
     std::unique_ptr<log_surgeon::SchemaAST> schema_ast
             = log_surgeon::SchemaParser::try_schema_file(schema_file_path);
     if (!lexer.m_symbol_id.empty()) {
@@ -178,12 +178,10 @@ load_lexer_from_file(std::string const& schema_file_path, log_surgeon::lexers::B
             continue;
         }
         if (0 < num_captures) {
-            throw std::runtime_error(
-                    schema_file_path + ":" + std::to_string(rule->m_line_num + 1)
-                    + ": error: the schema rule '" + rule->m_name
-                    + "' has a regex pattern containing capture groups (found "
-                    + std::to_string(num_captures) + ").\n"
-            );
+            throw std::runtime_error(schema_file_path + ":" + std::to_string(rule->m_line_num + 1)
+                                     + ": error: the schema rule '" + rule->m_name
+                                     + "' has a regex pattern containing capture groups (found "
+                                     + std::to_string(num_captures) + ").\n");
         }
 
         // transform '.' from any-character into any non-delimiter character

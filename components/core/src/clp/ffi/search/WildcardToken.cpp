@@ -144,11 +144,9 @@ static bool could_be_static_text(string_view query, size_t begin_pos, size_t end
 }
 
 template <typename encoded_variable_t>
-WildcardToken<encoded_variable_t>::WildcardToken(
-        string_view query,
-        size_t begin_pos,
-        size_t end_pos
-)
+WildcardToken<encoded_variable_t>::WildcardToken(string_view query,
+                                                 size_t begin_pos,
+                                                 size_t end_pos)
         : QueryToken(query, begin_pos, end_pos),
           m_has_prefix_star_wildcard('*' == query[begin_pos]),
           m_has_suffix_star_wildcard('*' == query[end_pos - 1]) {

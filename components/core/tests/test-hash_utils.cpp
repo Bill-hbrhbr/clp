@@ -18,16 +18,13 @@ using std::vector;
 TEST_CASE("test_sha256", "[hash_utils]") {
     constexpr string_view cInputString{"ThisIsARandomTestInput"};
     constexpr string_view cReferenceSha256{
-            "c3a1d9f04ada1198c4c63bf51d9933fc2cc216429275cadabdcb2178775add0c"
-    };
+            "c3a1d9f04ada1198c4c63bf51d9933fc2cc216429275cadabdcb2178775add0c"};
     vector<unsigned char> hash;
 
     REQUIRE(ErrorCode_Success
-            == get_sha256_hash(
-                    {size_checked_pointer_cast<unsigned char const>(cInputString.data()),
-                     cInputString.size()},
-                    hash
-            ));
+            == get_sha256_hash({size_checked_pointer_cast<unsigned char const>(cInputString.data()),
+                                cInputString.size()},
+                               hash));
     REQUIRE(convert_to_hex_string(hash) == cReferenceSha256);
 }
 
@@ -35,8 +32,7 @@ TEST_CASE("test_hmac", "[hash_utils]") {
     constexpr string_view cInputString{"ThisIsARandomTestInput"};
     constexpr string_view cInputKey{"ThisIsATestKey"};
     constexpr string_view cReferenceHmacSha256{
-            "38373057694c1038a6895212bea46849eb7a59b73a2ec175883ae095fb91ffda"
-    };
+            "38373057694c1038a6895212bea46849eb7a59b73a2ec175883ae095fb91ffda"};
     vector<unsigned char> hmac_hash;
 
     REQUIRE(ErrorCode_Success
@@ -45,7 +41,6 @@ TEST_CASE("test_hmac", "[hash_utils]") {
                      cInputString.size()},
                     {size_checked_pointer_cast<unsigned char const>(cInputKey.data()),
                      cInputKey.size()},
-                    hmac_hash
-            ));
+                    hmac_hash));
     REQUIRE(convert_to_hex_string(hmac_hash) == cReferenceHmacSha256);
 }

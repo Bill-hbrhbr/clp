@@ -46,8 +46,7 @@ public:
      * @return the variable dictionary reader
      */
     static std::shared_ptr<VariableDictionaryReader> get_variable_dictionary_reader(
-            ArchiveReaderAdaptor& adaptor
-    );
+            ArchiveReaderAdaptor& adaptor);
 
     /**
      * Gets the log type dictionary reader for an archive
@@ -55,8 +54,7 @@ public:
      * @return the log type dictionary reader
      */
     static std::shared_ptr<LogTypeDictionaryReader> get_log_type_dictionary_reader(
-            ArchiveReaderAdaptor& adaptor
-    );
+            ArchiveReaderAdaptor& adaptor);
 
     /**
      * Gets the array dictionary reader for an archive
@@ -64,8 +62,7 @@ public:
      * @return the array dictionary reader
      */
     static std::shared_ptr<LogTypeDictionaryReader> get_array_dictionary_reader(
-            ArchiveReaderAdaptor& adaptor
-    );
+            ArchiveReaderAdaptor& adaptor);
 
 private:
     /**
@@ -86,8 +83,7 @@ private:
             std::shared_ptr<VariableDictionaryReader> const& var_dict,
             std::shared_ptr<LogTypeDictionaryReader> const& log_dict,
             std::shared_ptr<LogTypeDictionaryReader> const& array_dict,
-            std::shared_ptr<TimestampDictionaryReader> const& timestamp_dict
-    );
+            std::shared_ptr<TimestampDictionaryReader> const& timestamp_dict);
 };
 }  // namespace clp_s
 

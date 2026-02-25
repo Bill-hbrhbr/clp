@@ -134,8 +134,7 @@ public:
      */
     static std::shared_ptr<ColumnDescriptor> create_from_escaped_tokens(
             std::vector<std::string> const& tokens,
-            std::string_view descriptor_namespace
-    );
+            std::string_view descriptor_namespace);
 
     /**
      * Create a ColumnDescriptor literal from a list of already-parsed DescriptorToken.
@@ -145,8 +144,7 @@ public:
      */
     static std::shared_ptr<ColumnDescriptor> create_from_descriptors(
             DescriptorList const& descriptors,
-            std::string_view descriptor_namespace
-    );
+            std::string_view descriptor_namespace);
 
     /**
      * Inserts an entire DescriptorList into this ColumnDescriptor before the specified position.

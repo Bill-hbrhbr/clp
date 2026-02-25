@@ -20,12 +20,10 @@ public:
      * @param decompressed_msg
      * @param custom_arg Custom argument for the output function
      */
-    using OutputFunc = void (*)(
-            std::string const& orig_file_path,
-            streaming_archive::reader::Message const& compressed_msg,
-            std::string const& decompressed_msg,
-            void* custom_arg
-    );
+    using OutputFunc = void (*)(std::string const& orig_file_path,
+                                streaming_archive::reader::Message const& compressed_msg,
+                                std::string const& decompressed_msg,
+                                void* custom_arg);
 
     // Methods
     /**
@@ -37,13 +35,11 @@ public:
      * @param ignore_case
      * @return Query if it may match a message, std::nullopt otherwise
      */
-    static std::optional<Query> process_raw_query(
-            streaming_archive::reader::Archive const& archive,
-            std::string const& search_string,
-            epochtime_t search_begin_ts,
-            epochtime_t search_end_ts,
-            bool ignore_case
-    );
+    static std::optional<Query> process_raw_query(streaming_archive::reader::Archive const& archive,
+                                                  std::string const& search_string,
+                                                  epochtime_t search_begin_ts,
+                                                  epochtime_t search_end_ts,
+                                                  bool ignore_case);
 
     /**
      * Returns bounds of next potential variable (either a definite variable or a token with
@@ -54,12 +50,10 @@ public:
      * @param is_var Whether the token is definitely a variable
      * @return true if another potential variable was found, false otherwise
      */
-    static bool get_bounds_of_next_potential_var(
-            std::string const& value,
-            size_t& begin_pos,
-            size_t& end_pos,
-            bool& is_var
-    );
+    static bool get_bounds_of_next_potential_var(std::string const& value,
+                                                 size_t& begin_pos,
+                                                 size_t& end_pos,
+                                                 bool& is_var);
 
     /**
      * Marks which sub-queries in each query are relevant to the given file
@@ -68,8 +62,7 @@ public:
      */
     static void calculate_sub_queries_relevant_to_file(
             streaming_archive::reader::File const& compressed_file,
-            std::vector<Query>& queries
-    );
+            std::vector<Query>& queries);
 
     /**
      * Searches a file with the given query and outputs any results using the given method
@@ -84,21 +77,17 @@ public:
      * fails
      * @throw TimestampPattern::OperationFailed if failed to insert timestamp into message
      */
-    static size_t search_and_output(
-            Query const& query,
-            size_t limit,
-            streaming_archive::reader::Archive& archive,
-            streaming_archive::reader::File& compressed_file,
-            OutputFunc output_func,
-            void* output_func_arg
-    );
-    static bool search_and_decompress(
-            Query const& query,
-            streaming_archive::reader::Archive& archive,
-            streaming_archive::reader::File& compressed_file,
-            streaming_archive::reader::Message& compressed_msg,
-            std::string& decompressed_msg
-    );
+    static size_t search_and_output(Query const& query,
+                                    size_t limit,
+                                    streaming_archive::reader::Archive& archive,
+                                    streaming_archive::reader::File& compressed_file,
+                                    OutputFunc output_func,
+                                    void* output_func_arg);
+    static bool search_and_decompress(Query const& query,
+                                      streaming_archive::reader::Archive& archive,
+                                      streaming_archive::reader::File& compressed_file,
+                                      streaming_archive::reader::Message& compressed_msg,
+                                      std::string& decompressed_msg);
     /**
      * Searches a file with the given query without outputting the results
      * @param query
@@ -110,12 +99,10 @@ public:
      * fails
      * @throw TimestampPattern::OperationFailed if failed to insert timestamp into message
      */
-    static size_t search(
-            Query const& query,
-            size_t limit,
-            streaming_archive::reader::Archive& archive,
-            streaming_archive::reader::File& compressed_file
-    );
+    static size_t search(Query const& query,
+                         size_t limit,
+                         streaming_archive::reader::Archive& archive,
+                         streaming_archive::reader::File& compressed_file);
 
     /**
      * Searches the segment with the given queries and outputs any results using the given method
@@ -131,24 +118,20 @@ public:
      * fails
      * @throw TimestampPattern::OperationFailed if failed to insert timestamp into message
      */
-    static size_t search_segment_and_output(
-            std::vector<LogtypeQueries> const& queries,
-            Query const& query,
-            size_t limit,
-            streaming_archive::reader::Archive& archive,
-            OutputFunc output_func,
-            void* output_func_arg
-    );
+    static size_t search_segment_and_output(std::vector<LogtypeQueries> const& queries,
+                                            Query const& query,
+                                            size_t limit,
+                                            streaming_archive::reader::Archive& archive,
+                                            OutputFunc output_func,
+                                            void* output_func_arg);
 
-    static size_t search_combined_table_and_output(
-            combined_table_id_t table_id,
-            std::vector<LogtypeQueries> const& queries,
-            Query const& query,
-            size_t limit,
-            streaming_archive::reader::Archive& archive,
-            OutputFunc output_func,
-            void* output_func_arg
-    );
+    static size_t search_combined_table_and_output(combined_table_id_t table_id,
+                                                   std::vector<LogtypeQueries> const& queries,
+                                                   Query const& query,
+                                                   size_t limit,
+                                                   streaming_archive::reader::Archive& archive,
+                                                   OutputFunc output_func,
+                                                   void* output_func_arg);
 
     /**
      * find all messages within the segment matching the time range specified in query and output
@@ -168,16 +151,14 @@ public:
             size_t limit,
             streaming_archive::reader::Archive& archive,
             OutputFunc output_func,
-            void* output_func_arg
-    );
+            void* output_func_arg);
 
     static size_t output_message_in_combined_segment_within_time_range(
             Query const& query,
             size_t limit,
             streaming_archive::reader::Archive& archive,
             OutputFunc output_func,
-            void* output_func_arg
-    );
+            void* output_func_arg);
     /**
      * Searches the segment with the given queries and outputs any results using the given method
      * This method is optimized such that it only scans through columns that are necessary
@@ -192,14 +173,12 @@ public:
      * fails
      * @throw TimestampPattern::OperationFailed if failed to insert timestamp into message
      */
-    static size_t search_segment_optimized_and_output(
-            std::vector<LogtypeQueries> const& queries,
-            Query const& query,
-            size_t limit,
-            streaming_archive::reader::Archive& archive,
-            OutputFunc output_func,
-            void* output_func_arg
-    );
+    static size_t search_segment_optimized_and_output(std::vector<LogtypeQueries> const& queries,
+                                                      Query const& query,
+                                                      size_t limit,
+                                                      streaming_archive::reader::Archive& archive,
+                                                      OutputFunc output_func,
+                                                      void* output_func_arg);
     /**
      * Converted a query of class Query into a set of LogtypeQueries, indexed by logtype_id
      * specifically, a Query could have n subqueries, each subquery has a fixed "vars_to_match" and

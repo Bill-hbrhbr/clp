@@ -12,11 +12,9 @@
 #include "type_utils.hpp"
 
 namespace clp {
-FileDescriptor::FileDescriptor(
-        std::string_view path,
-        OpenMode open_mode,
-        CloseFailureCallback close_failure_callback
-)
+FileDescriptor::FileDescriptor(std::string_view path,
+                               OpenMode open_mode,
+                               CloseFailureCallback close_failure_callback)
         : m_open_mode{open_mode},
           m_close_failure_callback{close_failure_callback} {
     // For newly created files, we enable writing for the owner and reading for everyone.
@@ -29,12 +27,10 @@ FileDescriptor::FileDescriptor(
         m_fd = open(path.data(), flag);
     }
     if (-1 == m_fd) {
-        throw OperationFailed(
-                ErrorCode_errno,
-                __FILE__,
-                __LINE__,
-                "Failed to open file descriptor for path: " + std::string{path}
-        );
+        throw OperationFailed(ErrorCode_errno,
+                              __FILE__,
+                              __LINE__,
+                              "Failed to open file descriptor for path: " + std::string{path});
     }
 }
 
@@ -51,12 +47,10 @@ auto FileDescriptor::get_size() const -> size_t {
     struct stat stat_result{};
 
     if (ErrorCode_Success != stat(stat_result)) {
-        throw OperationFailed(
-                ErrorCode_errno,
-                __FILE__,
-                __LINE__,
-                "Failed to stat file using file descriptor."
-        );
+        throw OperationFailed(ErrorCode_errno,
+                              __FILE__,
+                              __LINE__,
+                              "Failed to stat file using file descriptor.");
     }
     return static_cast<size_t>(stat_result.st_size);
 }

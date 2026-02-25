@@ -44,8 +44,7 @@ public:
      * @param compressed_data_buffer_size
      */
     virtual auto open(char const* compressed_data_buffer, size_t compressed_data_buffer_size)
-            -> void
-            = 0;
+            -> void = 0;
     /**
      * Initializes the decompressor to decompress from a reader interface
      * @param reader
@@ -57,11 +56,9 @@ public:
      */
     virtual auto close() -> void = 0;
 
-    [[nodiscard]] virtual auto get_decompressed_stream_region(
-            size_t decompressed_stream_pos,
-            char* extraction_buf,
-            size_t extraction_len
-    ) -> ErrorCode
+    [[nodiscard]] virtual auto get_decompressed_stream_region(size_t decompressed_stream_pos,
+                                                              char* extraction_buf,
+                                                              size_t extraction_len) -> ErrorCode
             = 0;
 
 protected:

@@ -10,8 +10,7 @@ bool FileDecompressor::decompress_file(
         streaming_archive::MetadataDB::FileIterator const& file_metadata_ix,
         string const& output_dir,
         streaming_archive::reader::Archive& archive_reader,
-        std::unordered_map<string, string>& temp_path_to_final_path
-) {
+        std::unordered_map<string, string>& temp_path_to_final_path) {
     // Open compressed file
     auto error_code = archive_reader.open_file(m_encoded_file, file_metadata_ix);
     if (ErrorCode_Success != error_code) {
@@ -45,11 +44,9 @@ bool FileDecompressor::decompress_file(
     // Generate output directory
     error_code = create_directory_structure(final_output_path.parent_path().string(), 0700);
     if (ErrorCode_Success != error_code) {
-        SPDLOG_ERROR(
-                "Failed to create directory structure {}, errno={}",
-                final_output_path.parent_path().c_str(),
-                errno
-        );
+        SPDLOG_ERROR("Failed to create directory structure {}, errno={}",
+                     final_output_path.parent_path().c_str(),
+                     errno);
         return false;
     }
 
@@ -59,8 +56,9 @@ bool FileDecompressor::decompress_file(
     // Decompress
     archive_reader.reset_file_indices(m_encoded_file);
     while (archive_reader.get_next_message(m_encoded_file, m_encoded_message)) {
-        if (!archive_reader
-                     .decompress_message(m_encoded_file, m_encoded_message, m_decompressed_message))
+        if (!archive_reader.decompress_message(m_encoded_file,
+                                               m_encoded_message,
+                                               m_decompressed_message))
         {
             // Can't decompress any more of file
             break;

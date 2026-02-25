@@ -6,11 +6,9 @@
 #include <spdlog/spdlog.h>
 
 namespace clp_s {
-JsonFileIterator::JsonFileIterator(
-        clp::ReaderInterface& reader,
-        size_t max_document_size,
-        size_t buf_size
-)
+JsonFileIterator::JsonFileIterator(clp::ReaderInterface& reader,
+                                   size_t max_document_size,
+                                   size_t buf_size)
         : m_buf_size(buf_size),
           m_max_document_size(max_document_size),
           m_buf(new char[buf_size + simdjson::SIMDJSON_PADDING]),
@@ -57,11 +55,9 @@ bool JsonFileIterator::read_new_json() {
             return false;
         }
 
-        auto error = m_parser.iterate_many(
-                                     m_buf,
-                                     /* length of data */ m_buf_occupied,
-                                     /* batch size of data to parse*/ m_buf_occupied
-        )
+        auto error = m_parser.iterate_many(m_buf,
+                                           /* length of data */ m_buf_occupied,
+                                           /* batch size of data to parse*/ m_buf_occupied)
                              .get(m_stream);
 
         if (error) {

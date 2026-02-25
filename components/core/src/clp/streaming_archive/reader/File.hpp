@@ -80,11 +80,9 @@ private:
      * @return Same as SegmentManager::try_read
      * @return ErrorCode_Success on success
      */
-    ErrorCode open_me(
-            LogTypeDictionaryReader const& archive_logtype_dict,
-            MetadataDB::FileIterator const& file_metadata_ix,
-            SegmentManager& segment_manager
-    );
+    ErrorCode open_me(LogTypeDictionaryReader const& archive_logtype_dict,
+                      MetadataDB::FileIterator const& file_metadata_ix,
+                      SegmentManager& segment_manager);
     /**
      * Closes the file
      */
@@ -107,11 +105,9 @@ private:
      * @param msg
      * @return true if a message was found, false otherwise
      */
-    bool find_message_in_time_range(
-            epochtime_t search_begin_timestamp,
-            epochtime_t search_end_timestamp,
-            Message& msg
-    );
+    bool find_message_in_time_range(epochtime_t search_begin_timestamp,
+                                    epochtime_t search_end_timestamp,
+                                    Message& msg);
     /**
      * Finds message matching the given query
      * @param query

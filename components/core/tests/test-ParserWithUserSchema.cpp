@@ -33,11 +33,9 @@ using log_surgeon::SchemaAST;
 namespace {
 constexpr std::string_view cTestArchiveDirectory{"test-parser-with-user-schema-archive"};
 
-auto run_clp_compress(
-        std::filesystem::path const& schema_path,
-        std::filesystem::path const& output_path,
-        std::filesystem::path const& input_path
-) -> int;
+auto run_clp_compress(std::filesystem::path const& schema_path,
+                      std::filesystem::path const& output_path,
+                      std::filesystem::path const& input_path) -> int;
 [[nodiscard]] auto get_config_schema_files_dir() -> std::filesystem::path;
 [[nodiscard]] auto get_tests_dir() -> std::filesystem::path;
 [[nodiscard]] auto get_test_schema_files_dir() -> std::filesystem::path;
@@ -66,23 +64,19 @@ auto get_test_log_dir() -> std::filesystem::path {
     return get_tests_dir() / "test_log_files";
 }
 
-auto run_clp_compress(
-        std::filesystem::path const& schema_path,
-        std::filesystem::path const& output_path,
-        std::filesystem::path const& input_path
-) -> int {
+auto run_clp_compress(std::filesystem::path const& schema_path,
+                      std::filesystem::path const& output_path,
+                      std::filesystem::path const& input_path) -> int {
     auto const schema_path_str{schema_path.string()};
     auto const output_path_str{output_path.string()};
     auto const input_path_str{input_path.string()};
-    std::vector<char const*> argv{
-            "clp",
-            "c",
-            "--schema-path",
-            schema_path_str.data(),
-            output_path_str.data(),
-            input_path_str.data(),
-            nullptr
-    };
+    std::vector<char const*> argv{"clp",
+                                  "c",
+                                  "--schema-path",
+                                  schema_path_str.data(),
+                                  output_path_str.data(),
+                                  input_path_str.data(),
+                                  nullptr};
     // `clp::clp::run` registers a logger for `spdlog` that persists across runs. `spdlog` will
     // error if a logger with the same name already exists. `spdlog::drop_all` clears all loggers,
     // ensuring `clp::clp::run` can safely create a fresh logger for each new call.
@@ -110,18 +104,15 @@ TEST_CASE("Test error for missing schema file", "[LALR1Parser][SchemaParser]") {
     REQUIRE_THROWS_WITH(
             generate_schema_ast(file_path_string),
             "Failed to read '" + file_path_string + "', error_code="
-                    + std::to_string(static_cast<int>(log_surgeon::ErrorCode::FileNotFound))
-    );
+                    + std::to_string(static_cast<int>(log_surgeon::ErrorCode::FileNotFound)));
 }
 
 TEST_CASE("Test error for empty schema file", "[LALR1Parser][SchemaParser]") {
     auto const file_path = get_test_schema_files_dir() / "empty_schema.txt";
-    REQUIRE_THROWS_WITH(
-            generate_schema_ast(file_path.string()),
-            "Schema:1:1: error: empty file\n"
-            "          \n"
-            "^\n"
-    );
+    REQUIRE_THROWS_WITH(generate_schema_ast(file_path.string()),
+                        "Schema:1:1: error: empty file\n"
+                        "          \n"
+                        "^\n");
 }
 
 TEST_CASE("Test error for colon missing schema file", "[LALR1Parser][SchemaParser]") {
@@ -130,19 +121,16 @@ TEST_CASE("Test error for colon missing schema file", "[LALR1Parser][SchemaParse
             generate_schema_ast(file_path.string()),
             "Schema:3:4: error: expected '>',':','IdentifierCharacters' before ' ' token\n"
             "          int [0-9]+\n"
-            "             ^\n"
-    );
+            "             ^\n");
 }
 
 TEST_CASE("Test error for multi-character tokens in schema file", "[LALR1Parser][SchemaParser]") {
     auto const file_path
             = get_test_schema_files_dir() / "schema_with_multicharacter_token_error.txt";
-    REQUIRE_THROWS_WITH(
-            generate_schema_ast(file_path.string()),
-            "Schema:2:11: error: expected ':' before ' ' token\n"
-            "          delimiters : \\r\\n\n"
-            "                    ^\n"
-    );
+    REQUIRE_THROWS_WITH(generate_schema_ast(file_path.string()),
+                        "Schema:2:11: error: expected ':' before ' ' token\n"
+                        "          delimiters : \\r\\n\n"
+                        "                    ^\n");
 }
 
 TEST_CASE("Test creating schema parser", "[LALR1Parser][SchemaParser]") {
@@ -162,10 +150,8 @@ TEST_CASE("Test creating log parser from config schema", "[LALR1Parser][LogParse
 
 TEST_CASE("Test creating log parser without delimiters", "[LALR1Parser][LogParser]") {
     auto const schema_file_path = get_test_schema_files_dir() / "schema_without_delimiters.txt";
-    REQUIRE_THROWS_WITH(
-            generate_log_parser(schema_file_path.string()),
-            "When using --schema-path, \"delimiters:\" line must be used."
-    );
+    REQUIRE_THROWS_WITH(generate_log_parser(schema_file_path.string()),
+                        "When using --schema-path, \"delimiters:\" line must be used.");
 }
 
 TEST_CASE("Test lexer", "[Search]") {
@@ -183,10 +169,8 @@ TEST_CASE("Test lexer", "[Search]") {
     auto token{opt_token.value()};
     while (token.get_type_ids()->at(0) != static_cast<int>(log_surgeon::SymbolId::TokenEnd)) {
         SPDLOG_INFO("token:" + token.to_string() + "\n");
-        SPDLOG_INFO(
-                "token.get_type_ids()->back():" + lexer.m_id_symbol[token.get_type_ids()->back()]
-                + "\n"
-        );
+        SPDLOG_INFO("token.get_type_ids()->back():"
+                    + lexer.m_id_symbol[token.get_type_ids()->back()] + "\n");
         auto [error_code, opt_token] = lexer.scan(parser_input_buffer);
         REQUIRE(error_code == log_surgeon::ErrorCode::Success);
         token = opt_token.value();
@@ -200,8 +184,7 @@ TEST_CASE("Error on schema rule with a single non-header capture group", "[load_
             load_lexer_from_file(schema_file_path, lexer),
             schema_file_path.string()
                     + ":3: error: the schema rule 'capture' has a regex pattern containing capture "
-                      "groups (found 1).\n"
-    );
+                      "groups (found 1).\n");
 }
 
 TEST_CASE("Error on schema rule with multiple non-header capture groups", "[load_lexer]") {
@@ -211,8 +194,7 @@ TEST_CASE("Error on schema rule with multiple non-header capture groups", "[load
             load_lexer_from_file(schema_file_path, lexer),
             schema_file_path.string()
                     + ":3: error: the schema rule 'multicapture' has a regex pattern containing "
-                      "capture groups (found 2).\n"
-    );
+                      "capture groups (found 2).\n");
 }
 
 TEST_CASE("Verify CLP compression fails with non-header capture groups", "[Compression]") {
@@ -225,8 +207,7 @@ TEST_CASE("Verify CLP compression fails with non-header capture groups", "[Compr
             run_clp_compress(schema_file_path, cTestArchiveDirectory, log_file_path),
             schema_file_path.string()
                     + ": error: the schema rule 'capture' has a regex pattern containing capture "
-                      "groups.\n"
-    );
+                      "groups.\n");
 }
 
 TEST_CASE("Succeed on header rule with no capture", "[load_lexer]") {
@@ -248,8 +229,7 @@ TEST_CASE("Error on header rule with a single non-timestamp capture", "[load_lex
             load_lexer_from_file(schema_file_path, lexer),
             schema_file_path.string()
                     + ":3: error: the schema rule 'header' has a regex pattern containing capture "
-                      "groups (found 1).\n"
-    );
+                      "groups (found 1).\n");
 }
 
 TEST_CASE("Error on header rule with a timestamp and non-timestamp capture", "[load_lexer]") {
@@ -259,8 +239,7 @@ TEST_CASE("Error on header rule with a timestamp and non-timestamp capture", "[l
             load_lexer_from_file(schema_file_path, lexer),
             schema_file_path.string()
                     + ":3: error: the schema rule 'header' has a regex pattern containing capture "
-                      "groups (found 2).\n"
-    );
+                      "groups (found 2).\n");
 }
 
 TEST_CASE("Verify CLP compression succeeds with non-capture header", "[Compression]") {
@@ -291,8 +270,7 @@ TEST_CASE("Verify CLP compression fails with non-timestamp capture header", "[Co
             run_clp_compress(schema_file_path, cTestArchiveDirectory, log_file_path),
             schema_file_path.string()
                     + ": error: the schema rule 'header' has a regex pattern containing capture "
-                      "groups.\n"
-    );
+                      "groups.\n");
 }
 
 TEST_CASE("Verify CLP compression fails with multi-capture header", "[Compression]") {
@@ -305,6 +283,5 @@ TEST_CASE("Verify CLP compression fails with multi-capture header", "[Compressio
             run_clp_compress(schema_file_path, cTestArchiveDirectory, log_file_path),
             schema_file_path.string()
                     + ": error: the schema rule 'header' has a regex pattern containing capture "
-                      "groups.\n"
-    );
+                      "groups.\n");
 }

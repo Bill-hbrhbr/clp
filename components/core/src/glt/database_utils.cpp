@@ -13,12 +13,10 @@ string get_field_names_and_types_sql(vector<pair<string, string>> const& field_n
     auto buffer_ix = std::back_inserter(buffer);
 
     size_t i = 0;
-    fmt::format_to(
-            buffer_ix,
-            "{} {}",
-            field_names_and_types[i].first,
-            field_names_and_types[i].second
-    );
+    fmt::format_to(buffer_ix,
+                   "{} {}",
+                   field_names_and_types[i].first,
+                   field_names_and_types[i].second);
     ++i;
     for (; i < field_names_and_types.size(); ++i) {
         auto const& field_name_and_type = field_names_and_types[i];
@@ -98,10 +96,8 @@ string get_set_field_sql(vector<string> const& field_names, size_t begin_ix, siz
     return {buffer.data(), buffer.size()};
 }
 
-string get_numbered_set_field_sql(
-        vector<pair<string, string>> const& field_names_and_types,
-        size_t begin_ix
-) {
+string get_numbered_set_field_sql(vector<pair<string, string>> const& field_names_and_types,
+                                  size_t begin_ix) {
     fmt::memory_buffer buffer;
     auto buffer_ix = std::back_inserter(buffer);
 

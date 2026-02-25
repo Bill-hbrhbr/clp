@@ -29,8 +29,8 @@ public:
      * - std::errc::no_such_file_or_directory if a `clp_s::FileWriter` fails to open an output file.
      * - Forwards `clp::ffi::ir_stream::Serializer<>::create()`'s return values.
      */
-    [[nodiscard]] static auto
-    create(std::string_view output_dir, std::string_view original_file_path)
+    [[nodiscard]] static auto create(std::string_view output_dir,
+                                     std::string_view original_file_path)
             -> ystdlib::error_handling::Result<LogSerializer>;
 
     // Constructors
@@ -90,8 +90,7 @@ private:
     // Constructors
     explicit LogSerializer(
             clp::ffi::ir_stream::Serializer<clp::ir::eight_byte_encoded_variable_t>&& serializer,
-            clp_s::FileWriter&& writer
-    )
+            clp_s::FileWriter&& writer)
             : m_serializer{std::move(serializer)},
               m_writer{std::move(writer)} {}
 
@@ -101,10 +100,8 @@ private:
      */
     void flush_buffer() {
         auto const buffer{m_serializer.get_ir_buf_view()};
-        m_writer.write(
-                clp::size_checked_pointer_cast<char const>(buffer.data()),
-                buffer.size_bytes()
-        );
+        m_writer.write(clp::size_checked_pointer_cast<char const>(buffer.data()),
+                       buffer.size_bytes());
         m_serializer.clear_ir_buf();
     }
 

@@ -37,13 +37,11 @@ public:
      * @param message
      * @return true if message parsed, false otherwise
      */
-    bool parse_next_message(
-            bool drain_source,
-            size_t buffer_length,
-            char const* buffer,
-            size_t& buf_pos,
-            ParsedMessage& message
-    );
+    bool parse_next_message(bool drain_source,
+                            size_t buffer_length,
+                            char const* buffer,
+                            size_t& buf_pos,
+                            ParsedMessage& message);
     /**
      * Parses the next message from the given reader. Messages are delimited either by
      * i) a timestamp or

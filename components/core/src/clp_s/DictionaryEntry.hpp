@@ -81,8 +81,8 @@ public:
      * @param placeholder
      * @return The placeholder's position in the logtype, or SIZE_MAX if var_ix is out of bounds
      */
-    size_t
-    get_placeholder_info(size_t placeholder_ix, clp::ir::VariablePlaceholder& placeholder) const;
+    size_t get_placeholder_info(size_t placeholder_ix,
+                                clp::ir::VariablePlaceholder& placeholder) const;
 
     /**
      * Adds a constant to the logtype
@@ -131,12 +131,10 @@ public:
      * @param var
      * @return true if another variable was found, false otherwise
      */
-    auto parse_next_var(
-            std::string_view msg,
-            size_t& var_begin_pos,
-            size_t& var_end_pos,
-            std::string_view& var
-    ) -> bool;
+    auto parse_next_var(std::string_view msg,
+                        size_t& var_begin_pos,
+                        size_t& var_end_pos,
+                        std::string_view& var) -> bool;
 
     /**
      * Reserves space for a constant of the given length
@@ -163,8 +161,9 @@ public:
      * @return Same as streaming_compression::Decompressor::try_read_numeric_value
      * @return Same as streaming_compression::Decompressor::try_read_string
      */
-    ErrorCode
-    try_read_from_file(ZstdDecompressor& decompressor, clp::logtype_dictionary_id_t id, bool lazy);
+    ErrorCode try_read_from_file(ZstdDecompressor& decompressor,
+                                 clp::logtype_dictionary_id_t id,
+                                 bool lazy);
 
     /**
      * Reads an entry from the given decompressor
@@ -254,8 +253,9 @@ public:
      * @param id
      * @param lazy
      */
-    void
-    read_from_file(ZstdDecompressor& decompressor, clp::variable_dictionary_id_t id, bool lazy);
+    void read_from_file(ZstdDecompressor& decompressor,
+                        clp::variable_dictionary_id_t id,
+                        bool lazy);
 };
 }  // namespace clp_s
 

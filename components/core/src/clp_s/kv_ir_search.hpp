@@ -37,12 +37,11 @@ using KvIrSearchError = ystdlib::error_handling::ErrorCode<KvIrSearchErrorEnum>;
  *   created.
  * - Forwards `deserialize_and_search_kv_ir_stream`'s return values.
  */
-[[nodiscard]] auto search_kv_ir_stream(
-        Path const& stream_path,
-        CommandLineArguments const& command_line_arguments,
-        std::shared_ptr<search::ast::Expression> query,
-        int reducer_socket_fd
-) -> ystdlib::error_handling::Result<void>;
+[[nodiscard]] auto search_kv_ir_stream(Path const& stream_path,
+                                       CommandLineArguments const& command_line_arguments,
+                                       std::shared_ptr<search::ast::Expression> query,
+                                       int reducer_socket_fd)
+        -> ystdlib::error_handling::Result<void>;
 }  // namespace clp_s
 
 YSTDLIB_ERROR_HANDLING_MARK_AS_ERROR_CODE_ENUM(clp_s::KvIrSearchErrorEnum);

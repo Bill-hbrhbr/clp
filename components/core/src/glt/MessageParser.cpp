@@ -6,13 +6,11 @@
 constexpr char cLineDelimiter = '\n';
 
 namespace glt {
-bool MessageParser::parse_next_message(
-        bool drain_source,
-        size_t buffer_length,
-        char const* buffer,
-        size_t& buf_pos,
-        ParsedMessage& message
-) {
+bool MessageParser::parse_next_message(bool drain_source,
+                                       size_t buffer_length,
+                                       char const* buffer,
+                                       size_t& buf_pos,
+                                       ParsedMessage& message) {
     message.clear_except_ts_patt();
 
     while (true) {
@@ -45,11 +43,9 @@ bool MessageParser::parse_next_message(
     return false;
 }
 
-bool MessageParser::parse_next_message(
-        bool drain_source,
-        ReaderInterface& reader,
-        ParsedMessage& message
-) {
+bool MessageParser::parse_next_message(bool drain_source,
+                                       ReaderInterface& reader,
+                                       ParsedMessage& message) {
     message.clear_except_ts_patt();
 
     while (true) {
@@ -102,57 +98,47 @@ bool MessageParser::parse_line(ParsedMessage& message) {
     size_t timestamp_end_pos;
     if (nullptr == timestamp_pattern
         || false
-                   == timestamp_pattern->parse_timestamp(
-                           m_line,
-                           timestamp,
-                           timestamp_begin_pos,
-                           timestamp_end_pos
-                   ))
+                   == timestamp_pattern->parse_timestamp(m_line,
+                                                         timestamp,
+                                                         timestamp_begin_pos,
+                                                         timestamp_end_pos))
     {
-        timestamp_pattern = TimestampPattern::search_known_ts_patterns(
-                m_line,
-                timestamp,
-                timestamp_begin_pos,
-                timestamp_end_pos
-        );
+        timestamp_pattern = TimestampPattern::search_known_ts_patterns(m_line,
+                                                                       timestamp,
+                                                                       timestamp_begin_pos,
+                                                                       timestamp_end_pos);
     }
 
     if (nullptr != timestamp_pattern) {
         // A timestamp was parsed
         if (m_buffered_msg.is_empty()) {
             // Fill message with line
-            m_buffered_msg.set(
-                    timestamp_pattern,
-                    timestamp,
-                    m_line,
-                    timestamp_begin_pos,
-                    timestamp_end_pos
-            );
+            m_buffered_msg.set(timestamp_pattern,
+                               timestamp,
+                               m_line,
+                               timestamp_begin_pos,
+                               timestamp_end_pos);
         } else {
             // Move buffered message to message
             message.consume(m_buffered_msg);
 
             // Save line for next message
-            m_buffered_msg.set(
-                    timestamp_pattern,
-                    timestamp,
-                    m_line,
-                    timestamp_begin_pos,
-                    timestamp_end_pos
-            );
+            m_buffered_msg.set(timestamp_pattern,
+                               timestamp,
+                               m_line,
+                               timestamp_begin_pos,
+                               timestamp_end_pos);
             message_completed = true;
         }
     } else {
         // No timestamp was parsed
         if (m_buffered_msg.is_empty()) {
             // Fill message with line
-            message.set(
-                    timestamp_pattern,
-                    timestamp,
-                    m_line,
-                    timestamp_begin_pos,
-                    timestamp_end_pos
-            );
+            message.set(timestamp_pattern,
+                        timestamp,
+                        m_line,
+                        timestamp_begin_pos,
+                        timestamp_end_pos);
             message_completed = true;
         } else {
             // Append line to message

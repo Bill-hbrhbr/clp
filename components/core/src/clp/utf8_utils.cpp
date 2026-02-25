@@ -11,13 +11,11 @@ auto is_utf8_encoded(std::string_view str) -> bool {
 }
 
 namespace utf8_utils_internal {
-auto parse_and_validate_lead_byte(
-        uint8_t byte,
-        size_t& num_continuation_bytes,
-        uint32_t& code_point,
-        uint32_t& code_point_lower_bound,
-        uint32_t& code_point_upper_bound
-) -> bool {
+auto parse_and_validate_lead_byte(uint8_t byte,
+                                  size_t& num_continuation_bytes,
+                                  uint32_t& code_point,
+                                  uint32_t& code_point_lower_bound,
+                                  uint32_t& code_point_upper_bound) -> bool {
     if ((byte & cFourByteUtf8CharHeaderMask) == cFourByteUtf8CharHeader) {
         num_continuation_bytes = 3;
         code_point = (~cFourByteUtf8CharHeaderMask & byte);

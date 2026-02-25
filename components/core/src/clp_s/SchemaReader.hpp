@@ -34,8 +34,8 @@ public:
      * @param reader
      * @param column_map
      */
-    virtual void
-    init(SchemaReader* reader, std::unordered_map<int32_t, BaseColumnReader*> const& column_map) {}
+    virtual void init(SchemaReader* reader,
+                      std::unordered_map<int32_t, BaseColumnReader*> const& column_map) {}
 
     /**
      * Filters the message
@@ -85,14 +85,12 @@ public:
      * @param num_messages
      * @param should_marshal_records
      */
-    void reset(
-            std::shared_ptr<SchemaTree> schema_tree,
-            std::shared_ptr<search::Projection> projection,
-            int32_t schema_id,
-            std::span<int32_t> ordered_schema,
-            uint64_t num_messages,
-            bool should_marshal_records
-    ) {
+    void reset(std::shared_ptr<SchemaTree> schema_tree,
+               std::shared_ptr<search::Projection> projection,
+               int32_t schema_id,
+               std::span<int32_t> ordered_schema,
+               uint64_t num_messages,
+               bool should_marshal_records) {
         m_schema_id = schema_id;
         m_num_messages = num_messages;
         m_cur_message = 0;
@@ -135,11 +133,9 @@ public:
      * @param mst_subtree_root,
      * @param schema
      */
-    void mark_unordered_object(
-            size_t column_reader_start,
-            int32_t mst_subtree_root,
-            std::span<int32_t> schema
-    );
+    void mark_unordered_object(size_t column_reader_start,
+                               int32_t mst_subtree_root,
+                               std::span<int32_t> schema);
 
     /**
      * Loads the encoded messages from a shared buffer starting at a given offset
@@ -184,12 +180,10 @@ public:
      * @param filter
      * @return true if there is a next message
      */
-    bool get_next_message_with_metadata(
-            std::string& message,
-            epochtime_t& timestamp,
-            int64_t& log_event_idx,
-            FilterClass* filter
-    );
+    bool get_next_message_with_metadata(std::string& message,
+                                        epochtime_t& timestamp,
+                                        int64_t& log_event_idx,
+                                        FilterClass* filter);
 
     /**
      * Initializes the filter
@@ -269,8 +263,9 @@ private:
      * @param schema
      * @return the index of the next reader in m_columns after those consumed by this array
      */
-    size_t
-    generate_structured_array_template(int32_t id, size_t column_start, std::span<int32_t> schema);
+    size_t generate_structured_array_template(int32_t id,
+                                              size_t column_start,
+                                              std::span<int32_t> schema);
 
     /**
      * Generates a json template for a structured object
@@ -279,8 +274,9 @@ private:
      * @param schema
      * @return the index of the next reader in m_columns after those consumed by this object
      */
-    size_t
-    generate_structured_object_template(int32_t id, size_t column_start, std::span<int32_t> schema);
+    size_t generate_structured_object_template(int32_t id,
+                                               size_t column_start,
+                                               std::span<int32_t> schema);
 
     /**
      * Finds the common root of the subtree containing cur_root and next_root, and adds brackets
@@ -305,11 +301,9 @@ private:
      * @param next_root
      * @param path_to_intersection
      */
-    void find_intersection_and_fix_brackets(
-            int32_t cur_root,
-            int32_t next_root,
-            std::vector<int32_t>& path_to_intersection
-    );
+    void find_intersection_and_fix_brackets(int32_t cur_root,
+                                            int32_t next_root,
+                                            std::vector<int32_t>& path_to_intersection);
 
     int32_t m_schema_id;
     uint64_t m_num_messages;

@@ -31,8 +31,7 @@ public:
     void rearrange_queries(
             std::unordered_map<logtype_dictionary_id_t, LogtypeQueries> const& src_queries,
             std::vector<LogtypeQueries>& single_table_queries,
-            std::map<combined_table_id_t, std::vector<LogtypeQueries>>& combined_table_queries
-    );
+            std::map<combined_table_id_t, std::vector<LogtypeQueries>>& combined_table_queries);
 
     // getter
     LogtypeTable& logtype_table() { return m_logtype_table; }

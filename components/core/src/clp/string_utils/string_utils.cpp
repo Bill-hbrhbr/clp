@@ -21,19 +21,15 @@ namespace {
  * @param wild_bookmark
  * @return true on success, false if wild cannot match tame
  */
-inline bool advance_tame_to_next_match(
-        char const*& tame_current,
-        char const*& tame_bookmark,
-        char const* tame_end,
-        char const*& wild_current
-);
+inline bool advance_tame_to_next_match(char const*& tame_current,
+                                       char const*& tame_bookmark,
+                                       char const* tame_end,
+                                       char const*& wild_current);
 
-inline bool advance_tame_to_next_match(
-        char const*& tame_current,
-        char const*& tame_bookmark,
-        char const* tame_end,
-        char const*& wild_current
-) {
+inline bool advance_tame_to_next_match(char const*& tame_current,
+                                       char const*& tame_bookmark,
+                                       char const* tame_end,
+                                       char const*& wild_current) {
     auto w = *wild_current;
     if ('?' != w) {
         // No need to check for '*' since the caller ensures wild doesn't
@@ -69,12 +65,10 @@ inline bool advance_tame_to_next_match(
 }  // namespace
 
 namespace clp::string_utils {
-size_t find_first_of(
-        string const& haystack,
-        char const* needles,
-        size_t search_start_pos,
-        size_t& needle_ix
-) {
+size_t find_first_of(string const& haystack,
+                     char const* needles,
+                     size_t search_start_pos,
+                     size_t& needle_ix) {
     size_t haystack_length = haystack.length();
     size_t needles_length = strlen(needles);
     for (size_t i = search_start_pos; i < haystack_length; ++i) {
@@ -88,12 +82,10 @@ size_t find_first_of(
     return string::npos;
 }
 
-string replace_characters(
-        char const* characters_to_replace,
-        char const* replacement_characters,
-        string const& value,
-        bool escape
-) {
+string replace_characters(char const* characters_to_replace,
+                          char const* replacement_characters,
+                          string const& value,
+                          bool escape) {
     string new_value;
     size_t search_start_pos = 0;
     while (true) {
@@ -115,12 +107,10 @@ string replace_characters(
     return new_value;
 }
 
-auto replace_unescaped_char(
-        char const escape_char,
-        char const from_char,
-        char const to_char,
-        std::string& str
-) -> void {
+auto replace_unescaped_char(char const escape_char,
+                            char const from_char,
+                            char const to_char,
+                            std::string& str) -> void {
     bool escaped{false};
 
     auto should_replace_char = [&](char c) -> bool {
@@ -292,12 +282,10 @@ bool wildcard_match_unsafe_case_sensitive(string_view tame, string_view wild) {
                 wild_current = wild_bookmark;
                 tame_current = tame_bookmark + 1;
                 if (false
-                    == advance_tame_to_next_match(
-                            tame_current,
-                            tame_bookmark,
-                            tame_end,
-                            wild_current
-                    ))
+                    == advance_tame_to_next_match(tame_current,
+                                                  tame_bookmark,
+                                                  tame_end,
+                                                  wild_current))
                 {
                     return false;
                 }
@@ -320,12 +308,10 @@ bool wildcard_match_unsafe_case_sensitive(string_view tame, string_view wild) {
                     wild_current = wild_bookmark;
                     tame_current = tame_bookmark + 1;
                     if (false
-                        == advance_tame_to_next_match(
-                                tame_current,
-                                tame_bookmark,
-                                tame_end,
-                                wild_current
-                        ))
+                        == advance_tame_to_next_match(tame_current,
+                                                      tame_bookmark,
+                                                      tame_end,
+                                                      wild_current))
                     {
                         return false;
                     }

@@ -11,10 +11,8 @@ MySQLPreparedStatement::MySQLPreparedStatement(MYSQL* db_handle)
           m_is_set(false) {
     m_statement_handle = mysql_stmt_init(m_db_handle);
     if (nullptr == m_statement_handle) {
-        SPDLOG_ERROR(
-                "MySQLPreparedStatement: Failed to create statement - {}.",
-                mysql_error(m_db_handle)
-        );
+        SPDLOG_ERROR("MySQLPreparedStatement: Failed to create statement - {}.",
+                     mysql_error(m_db_handle));
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 }
@@ -55,12 +53,10 @@ void MySQLPreparedStatement::set(char const* statement, size_t statement_length)
     }
 
     if (0 != mysql_stmt_prepare(m_statement_handle, statement, statement_length)) {
-        SPDLOG_ERROR(
-                "MySQLPreparedStatement: Failed to prepare statement - {}. '{:.{}}'",
-                mysql_stmt_error(m_statement_handle),
-                statement,
-                statement_length
-        );
+        SPDLOG_ERROR("MySQLPreparedStatement: Failed to prepare statement - {}. '{:.{}}'",
+                     mysql_stmt_error(m_statement_handle),
+                     statement,
+                     statement_length);
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
     m_statement_bindings.resize(mysql_stmt_param_count(m_statement_handle));
@@ -69,23 +65,17 @@ void MySQLPreparedStatement::set(char const* statement, size_t statement_length)
 
 bool MySQLPreparedStatement::execute() {
     if (0
-        != mysql_stmt_bind_param(
-                m_statement_handle,
-                m_statement_bindings.get_internal_mysql_bindings()
-        ))
+        != mysql_stmt_bind_param(m_statement_handle,
+                                 m_statement_bindings.get_internal_mysql_bindings()))
     {
-        SPDLOG_ERROR(
-                "MySQLPreparedStatement: Failed to bind parameters to statement - {}.",
-                mysql_stmt_error(m_statement_handle)
-        );
+        SPDLOG_ERROR("MySQLPreparedStatement: Failed to bind parameters to statement - {}.",
+                     mysql_stmt_error(m_statement_handle));
         return false;
     }
 
     if (0 != mysql_stmt_execute(m_statement_handle)) {
-        SPDLOG_ERROR(
-                "MySQLPreparedStatement: Failed to execute statement - {}.",
-                mysql_stmt_error(m_statement_handle)
-        );
+        SPDLOG_ERROR("MySQLPreparedStatement: Failed to execute statement - {}.",
+                     mysql_stmt_error(m_statement_handle));
         return false;
     }
 
@@ -95,10 +85,8 @@ bool MySQLPreparedStatement::execute() {
 void MySQLPreparedStatement::close() {
     if (nullptr != m_statement_handle) {
         if (0 != mysql_stmt_close(m_statement_handle)) {
-            SPDLOG_ERROR(
-                    "MySQLPreparedStatement: Failed to delete statement - {}.",
-                    mysql_error(m_db_handle)
-            );
+            SPDLOG_ERROR("MySQLPreparedStatement: Failed to delete statement - {}.",
+                         mysql_error(m_db_handle));
         }
         m_statement_handle = nullptr;
         m_statement_bindings.clear();

@@ -132,8 +132,8 @@ void ArrayBackedPosIntSet<PosIntType>::insert(PosIntType value) {
 }
 
 template <typename PosIntType>
-void
-ArrayBackedPosIntSet<PosIntType>::insert_all(ArrayBackedPosIntSet<PosIntType> const& input_set) {
+void ArrayBackedPosIntSet<PosIntType>::insert_all(
+        ArrayBackedPosIntSet<PosIntType> const& input_set) {
     // Increase capacity if necessary
     size_t input_set_largest_value = input_set.m_largest_value;
     if (input_set_largest_value >= m_data.size()) {
@@ -174,8 +174,7 @@ void ArrayBackedPosIntSet<PosIntType>::insert_all(std::vector<PosIntType> const&
 
 template <typename PosIntType>
 void ArrayBackedPosIntSet<PosIntType>::write_to_compressor(
-        streaming_compression::Compressor& compressor
-) const {
+        streaming_compression::Compressor& compressor) const {
     for (PosIntType value = 0; value <= m_largest_value; ++value) {
         if (m_data[value]) {
             compressor.write_numeric_value(value);

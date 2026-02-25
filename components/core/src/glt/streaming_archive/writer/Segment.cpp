@@ -18,11 +18,9 @@ using std::unique_ptr;
 namespace glt::streaming_archive::writer {
 Segment::~Segment() {
     if (!m_segment_path.empty()) {
-        SPDLOG_ERROR(
-                "streaming_archive::writer::Segment: Segment {} not closed before being "
-                "destroyed causing possible data loss",
-                m_segment_path.c_str()
-        );
+        SPDLOG_ERROR("streaming_archive::writer::Segment: Segment {} not closed before being "
+                     "destroyed causing possible data loss",
+                     m_segment_path.c_str());
     }
 }
 

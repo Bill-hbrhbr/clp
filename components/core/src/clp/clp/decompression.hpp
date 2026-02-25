@@ -13,10 +13,8 @@ namespace clp::clp {
  * @param files_to_decompress
  * @return true if decompression was successful, false otherwise
  */
-bool decompress(
-        CommandLineArguments& command_line_args,
-        std::unordered_set<std::string> const& files_to_decompress
-);
+bool decompress(CommandLineArguments& command_line_args,
+                std::unordered_set<std::string> const& files_to_decompress);
 /**
  * Decompresses a file split from an archive into one or more IR chunks in the the given directory.
  * @param command_line_args

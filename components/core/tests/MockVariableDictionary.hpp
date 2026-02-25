@@ -53,8 +53,8 @@ public:
         return m_empty_string;
     }
 
-    auto
-    get_entry_matching_value(std::string_view const val, [[maybe_unused]] bool ignore_case) const
+    auto get_entry_matching_value(std::string_view const val,
+                                  [[maybe_unused]] bool ignore_case) const
             -> std::vector<Entry const*> {
         std::vector<Entry const*> results;
         for (auto const& [id, entry] : m_storage) {
@@ -65,11 +65,10 @@ public:
         return results;
     }
 
-    auto get_entries_matching_wildcard_string(
-            std::string_view const val,
-            [[maybe_unused]] bool ignore_case,
-            std::unordered_set<Entry const*>& results
-    ) const -> void {
+    auto get_entries_matching_wildcard_string(std::string_view const val,
+                                              [[maybe_unused]] bool ignore_case,
+                                              std::unordered_set<Entry const*>& results) const
+            -> void {
         for (auto const& [id, entry] : m_storage) {
             if (clp::string_utils::wildcard_match_unsafe_case_sensitive(entry.get_value(), val)) {
                 results.insert(&entry);

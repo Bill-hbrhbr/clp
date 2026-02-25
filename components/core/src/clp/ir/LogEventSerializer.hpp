@@ -113,11 +113,10 @@ private:
     size_t m_num_log_events{0};
     size_t m_serialized_size{0};  // Bytes
 
-    [[no_unique_address]] std::conditional_t<
-            std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>,
-            epoch_time_ms_t,
-            EmptyType
-    > m_prev_event_timestamp{};
+    [[no_unique_address]] std::conditional_t<std::is_same_v<encoded_variable_t,
+                                                            four_byte_encoded_variable_t>,
+                                             epoch_time_ms_t,
+                                             EmptyType> m_prev_event_timestamp{};
 
     std::vector<int8_t> m_ir_buf;
     FileWriter m_writer;

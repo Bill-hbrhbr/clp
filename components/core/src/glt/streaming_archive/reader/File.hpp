@@ -90,10 +90,8 @@ private:
      * @return Same as SegmentManager::try_read
      * @return ErrorCode_Success on success
      */
-    ErrorCode init(
-            LogTypeDictionaryReader const& archive_logtype_dict,
-            MetadataDB::FileIterator const& file_metadata_ix
-    );
+    ErrorCode init(LogTypeDictionaryReader const& archive_logtype_dict,
+                   MetadataDB::FileIterator const& file_metadata_ix);
 
     /**
      * Opens a file with GLTSegment
@@ -102,12 +100,10 @@ private:
      * @return Same as SegmentManager::try_read
      * @return ErrorCode_Success on success
      */
-    ErrorCode open_me(
-            LogTypeDictionaryReader const& archive_logtype_dict,
-            MetadataDB::FileIterator const& file_metadata_ix,
-            GLTSegment& segment,
-            Segment& message_order_table
-    );
+    ErrorCode open_me(LogTypeDictionaryReader const& archive_logtype_dict,
+                      MetadataDB::FileIterator const& file_metadata_ix,
+                      GLTSegment& segment,
+                      Segment& message_order_table);
     /**
      * Closes the file
      */

@@ -39,11 +39,10 @@ namespace clp::ffi::ir_stream {
  *   - Forwards `deserialize_schema_tree_node_key_name`'s return values.
  *   - Forwards `deserialize_schema_tree_node_parent_id`'s return values.
  */
-[[nodiscard]] auto deserialize_ir_unit_schema_tree_node_insertion(
-        ReaderInterface& reader,
-        encoded_tag_t tag,
-        std::string& key_name
-) -> ystdlib::error_handling::Result<std::pair<bool, SchemaTree::NodeLocator>>;
+[[nodiscard]] auto deserialize_ir_unit_schema_tree_node_insertion(ReaderInterface& reader,
+                                                                  encoded_tag_t tag,
+                                                                  std::string& key_name)
+        -> ystdlib::error_handling::Result<std::pair<bool, SchemaTree::NodeLocator>>;
 
 /**
  * Deserializes a UTC offset change IR unit.
@@ -78,8 +77,7 @@ namespace clp::ffi::ir_stream {
         encoded_tag_t tag,
         std::shared_ptr<SchemaTree> auto_gen_keys_schema_tree,
         std::shared_ptr<SchemaTree> user_gen_keys_schema_tree,
-        UtcOffset utc_offset
-) -> ystdlib::error_handling::Result<KeyValuePairLogEvent>;
+        UtcOffset utc_offset) -> ystdlib::error_handling::Result<KeyValuePairLogEvent>;
 }  // namespace clp::ffi::ir_stream
 
 #endif  // CLP_FFI_IR_STREAM_IR_UNIT_DESERIALIZATION_METHODS_HPP

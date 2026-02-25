@@ -103,8 +103,9 @@ private:
      * @return 0 on EOF
      * @return -1 on failure
      */
-    static la_ssize_t
-    libarchive_read_callback(struct archive* archive, void* client_data, void const** buffer);
+    static la_ssize_t libarchive_read_callback(struct archive* archive,
+                                               void* client_data,
+                                               void const** buffer);
 
     /**
      * Marks the archive opened by libarchive

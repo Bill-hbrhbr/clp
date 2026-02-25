@@ -7,11 +7,9 @@ using std::string_view;
 
 namespace glt::ffi::search {
 template <typename encoded_variable_t>
-ExactVariableToken<encoded_variable_t>::ExactVariableToken(
-        string_view query,
-        size_t begin_pos,
-        size_t end_pos
-)
+ExactVariableToken<encoded_variable_t>::ExactVariableToken(string_view query,
+                                                           size_t begin_pos,
+                                                           size_t end_pos)
         : QueryToken(query, begin_pos, end_pos) {
     auto token = query.substr(begin_pos, end_pos - begin_pos);
     if (encode_float_string(token, m_encoded_value)) {

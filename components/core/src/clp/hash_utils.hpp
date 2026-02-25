@@ -15,19 +15,15 @@ class HashUtilsOperationFailed : public TraceableException {
 public:
     // Constructors
     HashUtilsOperationFailed(ErrorCode error_code, char const* const filename, int line_number)
-            : HashUtilsOperationFailed(
-                      error_code,
-                      filename,
-                      line_number,
-                      "clp::hash_utils operation failed"
-              ) {}
+            : HashUtilsOperationFailed(error_code,
+                                       filename,
+                                       line_number,
+                                       "clp::hash_utils operation failed") {}
 
-    HashUtilsOperationFailed(
-            ErrorCode error_code,
-            char const* const filename,
-            int line_number,
-            std::string message
-    )
+    HashUtilsOperationFailed(ErrorCode error_code,
+                             char const* const filename,
+                             int line_number,
+                             std::string message)
             : TraceableException(error_code, filename, line_number),
               m_message(std::move(message)) {}
 
@@ -54,11 +50,9 @@ private:
  * @return ErrorCode_Failure if hash generation fails.
  * @return ErrorCode_Corrupt if `hash` has an unexpected length.
  */
-[[nodiscard]] auto get_hmac_sha256_hash(
-        std::span<unsigned char const> input,
-        std::span<unsigned char const> key,
-        std::vector<unsigned char>& hash
-) -> ErrorCode;
+[[nodiscard]] auto get_hmac_sha256_hash(std::span<unsigned char const> input,
+                                        std::span<unsigned char const> key,
+                                        std::vector<unsigned char>& hash) -> ErrorCode;
 
 /**
  * Gets the SHA256 hash of `input`.
@@ -69,8 +63,7 @@ private:
  * @return Same as `EvpDigestContext::digest_final` if `EvpDigestContext::digest_final` fails.
  * @throw HashUtilsOperationFailed if an OpenSSL EVP digest couldn't be created.
  */
-[[nodiscard]] auto
-get_sha256_hash(std::span<unsigned char const> input, std::vector<unsigned char>& hash)
-        -> ErrorCode;
+[[nodiscard]] auto get_sha256_hash(std::span<unsigned char const> input,
+                                   std::vector<unsigned char>& hash) -> ErrorCode;
 }  // namespace clp
 #endif  // CLP_HASH_UTILS_HPP

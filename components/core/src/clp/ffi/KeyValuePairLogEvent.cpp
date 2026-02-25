@@ -46,12 +46,10 @@ template <JsonExceptionHandlerConcept JsonExceptionHandler>
 class JsonSerializationIterator {
 public:
     // Constructor
-    JsonSerializationIterator(
-            SchemaTree::Node const* schema_tree_node,
-            vector<bool> const& schema_subtree_bitmap,
-            nlohmann::json::object_t* parent_json_obj,
-            JsonExceptionHandler json_exception_callback
-    )
+    JsonSerializationIterator(SchemaTree::Node const* schema_tree_node,
+                              vector<bool> const& schema_subtree_bitmap,
+                              nlohmann::json::object_t* parent_json_obj,
+                              JsonExceptionHandler json_exception_callback)
             : m_schema_tree_node{schema_tree_node},
               m_parent_json_obj{parent_json_obj},
               m_json_exception_callback{json_exception_callback} {
@@ -77,10 +75,8 @@ public:
             if (m_schema_tree_node->is_root()) {
                 *m_parent_json_obj = std::move(m_json_obj);
             } else {
-                m_parent_json_obj->emplace(
-                        string{m_schema_tree_node->get_key_name()},
-                        std::move(m_json_obj)
-                );
+                m_parent_json_obj->emplace(string{m_schema_tree_node->get_key_name()},
+                                           std::move(m_json_obj));
             }
         } catch (nlohmann::json::exception const& ex) {
             m_json_exception_callback(ex);
@@ -135,8 +131,7 @@ private:
  */
 [[nodiscard]] auto validate_node_id_value_pairs(
         SchemaTree const& schema_tree,
-        KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs
-) -> std::errc;
+        KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs) -> std::errc;
 
 /**
  * @param schema_tree
@@ -146,11 +141,10 @@ private:
  * `node_id_value_pairs`. A node is considered a leaf if none of its descendants appear in
  * `node_id_value_pairs`.
  */
-[[nodiscard]] auto is_leaf_node(
-        SchemaTree const& schema_tree,
-        SchemaTree::Node::id_t node_id,
-        KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs
-) -> bool;
+[[nodiscard]] auto is_leaf_node(SchemaTree const& schema_tree,
+                                SchemaTree::Node::id_t node_id,
+                                KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs)
+        -> bool;
 
 /**
  * @param node_id_value_pairs
@@ -163,8 +157,7 @@ private:
  */
 [[nodiscard]] auto get_schema_subtree_bitmap(
         KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs,
-        SchemaTree const& schema_tree
-) -> ystdlib::error_handling::Result<vector<bool>>;
+        SchemaTree const& schema_tree) -> ystdlib::error_handling::Result<vector<bool>>;
 
 /**
  * Inserts the given key-value pair into the JSON object (map).
@@ -173,11 +166,9 @@ private:
  * @param json_obj The JSON object to insert the kv-pair into.
  * @return Whether the insertion was successful.
  */
-[[nodiscard]] auto insert_kv_pair_into_json_obj(
-        SchemaTree::Node const& node,
-        std::optional<Value> const& optional_val,
-        nlohmann::json::object_t& json_obj
-) -> bool;
+[[nodiscard]] auto insert_kv_pair_into_json_obj(SchemaTree::Node const& node,
+                                                std::optional<Value> const& optional_val,
+                                                nlohmann::json::object_t& json_obj) -> bool;
 
 /**
  * Decodes a value as an `EncodedTextAst` according to the encoding type.
@@ -201,8 +192,8 @@ private:
 [[nodiscard]] auto serialize_node_id_value_pairs_to_json(
         SchemaTree const& schema_tree,
         KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs,
-        vector<bool> const& schema_subtree_bitmap
-) -> ystdlib::error_handling::Result<nlohmann::json>;
+        vector<bool> const& schema_subtree_bitmap)
+        -> ystdlib::error_handling::Result<nlohmann::json>;
 
 /**
  * @param node A non-root schema tree node.
@@ -214,8 +205,7 @@ private:
 [[nodiscard]] auto check_key_uniqueness_among_sibling_nodes(
         SchemaTree::Node const& node,
         std::unordered_map<SchemaTree::Node::id_t, std::unordered_set<std::string_view>>&
-                parent_node_id_to_key_names
-) -> bool;
+                parent_node_id_to_key_names) -> bool;
 
 auto node_type_matches_value_type(SchemaTree::Node::Type type, Value const& value) -> bool {
     switch (type) {
@@ -237,10 +227,9 @@ auto node_type_matches_value_type(SchemaTree::Node::Type type, Value const& valu
     }
 }
 
-auto validate_node_id_value_pairs(
-        SchemaTree const& schema_tree,
-        KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs
-) -> std::errc {
+auto validate_node_id_value_pairs(SchemaTree const& schema_tree,
+                                  KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs)
+        -> std::errc {
     try {
         std::unordered_map<SchemaTree::Node::id_t, std::unordered_set<std::string_view>>
                 parent_node_id_to_key_names;
@@ -291,10 +280,8 @@ auto validate_node_id_value_pairs(
                 }
 
                 if (false
-                    == check_key_uniqueness_among_sibling_nodes(
-                            node_to_check,
-                            parent_node_id_to_key_names
-                    ))
+                    == check_key_uniqueness_among_sibling_nodes(node_to_check,
+                                                                parent_node_id_to_key_names))
                 {
                     return std::errc::protocol_not_supported;
                 }
@@ -309,11 +296,9 @@ auto validate_node_id_value_pairs(
     return std::errc{};
 }
 
-auto is_leaf_node(
-        SchemaTree const& schema_tree,
-        SchemaTree::Node::id_t node_id,
-        KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs
-) -> bool {
+auto is_leaf_node(SchemaTree const& schema_tree,
+                  SchemaTree::Node::id_t node_id,
+                  KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs) -> bool {
     vector<SchemaTree::Node::id_t> dfs_stack;
     dfs_stack.reserve(schema_tree.get_size());
     dfs_stack.push_back(node_id);
@@ -330,10 +315,9 @@ auto is_leaf_node(
     return true;
 }
 
-auto get_schema_subtree_bitmap(
-        KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs,
-        SchemaTree const& schema_tree
-) -> ystdlib::error_handling::Result<vector<bool>> {
+auto get_schema_subtree_bitmap(KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs,
+                               SchemaTree const& schema_tree)
+        -> ystdlib::error_handling::Result<vector<bool>> {
     vector<bool> schema_subtree_bitmap(schema_tree.get_size(), false);
     for (auto const& [node_id, val] : node_id_value_pairs) {
         if (node_id >= schema_subtree_bitmap.size()) {
@@ -362,11 +346,9 @@ auto get_schema_subtree_bitmap(
     return schema_subtree_bitmap;
 }
 
-auto insert_kv_pair_into_json_obj(
-        SchemaTree::Node const& node,
-        std::optional<Value> const& optional_val,
-        nlohmann::json::object_t& json_obj
-) -> bool {
+auto insert_kv_pair_into_json_obj(SchemaTree::Node const& node,
+                                  std::optional<Value> const& optional_val,
+                                  nlohmann::json::object_t& json_obj) -> bool {
     string const key_name{node.get_key_name()};
     auto const type{node.get_type()};
     if (false == optional_val.has_value()) {
@@ -421,11 +403,9 @@ auto insert_kv_pair_into_json_obj(
 }
 
 auto decode_as_encoded_text_ast(Value const& val) -> std::optional<string> {
-    auto result{
-            val.is<FourByteEncodedTextAst>()
-                    ? val.get_immutable_view<FourByteEncodedTextAst>().to_string()
-                    : val.get_immutable_view<EightByteEncodedTextAst>().to_string()
-    };
+    auto result{val.is<FourByteEncodedTextAst>()
+                        ? val.get_immutable_view<FourByteEncodedTextAst>().to_string()
+                        : val.get_immutable_view<EightByteEncodedTextAst>().to_string()};
     if (result.has_error()) {
         return std::nullopt;
     }
@@ -435,8 +415,8 @@ auto decode_as_encoded_text_ast(Value const& val) -> std::optional<string> {
 auto serialize_node_id_value_pairs_to_json(
         SchemaTree const& schema_tree,
         KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs,
-        vector<bool> const& schema_subtree_bitmap
-) -> ystdlib::error_handling::Result<nlohmann::json> {
+        vector<bool> const& schema_subtree_bitmap)
+        -> ystdlib::error_handling::Result<nlohmann::json> {
     if (node_id_value_pairs.empty()) {
         return nlohmann::json::object();
     }
@@ -465,12 +445,10 @@ auto serialize_node_id_value_pairs_to_json(
     auto const& root_schema_tree_node{schema_tree.get_root()};
     auto root_json_obj = nlohmann::json::object_t();
 
-    dfs_stack.emplace(
-            &root_schema_tree_node,
-            schema_subtree_bitmap,
-            &root_json_obj,
-            json_exception_handler
-    );
+    dfs_stack.emplace(&root_schema_tree_node,
+                      schema_subtree_bitmap,
+                      &root_json_obj,
+                      json_exception_handler);
     while (false == dfs_stack.empty() && false == json_exception_captured) {
         auto& top{dfs_stack.top()};
         if (false == top.has_next_child_schema_tree_node()) {
@@ -482,21 +460,17 @@ auto serialize_node_id_value_pairs_to_json(
         if (node_id_value_pairs.contains(child_schema_tree_node_id)) {
             // Handle leaf node
             if (false
-                == insert_kv_pair_into_json_obj(
-                        child_schema_tree_node,
-                        node_id_value_pairs.at(child_schema_tree_node_id),
-                        top.get_json_obj()
-                ))
+                == insert_kv_pair_into_json_obj(child_schema_tree_node,
+                                                node_id_value_pairs.at(child_schema_tree_node_id),
+                                                top.get_json_obj()))
             {
                 return std::errc::protocol_error;
             }
         } else {
-            dfs_stack.emplace(
-                    &child_schema_tree_node,
-                    schema_subtree_bitmap,
-                    &top.get_json_obj(),
-                    json_exception_handler
-            );
+            dfs_stack.emplace(&child_schema_tree_node,
+                              schema_subtree_bitmap,
+                              &top.get_json_obj(),
+                              json_exception_handler);
         }
     }
 
@@ -510,8 +484,7 @@ auto serialize_node_id_value_pairs_to_json(
 auto check_key_uniqueness_among_sibling_nodes(
         SchemaTree::Node const& node,
         std::unordered_map<SchemaTree::Node::id_t, std::unordered_set<std::string_view>>&
-                parent_node_id_to_key_names
-) -> bool {
+                parent_node_id_to_key_names) -> bool {
     // The caller checks that the given node is not the root, so we can query the underlying
     // parent ID safely without a check.
     auto const parent_node_id{node.get_parent_id_unsafe()};
@@ -530,42 +503,35 @@ auto check_key_uniqueness_among_sibling_nodes(
 }
 }  // namespace
 
-auto KeyValuePairLogEvent::create(
-        std::shared_ptr<SchemaTree const> auto_gen_keys_schema_tree,
-        std::shared_ptr<SchemaTree const> user_gen_keys_schema_tree,
-        NodeIdValuePairs auto_gen_node_id_value_pairs,
-        NodeIdValuePairs user_gen_node_id_value_pairs,
-        UtcOffset utc_offset
-) -> ystdlib::error_handling::Result<KeyValuePairLogEvent> {
+auto KeyValuePairLogEvent::create(std::shared_ptr<SchemaTree const> auto_gen_keys_schema_tree,
+                                  std::shared_ptr<SchemaTree const> user_gen_keys_schema_tree,
+                                  NodeIdValuePairs auto_gen_node_id_value_pairs,
+                                  NodeIdValuePairs user_gen_node_id_value_pairs,
+                                  UtcOffset utc_offset)
+        -> ystdlib::error_handling::Result<KeyValuePairLogEvent> {
     if (nullptr == auto_gen_keys_schema_tree || nullptr == user_gen_keys_schema_tree) {
         return std::errc::invalid_argument;
     }
 
-    if (auto const ret_val{validate_node_id_value_pairs(
-                *auto_gen_keys_schema_tree,
-                auto_gen_node_id_value_pairs
-        )};
+    if (auto const ret_val{validate_node_id_value_pairs(*auto_gen_keys_schema_tree,
+                                                        auto_gen_node_id_value_pairs)};
         std::errc{} != ret_val)
     {
         return ret_val;
     }
 
-    if (auto const ret_val{validate_node_id_value_pairs(
-                *user_gen_keys_schema_tree,
-                user_gen_node_id_value_pairs
-        )};
+    if (auto const ret_val{validate_node_id_value_pairs(*user_gen_keys_schema_tree,
+                                                        user_gen_node_id_value_pairs)};
         std::errc{} != ret_val)
     {
         return ret_val;
     }
 
-    return KeyValuePairLogEvent{
-            std::move(auto_gen_keys_schema_tree),
-            std::move(user_gen_keys_schema_tree),
-            std::move(auto_gen_node_id_value_pairs),
-            std::move(user_gen_node_id_value_pairs),
-            utc_offset
-    };
+    return KeyValuePairLogEvent{std::move(auto_gen_keys_schema_tree),
+                                std::move(user_gen_keys_schema_tree),
+                                std::move(auto_gen_node_id_value_pairs),
+                                std::move(user_gen_node_id_value_pairs),
+                                utc_offset};
 }
 
 auto KeyValuePairLogEvent::get_auto_gen_keys_schema_subtree_bitmap() const
@@ -581,31 +547,27 @@ auto KeyValuePairLogEvent::get_user_gen_keys_schema_subtree_bitmap() const
 auto KeyValuePairLogEvent::serialize_to_json() const
         -> ystdlib::error_handling::Result<std::pair<nlohmann::json, nlohmann::json>> {
     auto const auto_gen_keys_schema_subtree_bitmap_result{
-            get_auto_gen_keys_schema_subtree_bitmap()
-    };
+            get_auto_gen_keys_schema_subtree_bitmap()};
     if (auto_gen_keys_schema_subtree_bitmap_result.has_error()) {
         return auto_gen_keys_schema_subtree_bitmap_result.error();
     }
     auto serialized_auto_gen_kv_pairs_result{serialize_node_id_value_pairs_to_json(
             *m_auto_gen_keys_schema_tree,
             m_auto_gen_node_id_value_pairs,
-            auto_gen_keys_schema_subtree_bitmap_result.value()
-    )};
+            auto_gen_keys_schema_subtree_bitmap_result.value())};
     if (serialized_auto_gen_kv_pairs_result.has_error()) {
         return serialized_auto_gen_kv_pairs_result.error();
     }
 
     auto const user_gen_keys_schema_subtree_bitmap_result{
-            get_user_gen_keys_schema_subtree_bitmap()
-    };
+            get_user_gen_keys_schema_subtree_bitmap()};
     if (user_gen_keys_schema_subtree_bitmap_result.has_error()) {
         return user_gen_keys_schema_subtree_bitmap_result.error();
     }
     auto serialized_user_gen_kv_pairs_result{serialize_node_id_value_pairs_to_json(
             *m_user_gen_keys_schema_tree,
             m_user_gen_node_id_value_pairs,
-            user_gen_keys_schema_subtree_bitmap_result.value()
-    )};
+            user_gen_keys_schema_subtree_bitmap_result.value())};
     if (serialized_user_gen_kv_pairs_result.has_error()) {
         return serialized_user_gen_kv_pairs_result.error();
     }

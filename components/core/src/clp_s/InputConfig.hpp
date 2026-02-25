@@ -96,8 +96,8 @@ auto get_input_files_for_raw_path(std::string_view const path, std::vector<Path>
  * @param archives Returned archives
  * @return true on success, false otherwise
  */
-[[nodiscard]] auto
-get_input_archives_for_raw_path(std::string_view const path, std::vector<Path>& archives) -> bool;
+[[nodiscard]] auto get_input_archives_for_raw_path(std::string_view const path,
+                                                   std::vector<Path>& archives) -> bool;
 
 /**
  * Collects all archives from the given Path, including the Path itself.

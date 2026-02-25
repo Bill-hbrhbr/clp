@@ -17,15 +17,13 @@ using std::string_view;
 
 namespace clp {
 variable_dictionary_id_t EncodedVariableInterpreter::decode_var_dict_id(
-        encoded_variable_t encoded_var
-) {
+        encoded_variable_t encoded_var) {
     return bit_cast<variable_dictionary_id_t>(encoded_var);
 }
 
 bool EncodedVariableInterpreter::convert_string_to_representable_integer_var(
         string_view value,
-        encoded_variable_t& encoded_var
-) {
+        encoded_variable_t& encoded_var) {
     size_t length = value.length();
     if (0 == length) {
         // Empty string cannot be converted
@@ -63,8 +61,7 @@ bool EncodedVariableInterpreter::convert_string_to_representable_integer_var(
 
 bool EncodedVariableInterpreter::convert_string_to_representable_float_var(
         string_view value,
-        encoded_variable_t& encoded_var
-) {
+        encoded_variable_t& encoded_var) {
     if (value.empty()) {
         // Can't convert an empty string
         return false;
@@ -142,10 +139,8 @@ bool EncodedVariableInterpreter::convert_string_to_representable_float_var(
     return true;
 }
 
-void EncodedVariableInterpreter::convert_encoded_float_to_string(
-        encoded_variable_t encoded_var,
-        string& value
-) {
+void EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_variable_t encoded_var,
+                                                                 string& value) {
     auto encoded_float = bit_cast<uint64_t>(encoded_var);
 
     // Decode according to the format described in
@@ -198,8 +193,7 @@ void EncodedVariableInterpreter::convert_encoded_float_to_string(
 }
 
 auto EncodedVariableInterpreter::wildcard_string_could_be_representable_integer_var(
-        std::string_view value
-) -> bool {
+        std::string_view value) -> bool {
     if (value.empty()) {
         return false;
     }
@@ -209,8 +203,7 @@ auto EncodedVariableInterpreter::wildcard_string_could_be_representable_integer_
 }
 
 auto EncodedVariableInterpreter::wildcard_string_could_be_representable_float_var(
-        std::string_view value
-) -> bool {
+        std::string_view value) -> bool {
     if (value.empty()) {
         return false;
     }

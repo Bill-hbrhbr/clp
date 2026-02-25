@@ -21,8 +21,7 @@ concept VariableDictionaryReaderReq = requires(
         variable_dictionary_id_t id,
         std::string_view variable,
         bool ignore_case,
-        std::unordered_set<typename VariableDictionaryReaderType::Entry const*>& entries
-) {
+        std::unordered_set<typename VariableDictionaryReaderType::Entry const*>& entries) {
     requires VariableDictionaryEntryReq<typename VariableDictionaryReaderType::Entry>;
 
     /**
@@ -51,9 +50,8 @@ concept VariableDictionaryReaderReq = requires(
         reader.get_entries_matching_wildcard_string(variable, ignore_case, entries)
     } -> std::same_as<void>;
 
-    requires std::
-            same_as<typename VariableDictionaryReaderType::dictionary_id_t,
-                    variable_dictionary_id_t>;
+    requires std::same_as<typename VariableDictionaryReaderType::dictionary_id_t,
+                          variable_dictionary_id_t>;
 };
 }  // namespace clp
 

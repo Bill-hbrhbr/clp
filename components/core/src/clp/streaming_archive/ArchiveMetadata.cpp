@@ -7,11 +7,9 @@
 #include "../FileReader.hpp"
 
 namespace clp::streaming_archive {
-ArchiveMetadata::ArchiveMetadata(
-        archive_format_version_t archive_format_version,
-        std::string creator_id,
-        uint64_t creation_idx
-)
+ArchiveMetadata::ArchiveMetadata(archive_format_version_t archive_format_version,
+                                 std::string creator_id,
+                                 uint64_t creation_idx)
         : m_archive_format_version(archive_format_version),
           m_creator_id(std::move(creator_id)),
           m_creation_idx(creation_idx) {}

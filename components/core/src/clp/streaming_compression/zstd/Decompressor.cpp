@@ -54,16 +54,13 @@ auto Decompressor::try_read(char* buf, size_t num_bytes_to_read, size_t& num_byt
         }
 
         // Decompress
-        auto const ret{ZSTD_decompressStream(
-                m_decompression_stream,
-                &decompressed_stream_block,
-                &m_compressed_stream_block
-        )};
+        auto const ret{ZSTD_decompressStream(m_decompression_stream,
+                                             &decompressed_stream_block,
+                                             &m_compressed_stream_block)};
         if (ZSTD_isError(ret)) {
             SPDLOG_ERROR(
                     "streaming_compression::zstd::Decompressor: ZSTD_decompressStream() error: {}",
-                    ZSTD_getErrorName(ret)
-            );
+                    ZSTD_getErrorName(ret));
             return ErrorCode_Failure;
         }
         m_zstd_frame_might_have_more_data
@@ -91,14 +88,10 @@ auto Decompressor::try_seek_from_begin(size_t pos) -> ErrorCode {
     // We need to fast forward the decompression stream to decompressed_stream_pos
     ErrorCode error;
     while (m_decompressed_stream_pos < pos) {
-        size_t num_bytes_to_decompress = std::min(
-                m_unused_decompressed_stream_block_buffer.size(),
-                pos - m_decompressed_stream_pos
-        );
-        error = try_read_exact_length(
-                m_unused_decompressed_stream_block_buffer.data(),
-                num_bytes_to_decompress
-        );
+        size_t num_bytes_to_decompress = std::min(m_unused_decompressed_stream_block_buffer.size(),
+                                                  pos - m_decompressed_stream_pos);
+        error = try_read_exact_length(m_unused_decompressed_stream_block_buffer.data(),
+                                      num_bytes_to_decompress);
         if (ErrorCode_Success != error) {
             return error;
         }
@@ -183,8 +176,7 @@ auto Decompressor::open(std::string const& compressed_file_path) -> ErrorCode {
                 "file with path: {}. Error: {} - {}",
                 compressed_file_path.c_str(),
                 error.category().name(),
-                error.message()
-        );
+                error.message());
         return ErrorCode_Failure;
     }
     m_memory_mapped_file.emplace(std::move(result.value()));
@@ -198,11 +190,9 @@ auto Decompressor::open(std::string const& compressed_file_path) -> ErrorCode {
     return ErrorCode_Success;
 }
 
-auto Decompressor::get_decompressed_stream_region(
-        size_t decompressed_stream_pos,
-        char* extraction_buf,
-        size_t extraction_len
-) -> ErrorCode {
+auto Decompressor::get_decompressed_stream_region(size_t decompressed_stream_pos,
+                                                  char* extraction_buf,
+                                                  size_t extraction_len) -> ErrorCode {
     auto error_code = try_seek_from_begin(decompressed_stream_pos);
     if (ErrorCode_Success != error_code) {
         return error_code;
@@ -224,11 +214,9 @@ auto Decompressor::refill_compressed_stream_block() -> ErrorCode {
             }
 
             auto& read_buffer{m_read_buffer.value()};
-            auto const error_code = m_reader->try_read(
-                    read_buffer.data(),
-                    read_buffer.size(),
-                    m_read_buffer_length
-            );
+            auto const error_code = m_reader->try_read(read_buffer.data(),
+                                                       read_buffer.size(),
+                                                       m_read_buffer_length);
 
             if (ErrorCode_Success != error_code) {
                 return error_code;

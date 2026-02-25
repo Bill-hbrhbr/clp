@@ -74,8 +74,8 @@ public:
      * @param ignore_case
      * @return a vector of matching entries, or an empty vector if no entry matches.
      */
-    std::vector<EntryType const*>
-    get_entry_matching_value(std::string_view search_string, bool ignore_case) const;
+    std::vector<EntryType const*> get_entry_matching_value(std::string_view search_string,
+                                                           bool ignore_case) const;
 
     /**
      * Gets the entries that match a given wildcard string
@@ -83,11 +83,9 @@ public:
      * @param ignore_case
      * @param entries Set in which to store found entries
      */
-    void get_entries_matching_wildcard_string(
-            std::string_view wildcard_string,
-            bool ignore_case,
-            std::unordered_set<EntryType const*>& entries
-    ) const;
+    void get_entries_matching_wildcard_string(std::string_view wildcard_string,
+                                              bool ignore_case,
+                                              std::unordered_set<EntryType const*>& entries) const;
 
 protected:
     bool m_is_open;
@@ -157,8 +155,8 @@ EntryType& DictionaryReader<DictionaryIdType, EntryType>::get_entry(DictionaryId
 }
 
 template <typename DictionaryIdType, typename EntryType>
-std::string const&
-DictionaryReader<DictionaryIdType, EntryType>::get_value(DictionaryIdType id) const {
+std::string const& DictionaryReader<DictionaryIdType, EntryType>::get_value(
+        DictionaryIdType id) const {
     if (id >= m_entries.size()) {
         throw OperationFailed(ErrorCodeCorrupt, __FILENAME__, __LINE__);
     }
@@ -169,14 +167,13 @@ template <typename DictionaryIdType, typename EntryType>
 std::vector<EntryType const*>
 DictionaryReader<DictionaryIdType, EntryType>::get_entry_matching_value(
         std::string_view search_string,
-        bool ignore_case
-) const {
+        bool ignore_case) const {
     if (false == ignore_case) {
         // In case-sensitive match, there can be only one matched entry.
-        if (auto const it = std::ranges::find_if(
-                    m_entries,
-                    [&](auto const& entry) { return entry.get_value() == search_string; }
-            );
+        if (auto const it = std::ranges::find_if(m_entries,
+                                                 [&](auto const& entry) {
+                                                     return entry.get_value() == search_string;
+                                                 });
             m_entries.cend() != it)
         {
             return {&(*it)};
@@ -186,10 +183,8 @@ DictionaryReader<DictionaryIdType, EntryType>::get_entry_matching_value(
 
     std::vector<EntryType const*> entries;
     std::string search_string_uppercase;
-    std::ignore = boost::algorithm::to_upper_copy(
-            std::back_inserter(search_string_uppercase),
-            search_string
-    );
+    std::ignore = boost::algorithm::to_upper_copy(std::back_inserter(search_string_uppercase),
+                                                  search_string);
     for (auto const& entry : m_entries) {
         if (boost::algorithm::to_upper_copy(entry.get_value()) == search_string_uppercase) {
             entries.push_back(&entry);
@@ -202,14 +197,11 @@ template <typename DictionaryIdType, typename EntryType>
 void DictionaryReader<DictionaryIdType, EntryType>::get_entries_matching_wildcard_string(
         std::string_view wildcard_string,
         bool ignore_case,
-        std::unordered_set<EntryType const*>& entries
-) const {
+        std::unordered_set<EntryType const*>& entries) const {
     for (auto const& entry : m_entries) {
-        if (clp::string_utils::wildcard_match_unsafe(
-                    entry.get_value(),
-                    wildcard_string,
-                    !ignore_case
-            ))
+        if (clp::string_utils::wildcard_match_unsafe(entry.get_value(),
+                                                     wildcard_string,
+                                                     !ignore_case))
         {
             entries.insert(&entry);
         }

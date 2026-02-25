@@ -28,8 +28,7 @@ public:
     AddTimestampConditions(
             std::optional<std::pair<std::vector<std::string>, std::string>> const& timestamp_column,
             std::optional<epochtime_t> begin_ts,
-            std::optional<epochtime_t> end_ts
-    )
+            std::optional<epochtime_t> end_ts)
             : m_timestamp_column(timestamp_column),
               m_begin_ts(begin_ts),
               m_end_ts(end_ts) {}

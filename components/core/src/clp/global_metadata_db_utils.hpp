@@ -18,8 +18,7 @@ namespace clp {
  */
 auto create_global_metadata_db(
         std::optional<GlobalMetadataDBConfig> const& optional_metadata_db_config,
-        std::filesystem::path const& archives_dir
-) -> std::unique_ptr<GlobalMetadataDB>;
+        std::filesystem::path const& archives_dir) -> std::unique_ptr<GlobalMetadataDB>;
 }  // namespace clp
 
 #endif  // CLP_GLOBAL_METADATA_DB_UTILS_HPP

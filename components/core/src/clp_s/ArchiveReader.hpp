@@ -89,11 +89,9 @@ public:
      * @param should_marshal_records
      * @return the schema reader
      */
-    SchemaReader& read_schema_table(
-            int32_t schema_id,
-            bool should_extract_timestamp,
-            bool should_marshal_records
-    );
+    SchemaReader& read_schema_table(int32_t schema_id,
+                                    bool should_extract_timestamp,
+                                    bool should_marshal_records);
 
     /**
      * Loads all of the tables in the archive and returns SchemaReaders for them.
@@ -167,12 +165,10 @@ private:
      * @param should_extract_timestamp
      * @param should_marshal_records
      */
-    void initialize_schema_reader(
-            SchemaReader& reader,
-            int32_t schema_id,
-            bool should_extract_timestamp,
-            bool should_marshal_records
-    );
+    void initialize_schema_reader(SchemaReader& reader,
+                                  int32_t schema_id,
+                                  bool should_extract_timestamp,
+                                  bool should_marshal_records);
 
     /**
      * Appends a column to the schema reader.
@@ -190,12 +186,10 @@ private:
      * @param schema_ids
      * @param should_marshal_records
      */
-    void append_unordered_reader_columns(
-            SchemaReader& reader,
-            int32_t mst_subtree_root_node_id,
-            std::span<int32_t> schema_ids,
-            bool should_marshal_records
-    );
+    void append_unordered_reader_columns(SchemaReader& reader,
+                                         int32_t mst_subtree_root_node_id,
+                                         std::span<int32_t> schema_ids,
+                                         bool should_marshal_records);
 
     /**
      * Reads a table with given ID from the packed stream reader. If read_stream is called multiple
@@ -221,8 +215,7 @@ private:
     std::vector<int32_t> m_schema_ids;
     std::map<int32_t, SchemaReader::SchemaMetadata> m_id_to_schema_metadata;
     std::shared_ptr<search::Projection> m_projection{
-            std::make_shared<search::Projection>(search::ProjectionMode::ReturnAllColumns)
-    };
+            std::make_shared<search::Projection>(search::ProjectionMode::ReturnAllColumns)};
 
     PackedStreamReader m_stream_reader;
     ZstdDecompressor m_table_metadata_decompressor;

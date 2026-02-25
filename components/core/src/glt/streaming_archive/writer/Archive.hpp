@@ -110,12 +110,10 @@ public:
      * @param split_ix
      * @return Pointer to the new file
      */
-    void create_and_open_file(
-            std::string const& path,
-            group_id_t group_id,
-            boost::uuids::uuid const& orig_file_id,
-            size_t split_ix
-    );
+    void create_and_open_file(std::string const& path,
+                              group_id_t group_id,
+                              boost::uuids::uuid const& orig_file_id,
+                              size_t split_ix);
 
     void close_file();
 
@@ -139,8 +137,9 @@ public:
      * @param num_uncompressed_bytes
      * @throw FileWriter::OperationFailed if any write fails
      */
-    void
-    write_msg(epochtime_t timestamp, std::string const& message, size_t num_uncompressed_bytes);
+    void write_msg(epochtime_t timestamp,
+                   std::string const& message,
+                   size_t num_uncompressed_bytes);
 
     /**
      * Writes snapshot of archive to disk including metadata of all files and new dictionary
@@ -208,10 +207,8 @@ private:
     };
 
     // Methods
-    void update_segment_indices(
-            logtype_dictionary_id_t logtype_id,
-            std::vector<variable_dictionary_id_t> const& var_ids
-    );
+    void update_segment_indices(logtype_dictionary_id_t logtype_id,
+                                std::vector<variable_dictionary_id_t> const& var_ids);
 
     /**
      * Appends the message order table of the current encoded file to the given segment
@@ -225,8 +222,7 @@ private:
             GLTSegment& glt_segment,
             ArrayBackedPosIntSet<logtype_dictionary_id_t>& logtype_ids_in_segment,
             ArrayBackedPosIntSet<variable_dictionary_id_t>& var_ids_in_segment,
-            std::vector<File*>& files_in_segment
-    );
+            std::vector<File*>& files_in_segment);
     /**
      * Writes the given files' metadata to the database using bulk writes
      * @param files
@@ -250,8 +246,7 @@ private:
             GLTSegment& glt_segment,
             std::vector<File*>& files,
             ArrayBackedPosIntSet<logtype_dictionary_id_t>& segment_logtype_ids,
-            ArrayBackedPosIntSet<variable_dictionary_id_t>& segment_var_ids
-    );
+            ArrayBackedPosIntSet<variable_dictionary_id_t>& segment_var_ids);
 
     /**
      * @return The size (in bytes) of compressed data whose size may change before the archive

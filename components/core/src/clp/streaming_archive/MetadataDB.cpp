@@ -39,85 +39,71 @@ enum class FilesTableFieldIndexes : uint16_t {
 };
 }  // namespace
 
-static void
-create_tables(vector<std::pair<string, string>> const& file_field_names_and_types, SQLiteDB& db) {
+static void create_tables(vector<std::pair<string, string>> const& file_field_names_and_types,
+                          SQLiteDB& db) {
     fmt::memory_buffer statement_buffer;
     auto statement_buffer_ix = std::back_inserter(statement_buffer);
-    fmt::format_to(
-            statement_buffer_ix,
-            "CREATE TABLE IF NOT EXISTS {} ({}) WITHOUT ROWID",
-            streaming_archive::cMetadataDB::FilesTableName,
-            get_field_names_and_types_sql(file_field_names_and_types)
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "CREATE TABLE IF NOT EXISTS {} ({}) WITHOUT ROWID",
+                   streaming_archive::cMetadataDB::FilesTableName,
+                   get_field_names_and_types_sql(file_field_names_and_types));
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     auto create_files_table
             = db.prepare_statement(statement_buffer.data(), statement_buffer.size());
     create_files_table.step();
     statement_buffer.clear();
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "CREATE INDEX IF NOT EXISTS files_segment_order ON {} ({},{})",
-            streaming_archive::cMetadataDB::FilesTableName,
-            streaming_archive::cMetadataDB::File::SegmentId,
-            streaming_archive::cMetadataDB::File::SegmentTimestampsPosition
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "CREATE INDEX IF NOT EXISTS files_segment_order ON {} ({},{})",
+                   streaming_archive::cMetadataDB::FilesTableName,
+                   streaming_archive::cMetadataDB::File::SegmentId,
+                   streaming_archive::cMetadataDB::File::SegmentTimestampsPosition);
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     auto create_index_statement
             = db.prepare_statement(statement_buffer.data(), statement_buffer.size());
     create_index_statement.step();
     statement_buffer.clear();
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "CREATE INDEX IF NOT EXISTS files_begin_timestamp ON {} ({})",
-            streaming_archive::cMetadataDB::FilesTableName,
-            streaming_archive::cMetadataDB::File::BeginTimestamp
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "CREATE INDEX IF NOT EXISTS files_begin_timestamp ON {} ({})",
+                   streaming_archive::cMetadataDB::FilesTableName,
+                   streaming_archive::cMetadataDB::File::BeginTimestamp);
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     create_index_statement = db.prepare_statement(statement_buffer.data(), statement_buffer.size());
     create_index_statement.step();
     statement_buffer.clear();
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "CREATE INDEX IF NOT EXISTS files_end_timestamp ON {} ({})",
-            streaming_archive::cMetadataDB::FilesTableName,
-            streaming_archive::cMetadataDB::File::EndTimestamp
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "CREATE INDEX IF NOT EXISTS files_end_timestamp ON {} ({})",
+                   streaming_archive::cMetadataDB::FilesTableName,
+                   streaming_archive::cMetadataDB::File::EndTimestamp);
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     create_index_statement = db.prepare_statement(statement_buffer.data(), statement_buffer.size());
     create_index_statement.step();
     statement_buffer.clear();
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "CREATE INDEX IF NOT EXISTS files_path ON {} ({})",
-            streaming_archive::cMetadataDB::FilesTableName,
-            streaming_archive::cMetadataDB::File::Path
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "CREATE INDEX IF NOT EXISTS files_path ON {} ({})",
+                   streaming_archive::cMetadataDB::FilesTableName,
+                   streaming_archive::cMetadataDB::File::Path);
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     create_index_statement = db.prepare_statement(statement_buffer.data(), statement_buffer.size());
     create_index_statement.step();
     statement_buffer.clear();
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "CREATE INDEX IF NOT EXISTS files_segment_id ON {} ({})",
-            streaming_archive::cMetadataDB::FilesTableName,
-            streaming_archive::cMetadataDB::File::SegmentId
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "CREATE INDEX IF NOT EXISTS files_segment_id ON {} ({})",
+                   streaming_archive::cMetadataDB::FilesTableName,
+                   streaming_archive::cMetadataDB::File::SegmentId);
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     create_index_statement = db.prepare_statement(statement_buffer.data(), statement_buffer.size());
     create_index_statement.step();
     statement_buffer.clear();
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "CREATE TABLE IF NOT EXISTS {} ({} TEXT PRIMARY KEY) WITHOUT ROWID",
-            streaming_archive::cMetadataDB::EmptyDirectoriesTableName,
-            streaming_archive::cMetadataDB::EmptyDirectory::Path
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "CREATE TABLE IF NOT EXISTS {} ({} TEXT PRIMARY KEY) WITHOUT ROWID",
+                   streaming_archive::cMetadataDB::EmptyDirectoriesTableName,
+                   streaming_archive::cMetadataDB::EmptyDirectory::Path);
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     auto create_empty_directories_table
             = db.prepare_statement(statement_buffer.data(), statement_buffer.size());
@@ -134,16 +120,14 @@ void MetadataDB::Iterator::reset() {
     m_statement.step();
 }
 
-static SQLitePreparedStatement get_files_select_statement(
-        SQLiteDB& db,
-        epochtime_t ts_begin,
-        epochtime_t ts_end,
-        string const& file_path,
-        string const& file_split_id,
-        bool in_specific_segment,
-        segment_id_t segment_id,
-        bool order_by_segment_end_ts
-) {
+static SQLitePreparedStatement get_files_select_statement(SQLiteDB& db,
+                                                          epochtime_t ts_begin,
+                                                          epochtime_t ts_end,
+                                                          string const& file_path,
+                                                          string const& file_split_id,
+                                                          bool in_specific_segment,
+                                                          segment_id_t segment_id,
+                                                          bool order_by_segment_end_ts) {
     vector<string> field_names(enum_to_underlying_type(FilesTableFieldIndexes::Length));
     field_names[enum_to_underlying_type(FilesTableFieldIndexes::Id)]
             = streaming_archive::cMetadataDB::File::Id;
@@ -181,12 +165,10 @@ static SQLitePreparedStatement get_files_select_statement(
     fmt::memory_buffer statement_buffer;
     auto statement_buffer_ix = std::back_inserter(statement_buffer);
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "SELECT {} FROM {}",
-            get_field_names_sql(field_names),
-            streaming_archive::cMetadataDB::FilesTableName
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "SELECT {} FROM {}",
+                   get_field_names_sql(field_names),
+                   streaming_archive::cMetadataDB::FilesTableName);
 
     // Add clauses
     bool clause_exists = false;
@@ -194,108 +176,84 @@ static SQLitePreparedStatement get_files_select_statement(
         // If the end-timestamp of the file is less than the given begin-timestamp, messages within
         // the file are guaranteed to be outside the timestamp range. So this filters for the
         // opposite.
-        fmt::format_to(
-                statement_buffer_ix,
-                " WHERE {} >= ?{}",
-                streaming_archive::cMetadataDB::File::EndTimestamp,
-                enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp) + 1
-        );
+        fmt::format_to(statement_buffer_ix,
+                       " WHERE {} >= ?{}",
+                       streaming_archive::cMetadataDB::File::EndTimestamp,
+                       enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp) + 1);
         clause_exists = true;
     }
     if (cEpochTimeMax != ts_end) {
         // If the begin-timestamp of the file is greater than the given end-timestamp, messages
         // within the file are guaranteed to be outside the timestamp range. So this filters for the
         // opposite.
-        fmt::format_to(
-                statement_buffer_ix,
-                " {} {} <= ?{}",
-                clause_exists ? "AND" : "WHERE",
-                streaming_archive::cMetadataDB::File::BeginTimestamp,
-                enum_to_underlying_type(FilesTableFieldIndexes::EndTimestamp) + 1
-        );
+        fmt::format_to(statement_buffer_ix,
+                       " {} {} <= ?{}",
+                       clause_exists ? "AND" : "WHERE",
+                       streaming_archive::cMetadataDB::File::BeginTimestamp,
+                       enum_to_underlying_type(FilesTableFieldIndexes::EndTimestamp) + 1);
         clause_exists = true;
     }
     if (false == file_path.empty()) {
-        fmt::format_to(
-                statement_buffer_ix,
-                " {} {} = ?{}",
-                clause_exists ? "AND" : "WHERE",
-                streaming_archive::cMetadataDB::File::Path,
-                enum_to_underlying_type(FilesTableFieldIndexes::Path) + 1
-        );
+        fmt::format_to(statement_buffer_ix,
+                       " {} {} = ?{}",
+                       clause_exists ? "AND" : "WHERE",
+                       streaming_archive::cMetadataDB::File::Path,
+                       enum_to_underlying_type(FilesTableFieldIndexes::Path) + 1);
         clause_exists = true;
     }
     if (false == file_split_id.empty()) {
-        fmt::format_to(
-                statement_buffer_ix,
-                " {} {} = ?{}",
-                clause_exists ? "AND" : "WHERE",
-                streaming_archive::cMetadataDB::File::Id,
-                enum_to_underlying_type(FilesTableFieldIndexes::Id) + 1
-        );
+        fmt::format_to(statement_buffer_ix,
+                       " {} {} = ?{}",
+                       clause_exists ? "AND" : "WHERE",
+                       streaming_archive::cMetadataDB::File::Id,
+                       enum_to_underlying_type(FilesTableFieldIndexes::Id) + 1);
         clause_exists = true;
     }
     if (in_specific_segment) {
-        fmt::format_to(
-                statement_buffer_ix,
-                " {} {} = ?{}",
-                clause_exists ? "AND" : "WHERE",
-                streaming_archive::cMetadataDB::File::SegmentId,
-                enum_to_underlying_type(FilesTableFieldIndexes::SegmentId) + 1
-        );
+        fmt::format_to(statement_buffer_ix,
+                       " {} {} = ?{}",
+                       clause_exists ? "AND" : "WHERE",
+                       streaming_archive::cMetadataDB::File::SegmentId,
+                       enum_to_underlying_type(FilesTableFieldIndexes::SegmentId) + 1);
         clause_exists = true;
     }
 
     // Add ordering
     if (order_by_segment_end_ts) {
-        fmt::format_to(
-                statement_buffer_ix,
-                " ORDER BY MAX({}) OVER (PARTITION by {}) DESC, {} ASC",
-                streaming_archive::cMetadataDB::File::EndTimestamp,
-                streaming_archive::cMetadataDB::File::SegmentId,
-                streaming_archive::cMetadataDB::File::SegmentTimestampsPosition
-        );
+        fmt::format_to(statement_buffer_ix,
+                       " ORDER BY MAX({}) OVER (PARTITION by {}) DESC, {} ASC",
+                       streaming_archive::cMetadataDB::File::EndTimestamp,
+                       streaming_archive::cMetadataDB::File::SegmentId,
+                       streaming_archive::cMetadataDB::File::SegmentTimestampsPosition);
     } else {
-        fmt::format_to(
-                statement_buffer_ix,
-                " ORDER BY {} ASC, {} ASC",
-                streaming_archive::cMetadataDB::File::SegmentId,
-                streaming_archive::cMetadataDB::File::SegmentTimestampsPosition
-        );
+        fmt::format_to(statement_buffer_ix,
+                       " ORDER BY {} ASC, {} ASC",
+                       streaming_archive::cMetadataDB::File::SegmentId,
+                       streaming_archive::cMetadataDB::File::SegmentTimestampsPosition);
     }
 
     auto statement = db.prepare_statement(statement_buffer.data(), statement_buffer.size());
     if (cEpochTimeMin != ts_begin) {
-        statement.bind_int64(
-                enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp) + 1,
-                ts_begin
-        );
+        statement.bind_int64(enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp) + 1,
+                             ts_begin);
     }
     if (cEpochTimeMax != ts_end) {
-        statement.bind_int64(
-                enum_to_underlying_type(FilesTableFieldIndexes::EndTimestamp) + 1,
-                ts_end
-        );
+        statement.bind_int64(enum_to_underlying_type(FilesTableFieldIndexes::EndTimestamp) + 1,
+                             ts_end);
     }
     if (false == file_path.empty()) {
-        statement.bind_text(
-                enum_to_underlying_type(FilesTableFieldIndexes::Path) + 1,
-                file_path,
-                true
-        );
+        statement.bind_text(enum_to_underlying_type(FilesTableFieldIndexes::Path) + 1,
+                            file_path,
+                            true);
     }
     if (false == file_split_id.empty()) {
-        statement.bind_text(
-                enum_to_underlying_type(FilesTableFieldIndexes::Id) + 1,
-                file_split_id,
-                true
-        );
+        statement.bind_text(enum_to_underlying_type(FilesTableFieldIndexes::Id) + 1,
+                            file_split_id,
+                            true);
     }
     if (in_specific_segment) {
-        statement.bind_int64(
-                enum_to_underlying_type(FilesTableFieldIndexes::SegmentId) + 1,
-                (int64_t)segment_id
-        );
+        statement.bind_int64(enum_to_underlying_type(FilesTableFieldIndexes::SegmentId) + 1,
+                             (int64_t)segment_id);
     }
 
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
@@ -307,36 +265,30 @@ static SQLitePreparedStatement get_empty_directories_select_statement(SQLiteDB& 
     fmt::memory_buffer statement_buffer;
     auto statement_buffer_ix = std::back_inserter(statement_buffer);
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "SELECT {} FROM {}",
-            streaming_archive::cMetadataDB::EmptyDirectory::Path,
-            streaming_archive::cMetadataDB::EmptyDirectoriesTableName
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "SELECT {} FROM {}",
+                   streaming_archive::cMetadataDB::EmptyDirectory::Path,
+                   streaming_archive::cMetadataDB::EmptyDirectoriesTableName);
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     return db.prepare_statement(statement_buffer.data(), statement_buffer.size());
 }
 
-MetadataDB::FileIterator::FileIterator(
-        SQLiteDB& db,
-        epochtime_t begin_timestamp,
-        epochtime_t end_timestamp,
-        string const& file_path,
-        string const& file_split_id,
-        bool in_specific_segment,
-        segment_id_t segment_id,
-        bool order_by_segment_end_ts
-)
-        : Iterator(get_files_select_statement(
-                  db,
-                  begin_timestamp,
-                  end_timestamp,
-                  file_path,
-                  file_split_id,
-                  in_specific_segment,
-                  segment_id,
-                  order_by_segment_end_ts
-          )) {}
+MetadataDB::FileIterator::FileIterator(SQLiteDB& db,
+                                       epochtime_t begin_timestamp,
+                                       epochtime_t end_timestamp,
+                                       string const& file_path,
+                                       string const& file_split_id,
+                                       bool in_specific_segment,
+                                       segment_id_t segment_id,
+                                       bool order_by_segment_end_ts)
+        : Iterator(get_files_select_statement(db,
+                                              begin_timestamp,
+                                              end_timestamp,
+                                              file_path,
+                                              file_split_id,
+                                              in_specific_segment,
+                                              segment_id,
+                                              order_by_segment_end_ts)) {}
 
 MetadataDB::EmptyDirectoryIterator::EmptyDirectoryIterator(SQLiteDB& db)
         : Iterator(get_empty_directories_select_statement(db)) {}
@@ -344,10 +296,8 @@ MetadataDB::EmptyDirectoryIterator::EmptyDirectoryIterator(SQLiteDB& db)
 void MetadataDB::FileIterator::set_segment_id(segment_id_t segment_id) {
     m_statement.reset();
 
-    m_statement.bind_int64(
-            enum_to_underlying_type(FilesTableFieldIndexes::SegmentId) + 1,
-            (int64_t)segment_id
-    );
+    m_statement.bind_int64(enum_to_underlying_type(FilesTableFieldIndexes::SegmentId) + 1,
+                           (int64_t)segment_id);
 
     m_statement.step();
 }
@@ -366,8 +316,7 @@ void MetadataDB::FileIterator::get_path(string& path) const {
 
 epochtime_t MetadataDB::FileIterator::get_begin_ts() const {
     return m_statement.column_int64(
-            enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp)
-    );
+            enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp));
 }
 
 epochtime_t MetadataDB::FileIterator::get_end_ts() const {
@@ -375,22 +324,18 @@ epochtime_t MetadataDB::FileIterator::get_end_ts() const {
 }
 
 void MetadataDB::FileIterator::get_timestamp_patterns(string& timestamp_patterns) const {
-    m_statement.column_string(
-            enum_to_underlying_type(FilesTableFieldIndexes::TimestampPatterns),
-            timestamp_patterns
-    );
+    m_statement.column_string(enum_to_underlying_type(FilesTableFieldIndexes::TimestampPatterns),
+                              timestamp_patterns);
 }
 
 size_t MetadataDB::FileIterator::get_num_uncompressed_bytes() const {
     return m_statement.column_int64(
-            enum_to_underlying_type(FilesTableFieldIndexes::NumUncompressedBytes)
-    );
+            enum_to_underlying_type(FilesTableFieldIndexes::NumUncompressedBytes));
 }
 
 size_t MetadataDB::FileIterator::get_begin_message_ix() const {
     return m_statement.column_int64(
-            enum_to_underlying_type(FilesTableFieldIndexes::BeginMessageIx)
-    );
+            enum_to_underlying_type(FilesTableFieldIndexes::BeginMessageIx));
 }
 
 size_t MetadataDB::FileIterator::get_num_messages() const {
@@ -415,20 +360,17 @@ segment_id_t MetadataDB::FileIterator::get_segment_id() const {
 
 size_t MetadataDB::FileIterator::get_segment_timestamps_pos() const {
     return m_statement.column_int64(
-            enum_to_underlying_type(FilesTableFieldIndexes::SegmentTimestampsPosition)
-    );
+            enum_to_underlying_type(FilesTableFieldIndexes::SegmentTimestampsPosition));
 }
 
 size_t MetadataDB::FileIterator::get_segment_logtypes_pos() const {
     return m_statement.column_int64(
-            enum_to_underlying_type(FilesTableFieldIndexes::SegmentLogtypesPosition)
-    );
+            enum_to_underlying_type(FilesTableFieldIndexes::SegmentLogtypesPosition));
 }
 
 size_t MetadataDB::FileIterator::get_segment_variables_pos() const {
     return m_statement.column_int64(
-            enum_to_underlying_type(FilesTableFieldIndexes::SegmentVariablesPosition)
-    );
+            enum_to_underlying_type(FilesTableFieldIndexes::SegmentVariablesPosition));
 }
 
 void MetadataDB::open(string const& path) {
@@ -439,8 +381,7 @@ void MetadataDB::open(string const& path) {
     m_db.open(path);
 
     vector<std::pair<string, string>> file_field_names_and_types(
-            enum_to_underlying_type(FilesTableFieldIndexes::Length)
-    );
+            enum_to_underlying_type(FilesTableFieldIndexes::Length));
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::Id)].first
             = streaming_archive::cMetadataDB::File::Id;
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::Id)].second
@@ -457,11 +398,9 @@ void MetadataDB::open(string const& path) {
             = "TEXT";
 
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp)]
-            .first
-            = streaming_archive::cMetadataDB::File::BeginTimestamp;
+            .first = streaming_archive::cMetadataDB::File::BeginTimestamp;
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp)]
-            .second
-            = "INTEGER";
+            .second = "INTEGER";
 
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::EndTimestamp)].first
             = streaming_archive::cMetadataDB::File::EndTimestamp;
@@ -469,27 +408,21 @@ void MetadataDB::open(string const& path) {
             = "INTEGER";
 
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::TimestampPatterns)]
-            .first
-            = streaming_archive::cMetadataDB::File::TimestampPatterns;
+            .first = streaming_archive::cMetadataDB::File::TimestampPatterns;
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::TimestampPatterns)]
-            .second
-            = "TEXT";
+            .second = "TEXT";
 
-    file_field_names_and_types
-            [enum_to_underlying_type(FilesTableFieldIndexes::NumUncompressedBytes)]
-                    .first
-            = streaming_archive::cMetadataDB::File::NumUncompressedBytes;
-    file_field_names_and_types
-            [enum_to_underlying_type(FilesTableFieldIndexes::NumUncompressedBytes)]
-                    .second
-            = "INTEGER";
+    file_field_names_and_types[enum_to_underlying_type(
+                                       FilesTableFieldIndexes::NumUncompressedBytes)]
+            .first = streaming_archive::cMetadataDB::File::NumUncompressedBytes;
+    file_field_names_and_types[enum_to_underlying_type(
+                                       FilesTableFieldIndexes::NumUncompressedBytes)]
+            .second = "INTEGER";
 
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::BeginMessageIx)]
-            .first
-            = streaming_archive::cMetadataDB::File::BeginMessageIx;
+            .first = streaming_archive::cMetadataDB::File::BeginMessageIx;
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::BeginMessageIx)]
-            .second
-            = "INTEGER";
+            .second = "INTEGER";
 
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::NumMessages)].first
             = streaming_archive::cMetadataDB::File::NumMessages;
@@ -516,32 +449,26 @@ void MetadataDB::open(string const& path) {
     file_field_names_and_types[enum_to_underlying_type(FilesTableFieldIndexes::SegmentId)].second
             = "INTEGER";
 
-    file_field_names_and_types
-            [enum_to_underlying_type(FilesTableFieldIndexes::SegmentTimestampsPosition)]
-                    .first
-            = streaming_archive::cMetadataDB::File::SegmentTimestampsPosition;
-    file_field_names_and_types
-            [enum_to_underlying_type(FilesTableFieldIndexes::SegmentTimestampsPosition)]
-                    .second
-            = "INTEGER";
+    file_field_names_and_types[enum_to_underlying_type(
+                                       FilesTableFieldIndexes::SegmentTimestampsPosition)]
+            .first = streaming_archive::cMetadataDB::File::SegmentTimestampsPosition;
+    file_field_names_and_types[enum_to_underlying_type(
+                                       FilesTableFieldIndexes::SegmentTimestampsPosition)]
+            .second = "INTEGER";
 
-    file_field_names_and_types
-            [enum_to_underlying_type(FilesTableFieldIndexes::SegmentLogtypesPosition)]
-                    .first
-            = streaming_archive::cMetadataDB::File::SegmentLogtypesPosition;
-    file_field_names_and_types
-            [enum_to_underlying_type(FilesTableFieldIndexes::SegmentLogtypesPosition)]
-                    .second
-            = "INTEGER";
+    file_field_names_and_types[enum_to_underlying_type(
+                                       FilesTableFieldIndexes::SegmentLogtypesPosition)]
+            .first = streaming_archive::cMetadataDB::File::SegmentLogtypesPosition;
+    file_field_names_and_types[enum_to_underlying_type(
+                                       FilesTableFieldIndexes::SegmentLogtypesPosition)]
+            .second = "INTEGER";
 
-    file_field_names_and_types
-            [enum_to_underlying_type(FilesTableFieldIndexes::SegmentVariablesPosition)]
-                    .first
-            = streaming_archive::cMetadataDB::File::SegmentVariablesPosition;
-    file_field_names_and_types
-            [enum_to_underlying_type(FilesTableFieldIndexes::SegmentVariablesPosition)]
-                    .second
-            = "INTEGER";
+    file_field_names_and_types[enum_to_underlying_type(
+                                       FilesTableFieldIndexes::SegmentVariablesPosition)]
+            .first = streaming_archive::cMetadataDB::File::SegmentVariablesPosition;
+    file_field_names_and_types[enum_to_underlying_type(
+                                       FilesTableFieldIndexes::SegmentVariablesPosition)]
+            .second = "INTEGER";
 
     create_tables(file_field_names_and_types, m_db);
 
@@ -556,15 +483,11 @@ void MetadataDB::open(string const& path) {
             get_field_names_sql(file_field_names_and_types),
             get_numbered_placeholders_sql(file_field_names_and_types.size()),
             streaming_archive::cMetadataDB::File::Id,
-            get_numbered_set_field_sql(
-                    file_field_names_and_types,
-                    enum_to_underlying_type(FilesTableFieldIndexes::Id) + 1
-            )
-    );
+            get_numbered_set_field_sql(file_field_names_and_types,
+                                       enum_to_underlying_type(FilesTableFieldIndexes::Id) + 1));
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     m_upsert_file_statement = make_unique<SQLitePreparedStatement>(
-            m_db.prepare_statement(statement_buffer.data(), statement_buffer.size())
-    );
+            m_db.prepare_statement(statement_buffer.data(), statement_buffer.size()));
     statement_buffer.clear();
 
     m_transaction_begin_statement
@@ -572,16 +495,13 @@ void MetadataDB::open(string const& path) {
     m_transaction_end_statement
             = make_unique<SQLitePreparedStatement>(m_db.prepare_statement("END TRANSACTION"));
 
-    fmt::format_to(
-            statement_buffer_ix,
-            "INSERT INTO {} ({}) VALUES (?) ON CONFLICT DO NOTHING",
-            streaming_archive::cMetadataDB::EmptyDirectoriesTableName,
-            streaming_archive::cMetadataDB::EmptyDirectory::Path
-    );
+    fmt::format_to(statement_buffer_ix,
+                   "INSERT INTO {} ({}) VALUES (?) ON CONFLICT DO NOTHING",
+                   streaming_archive::cMetadataDB::EmptyDirectoriesTableName,
+                   streaming_archive::cMetadataDB::EmptyDirectory::Path);
     SPDLOG_DEBUG("{:.{}}", statement_buffer.data(), statement_buffer.size());
     m_insert_empty_directories_statement = make_unique<SQLitePreparedStatement>(
-            m_db.prepare_statement(statement_buffer.data(), statement_buffer.size())
-    );
+            m_db.prepare_statement(statement_buffer.data(), statement_buffer.size()));
     m_is_open = true;
 }
 
@@ -591,10 +511,8 @@ void MetadataDB::close() {
     m_upsert_file_statement.reset(nullptr);
     m_insert_empty_directories_statement.reset(nullptr);
     if (false == m_db.close()) {
-        SPDLOG_ERROR(
-                "streaming_archive::MetadataDB: Failed to close database - {}",
-                m_db.get_error_message()
-        );
+        SPDLOG_ERROR("streaming_archive::MetadataDB: Failed to close database - {}",
+                     m_db.get_error_message());
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
     m_is_open = false;
@@ -605,74 +523,57 @@ void MetadataDB::update_files(vector<writer::File*> const& files) {
     for (auto file : files) {
         auto const id_as_string = file->get_id_as_string();
         auto const orig_file_id_as_string = file->get_orig_file_id_as_string();
-        m_upsert_file_statement->bind_text(
-                enum_to_underlying_type(FilesTableFieldIndexes::Id) + 1,
-                id_as_string,
-                false
-        );
+        m_upsert_file_statement->bind_text(enum_to_underlying_type(FilesTableFieldIndexes::Id) + 1,
+                                           id_as_string,
+                                           false);
         m_upsert_file_statement->bind_text(
                 enum_to_underlying_type(FilesTableFieldIndexes::OrigFileId) + 1,
                 orig_file_id_as_string,
-                false
-        );
-        m_upsert_file_statement->bind_text(
-                enum_to_underlying_type(FilesTableFieldIndexes::Path) + 1,
-                file->get_orig_path(),
-                false
-        );
+                false);
+        m_upsert_file_statement->bind_text(enum_to_underlying_type(FilesTableFieldIndexes::Path)
+                                                   + 1,
+                                           file->get_orig_path(),
+                                           false);
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::BeginTimestamp) + 1,
-                file->get_begin_ts()
-        );
+                file->get_begin_ts());
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::EndTimestamp) + 1,
-                file->get_end_ts()
-        );
+                file->get_end_ts());
         m_upsert_file_statement->bind_text(
                 enum_to_underlying_type(FilesTableFieldIndexes::TimestampPatterns) + 1,
                 file->get_encoded_timestamp_patterns(),
-                true
-        );
+                true);
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::NumUncompressedBytes) + 1,
-                (int64_t)file->get_num_uncompressed_bytes()
-        );
+                (int64_t)file->get_num_uncompressed_bytes());
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::BeginMessageIx) + 1,
-                (int64_t)file->get_begin_message_ix()
-        );
+                (int64_t)file->get_begin_message_ix());
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::NumMessages) + 1,
-                (int64_t)file->get_num_messages()
-        );
+                (int64_t)file->get_num_messages());
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::NumVariables) + 1,
-                (int64_t)file->get_num_variables()
-        );
-        m_upsert_file_statement->bind_int64(
-                enum_to_underlying_type(FilesTableFieldIndexes::IsSplit) + 1,
-                (int64_t)file->is_split()
-        );
-        m_upsert_file_statement->bind_int64(
-                enum_to_underlying_type(FilesTableFieldIndexes::SplitIx) + 1,
-                (int64_t)file->get_split_ix()
-        );
+                (int64_t)file->get_num_variables());
+        m_upsert_file_statement->bind_int64(enum_to_underlying_type(FilesTableFieldIndexes::IsSplit)
+                                                    + 1,
+                                            (int64_t)file->is_split());
+        m_upsert_file_statement->bind_int64(enum_to_underlying_type(FilesTableFieldIndexes::SplitIx)
+                                                    + 1,
+                                            (int64_t)file->get_split_ix());
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::SegmentId) + 1,
-                (int64_t)file->get_segment_id()
-        );
+                (int64_t)file->get_segment_id());
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::SegmentTimestampsPosition) + 1,
-                (int64_t)file->get_segment_timestamps_pos()
-        );
+                (int64_t)file->get_segment_timestamps_pos());
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::SegmentLogtypesPosition) + 1,
-                (int64_t)file->get_segment_logtypes_pos()
-        );
+                (int64_t)file->get_segment_logtypes_pos());
         m_upsert_file_statement->bind_int64(
                 enum_to_underlying_type(FilesTableFieldIndexes::SegmentVariablesPosition) + 1,
-                (int64_t)file->get_segment_variables_pos()
-        );
+                (int64_t)file->get_segment_variables_pos());
 
         m_upsert_file_statement->step();
         m_upsert_file_statement->reset();

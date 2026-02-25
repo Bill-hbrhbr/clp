@@ -70,14 +70,12 @@ public:
         };
 
         // Constructors
-        explicit FileIterator(
-                SQLiteDB& db,
-                epochtime_t begin_timestamp,
-                epochtime_t end_timestamp,
-                std::string const& file_path,
-                bool in_specific_segment,
-                segment_id_t segment_id
-        );
+        explicit FileIterator(SQLiteDB& db,
+                              epochtime_t begin_timestamp,
+                              epochtime_t end_timestamp,
+                              std::string const& file_path,
+                              bool in_specific_segment,
+                              segment_id_t segment_id);
 
         // Methods
         void set_segment_id(segment_id_t segment_id);
@@ -132,21 +130,17 @@ public:
     void update_files(std::vector<writer::File*> const& files);
     void add_empty_directories(std::vector<std::string> const& empty_directory_paths);
 
-    std::unique_ptr<FileIterator> get_file_iterator(
-            epochtime_t begin_ts,
-            epochtime_t end_ts,
-            std::string const& file_path,
-            bool in_specific_segment,
-            segment_id_t segment_id
-    ) {
-        return std::make_unique<FileIterator>(
-                m_db,
-                begin_ts,
-                end_ts,
-                file_path,
-                in_specific_segment,
-                segment_id
-        );
+    std::unique_ptr<FileIterator> get_file_iterator(epochtime_t begin_ts,
+                                                    epochtime_t end_ts,
+                                                    std::string const& file_path,
+                                                    bool in_specific_segment,
+                                                    segment_id_t segment_id) {
+        return std::make_unique<FileIterator>(m_db,
+                                              begin_ts,
+                                              end_ts,
+                                              file_path,
+                                              in_specific_segment,
+                                              segment_id);
     }
 
     std::unique_ptr<EmptyDirectoryIterator> get_empty_directory_iterator() {

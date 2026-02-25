@@ -32,12 +32,10 @@ public:
             : ::clp_s::search::OutputHandler(should_output_metadata, true) {}
 
     // Methods inherited from OutputHandler
-    void write(
-            std::string_view message,
-            epochtime_t timestamp,
-            std::string_view archive_id,
-            int64_t log_event_idx
-    ) override {
+    void write(std::string_view message,
+               epochtime_t timestamp,
+               std::string_view archive_id,
+               int64_t log_event_idx) override {
         std::cout << archive_id << ": " << log_event_idx << ": " << timestamp << " " << message;
     }
 
@@ -59,12 +57,10 @@ public:
     ~FileOutputHandler() { m_file_writer.close(); }
 
     // Methods inherited from OutputHandler
-    void write(
-            std::string_view message,
-            epochtime_t timestamp,
-            std::string_view archive_id,
-            int64_t log_event_idx
-    ) override;
+    void write(std::string_view message,
+               epochtime_t timestamp,
+               std::string_view archive_id,
+               int64_t log_event_idx) override;
 
     void write(std::string_view message) override { write(message, 0, {}, 0); }
 
@@ -86,11 +82,9 @@ public:
     };
 
     // Constructors
-    explicit NetworkOutputHandler(
-            std::string const& host,
-            int port,
-            bool should_output_metadata = false
-    );
+    explicit NetworkOutputHandler(std::string const& host,
+                                  int port,
+                                  bool should_output_metadata = false);
 
     // Destructor
     ~NetworkOutputHandler() override {
@@ -100,12 +94,10 @@ public:
     }
 
     // Methods inherited from OutputHandler
-    void write(
-            std::string_view message,
-            epochtime_t timestamp,
-            std::string_view archive_id,
-            int64_t log_event_idx
-    ) override;
+    void write(std::string_view message,
+               epochtime_t timestamp,
+               std::string_view archive_id,
+               int64_t log_event_idx) override;
 
     void write(std::string_view message) override { write(message, 0, {}, 0); }
 
@@ -123,13 +115,11 @@ public:
     // Types
     struct QueryResult {
         // Constructors
-        QueryResult(
-                std::string_view original_path,
-                std::string_view message,
-                epochtime_t timestamp,
-                std::string_view archive_id,
-                int64_t log_event_idx
-        )
+        QueryResult(std::string_view original_path,
+                    std::string_view message,
+                    epochtime_t timestamp,
+                    std::string_view archive_id,
+                    int64_t log_event_idx)
                 : original_path(original_path),
                   message(message),
                   timestamp(timestamp),
@@ -144,10 +134,8 @@ public:
     };
 
     struct QueryResultGreaterTimestampComparator {
-        bool operator()(
-                std::unique_ptr<QueryResult> const& r1,
-                std::unique_ptr<QueryResult> const& r2
-        ) const {
+        bool operator()(std::unique_ptr<QueryResult> const& r1,
+                        std::unique_ptr<QueryResult> const& r2) const {
             return r1->timestamp > r2->timestamp;
         }
     };
@@ -160,13 +148,11 @@ public:
     };
 
     // Constructor
-    ResultsCacheOutputHandler(
-            std::string const& uri,
-            std::string const& collection,
-            uint64_t batch_size,
-            uint64_t max_num_results,
-            bool should_output_metadata = true
-    );
+    ResultsCacheOutputHandler(std::string const& uri,
+                              std::string const& collection,
+                              uint64_t batch_size,
+                              uint64_t max_num_results,
+                              bool should_output_metadata = true);
 
     // Methods inherited from OutputHandler
     /**
@@ -176,12 +162,10 @@ public:
      */
     ErrorCode flush() override;
 
-    void write(
-            std::string_view message,
-            epochtime_t timestamp,
-            std::string_view archive_id,
-            int64_t log_event_idx
-    ) override;
+    void write(std::string_view message,
+               epochtime_t timestamp,
+               std::string_view archive_id,
+               int64_t log_event_idx) override;
 
     void write(std::string_view message) override { write(message, 0, {}, 0); }
 
@@ -191,11 +175,9 @@ private:
     std::vector<bsoncxx::document::value> m_results;
     uint64_t m_batch_size;
     uint64_t m_max_num_results;
-    std::priority_queue<
-            std::unique_ptr<QueryResult>,
-            std::vector<std::unique_ptr<QueryResult>>,
-            QueryResultGreaterTimestampComparator
-    >
+    std::priority_queue<std::unique_ptr<QueryResult>,
+                        std::vector<std::unique_ptr<QueryResult>>,
+                        QueryResultGreaterTimestampComparator>
             m_latest_results;
 };
 
@@ -208,12 +190,10 @@ public:
     CountOutputHandler(int reducer_socket_fd);
 
     // Methods inherited from OutputHandler
-    void write(
-            std::string_view message,
-            epochtime_t timestamp,
-            std::string_view archive_id,
-            int64_t log_event_idx
-    ) override {}
+    void write(std::string_view message,
+               epochtime_t timestamp,
+               std::string_view archive_id,
+               int64_t log_event_idx) override {}
 
     void write(std::string_view message) override;
 
@@ -242,12 +222,10 @@ public:
               m_count_by_time_bucket_size{count_by_time_bucket_size} {}
 
     // Methods inherited from OutputHandler
-    void write(
-            std::string_view message,
-            epochtime_t timestamp,
-            std::string_view archive_id,
-            int64_t log_event_idx
-    ) override {
+    void write(std::string_view message,
+               epochtime_t timestamp,
+               std::string_view archive_id,
+               int64_t log_event_idx) override {
         int64_t bucket = (timestamp / m_count_by_time_bucket_size) * m_count_by_time_bucket_size;
         m_bucket_counts[bucket] += 1;
     }
@@ -275,12 +253,10 @@ public:
     // Types
     struct QueryResult {
         // Constructors
-        QueryResult(
-                std::string_view message,
-                epochtime_t timestamp,
-                std::string_view archive_id,
-                int64_t log_event_idx
-        )
+        QueryResult(std::string_view message,
+                    epochtime_t timestamp,
+                    std::string_view archive_id,
+                    int64_t log_event_idx)
                 : message{message},
                   timestamp{timestamp},
                   archive_id{archive_id},
@@ -298,12 +274,10 @@ public:
               m_output(output) {}
 
     // Methods inherited from OutputHandler
-    void write(
-            std::string_view message,
-            epochtime_t timestamp,
-            std::string_view archive_id,
-            int64_t log_event_idx
-    ) override {
+    void write(std::string_view message,
+               epochtime_t timestamp,
+               std::string_view archive_id,
+               int64_t log_event_idx) override {
         m_output.emplace_back(message, timestamp, archive_id, log_event_idx);
     }
 

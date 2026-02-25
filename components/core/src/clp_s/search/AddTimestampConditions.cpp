@@ -34,25 +34,22 @@ std::shared_ptr<Expression> AddTimestampConditions::run(std::shared_ptr<Expressi
         return EmptyExpr::create();
     }
 
-    auto timestamp_column = ColumnDescriptor::create_from_escaped_tokens(
-            m_timestamp_column.value().first,
-            m_timestamp_column.value().second
-    );
+    auto timestamp_column
+            = ColumnDescriptor::create_from_escaped_tokens(m_timestamp_column.value().first,
+                                                           m_timestamp_column.value().second);
 
     auto and_expr = AndExpr::create();
     if (m_begin_ts.has_value()) {
         auto timestamp_literal
                 = TimestampLiteral::create(m_begin_ts.value() * cNanosecondsInMillisecond);
         and_expr->add_operand(
-                FilterExpr::create(timestamp_column, FilterOperation::GTE, timestamp_literal)
-        );
+                FilterExpr::create(timestamp_column, FilterOperation::GTE, timestamp_literal));
     }
     if (m_end_ts.has_value()) {
         auto timestamp_literal
                 = TimestampLiteral::create(m_end_ts.value() * cNanosecondsInMillisecond);
         and_expr->add_operand(
-                FilterExpr::create(timestamp_column, FilterOperation::LTE, timestamp_literal)
-        );
+                FilterExpr::create(timestamp_column, FilterOperation::LTE, timestamp_literal));
     }
     and_expr->add_operand(expr);
 

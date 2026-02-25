@@ -33,10 +33,8 @@ constexpr std::string_view cS3Auth{"s3"};
  * @param path_destination The vector that the paths are pushed into.
  * @return Whether paths were read successfully or not.
  */
-[[nodiscard]] auto read_paths_from_file(
-        std::string const& input_path_list_file_path,
-        std::vector<std::string>& path_destination
-) -> bool;
+[[nodiscard]] auto read_paths_from_file(std::string const& input_path_list_file_path,
+                                        std::vector<std::string>& path_destination) -> bool;
 
 /**
  * Validates and populates network authorization options.
@@ -46,17 +44,13 @@ constexpr std::string_view cS3Auth{"s3"};
  */
 void validate_network_auth(std::string_view auth_method, NetworkAuthOption& auth);
 
-auto read_paths_from_file(
-        std::string const& input_path_list_file_path,
-        std::vector<std::string>& path_destination
-) -> bool {
+auto read_paths_from_file(std::string const& input_path_list_file_path,
+                          std::vector<std::string>& path_destination) -> bool {
     FileReader reader;
     auto error_code = reader.try_open(input_path_list_file_path);
     if (ErrorCodeFileNotFound == error_code) {
-        SPDLOG_ERROR(
-                "Failed to open input path list file {} - file not found",
-                input_path_list_file_path
-        );
+        SPDLOG_ERROR("Failed to open input path list file {} - file not found",
+                     input_path_list_file_path);
         return false;
     }
     if (ErrorCodeSuccess != error_code) {
@@ -148,13 +142,11 @@ auto CommandLineArguments::parse_arguments(int argc, char const** argv)
         all_conversion_options.add(conversion_options);
         all_conversion_options.add(conversion_positional_options);
 
-        po::store(
-                po::command_line_parser(argc, argv)
-                        .options(all_conversion_options)
-                        .positional(positional_options)
-                        .run(),
-                parsed_command_line_options
-        );
+        po::store(po::command_line_parser(argc, argv)
+                          .options(all_conversion_options)
+                          .positional(positional_options)
+                          .run(),
+                  parsed_command_line_options);
         po::notify(parsed_command_line_options);
 
         if (parsed_command_line_options.contains("help")) {

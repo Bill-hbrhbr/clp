@@ -15,12 +15,10 @@ bool RecordReceiverContext::read_connection_init_packet() {
 
     memcpy(&job_id, m_buf.data(), sizeof(job_id));
     if (job_id != m_server_ctx->get_job_id()) {
-        SPDLOG_ERROR(
-                "Rejecting connection from worker with job_id={} during processing of "
-                "job_id={}",
-                job_id,
-                m_server_ctx->get_job_id()
-        );
+        SPDLOG_ERROR("Rejecting connection from worker with job_id={} during processing of "
+                     "job_id={}",
+                     job_id,
+                     m_server_ctx->get_job_id());
         return false;
     }
     m_buf_num_bytes_occupied = 0;

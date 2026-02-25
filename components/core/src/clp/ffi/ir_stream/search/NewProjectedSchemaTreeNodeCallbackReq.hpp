@@ -24,13 +24,12 @@ namespace clp::ffi::ir_stream::search {
  * @return A void result on success or a user-defined error code indicating the failure.
  */
 template <typename NewProjectedSchemaTreeNodeCallbackType>
-concept NewProjectedSchemaTreeNodeCallbackReq = std::is_invocable_r_v<
-        ystdlib::error_handling::Result<void>,
-        NewProjectedSchemaTreeNodeCallbackType,
-        bool,
-        SchemaTree::Node::id_t,
-        std::pair<std::string_view, size_t>
->;
+concept NewProjectedSchemaTreeNodeCallbackReq
+        = std::is_invocable_r_v<ystdlib::error_handling::Result<void>,
+                                NewProjectedSchemaTreeNodeCallbackType,
+                                bool,
+                                SchemaTree::Node::id_t,
+                                std::pair<std::string_view, size_t>>;
 }  // namespace clp::ffi::ir_stream::search
 
 #endif  // CLP_FFI_IR_STREAM_SEARCH_NEWPROJECTEDSCHEMATREENODECALLBACKREQ_HPP

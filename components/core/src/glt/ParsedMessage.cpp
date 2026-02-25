@@ -16,13 +16,11 @@ void ParsedMessage::clear_except_ts_patt() {
     m_is_set = false;
 }
 
-void ParsedMessage::set(
-        TimestampPattern const* timestamp_pattern,
-        epochtime_t const timestamp,
-        string const& line,
-        size_t timestamp_begin_pos,
-        size_t timestamp_end_pos
-) {
+void ParsedMessage::set(TimestampPattern const* timestamp_pattern,
+                        epochtime_t const timestamp,
+                        string const& line,
+                        size_t timestamp_begin_pos,
+                        size_t timestamp_end_pos) {
     if (timestamp_pattern != m_ts_patt) {
         m_ts_patt = timestamp_pattern;
         m_ts_patt_changed = true;

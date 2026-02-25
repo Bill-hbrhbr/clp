@@ -69,16 +69,13 @@ public:
     void open() override;
     void close() override;
 
-    void
-    add_archive(std::string const& id, streaming_archive::ArchiveMetadata const& metadata) override;
-    void update_archive_metadata(
-            std::string const& archive_id,
-            streaming_archive::ArchiveMetadata const& metadata
-    ) override;
+    void add_archive(std::string const& id,
+                     streaming_archive::ArchiveMetadata const& metadata) override;
+    void update_archive_metadata(std::string const& archive_id,
+                                 streaming_archive::ArchiveMetadata const& metadata) override;
     void update_metadata_for_files(
             std::string const& archive_id,
-            std::vector<streaming_archive::writer::File*> const& files
-    ) override;
+            std::vector<streaming_archive::writer::File*> const& files) override;
 
     GlobalMetadataDB::ArchiveIterator* get_archive_iterator() override {
         return new ArchiveIterator(m_db);
@@ -90,8 +87,7 @@ public:
     }
 
     GlobalMetadataDB::ArchiveIterator* get_archive_iterator_for_file_path(
-            std::string const& path
-    ) override {
+            std::string const& path) override {
         return new ArchiveIterator(m_db, path);
     }
 

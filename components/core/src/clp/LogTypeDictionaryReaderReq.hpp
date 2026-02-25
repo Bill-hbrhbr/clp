@@ -19,8 +19,7 @@ concept LogTypeDictionaryReaderReq = requires(
         LogTypeDictionaryReaderType reader,
         std::string_view logtype,
         bool ignore_case,
-        std::unordered_set<typename LogTypeDictionaryReaderType::Entry const*>& entries
-) {
+        std::unordered_set<typename LogTypeDictionaryReaderType::Entry const*>& entries) {
     requires LogTypeDictionaryEntryReq<typename LogTypeDictionaryReaderType::Entry>;
 
     /**
@@ -43,8 +42,8 @@ concept LogTypeDictionaryReaderReq = requires(
         reader.get_entries_matching_wildcard_string(logtype, ignore_case, entries)
     } -> std::same_as<void>;
 
-    requires std::
-            same_as<typename LogTypeDictionaryReaderType::dictionary_id_t, logtype_dictionary_id_t>;
+    requires std::same_as<typename LogTypeDictionaryReaderType::dictionary_id_t,
+                          logtype_dictionary_id_t>;
 };
 }  // namespace clp
 

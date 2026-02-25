@@ -21,13 +21,11 @@ auto BufferReader::peek_buffer(char const*& buf, size_t& peek_size) const -> voi
     buf = 0 == peek_size ? nullptr : m_internal_buf + m_internal_buf_pos;
 }
 
-auto BufferReader::try_read_to_delimiter(
-        char delim,
-        bool keep_delimiter,
-        std::string& str,
-        bool& found_delim,
-        size_t& num_bytes_read
-) -> ErrorCode {
+auto BufferReader::try_read_to_delimiter(char delim,
+                                         bool keep_delimiter,
+                                         std::string& str,
+                                         bool& found_delim,
+                                         size_t& num_bytes_read) -> ErrorCode {
     found_delim = false;
     auto const remaining_data_size = get_remaining_data_size();
     if (0 == remaining_data_size) {
@@ -93,9 +91,10 @@ auto BufferReader::try_get_pos(size_t& pos) -> ErrorCode {
     return ErrorCode_Success;
 }
 
-auto
-BufferReader::try_read_to_delimiter(char delim, bool keep_delimiter, bool append, std::string& str)
-        -> ErrorCode {
+auto BufferReader::try_read_to_delimiter(char delim,
+                                         bool keep_delimiter,
+                                         bool append,
+                                         std::string& str) -> ErrorCode {
     if (false == append) {
         str.clear();
     }

@@ -53,21 +53,18 @@ auto create_encoded_text_ast_from_string(std::string_view input)
 
     string_blob.append(logtype);
 
-    auto encoded_text_ast_result{EncodedTextAst<encoded_variable_t>::create(
-            std::move(encoded_vars),
-            std::move(string_blob)
-    )};
+    auto encoded_text_ast_result{
+            EncodedTextAst<encoded_variable_t>::create(std::move(encoded_vars),
+                                                       std::move(string_blob))};
     REQUIRE_FALSE(encoded_text_ast_result.has_error());
     return std::move(encoded_text_ast_result.value());
 }
 }  // namespace
 
-TEMPLATE_TEST_CASE(
-        "EncodedTextAst Decoding",
-        "[ffi][EncodedTextAst]",
-        eight_byte_encoded_variable_t,
-        four_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("EncodedTextAst Decoding",
+                   "[ffi][EncodedTextAst]",
+                   eight_byte_encoded_variable_t,
+                   four_byte_encoded_variable_t) {
     SECTION("Text with variables") {
         std::vector<std::pair<std::string, std::string>> const test_str_components{
                 {"Here is a string with a small int ", "2887"},
@@ -92,13 +89,10 @@ TEMPLATE_TEST_CASE(
         };
         auto const text = fmt::format(
                 "{}",
-                fmt::join(
-                        test_str_components | std::views::transform([](auto const& pair) {
-                            return pair.first + pair.second;
-                        }),
-                        " "
-                )
-        );
+                fmt::join(test_str_components | std::views::transform([](auto const& pair) {
+                              return pair.first + pair.second;
+                          }),
+                          " "));
 
         auto const encoded_text_ast{create_encoded_text_ast_from_string<TestType>(text)};
         auto const decoded_text_result{encoded_text_ast.to_string()};
@@ -118,37 +112,26 @@ TEMPLATE_TEST_CASE(
     SECTION("Decoding errors") {
         SECTION("Missing logtype") {
             auto const encoded_text_ast_result{
-                    EncodedTextAst<TestType>::create(std::vector<TestType>{}, StringBlob{})
-            };
+                    EncodedTextAst<TestType>::create(std::vector<TestType>{}, StringBlob{})};
             REQUIRE(encoded_text_ast_result.has_error());
-            REQUIRE(
-                    (encoded_text_ast_result.error()
-                     == EncodedTextAstError{EncodedTextAstErrorEnum::MissingLogtype})
-            );
+            REQUIRE((encoded_text_ast_result.error()
+                     == EncodedTextAstError{EncodedTextAstErrorEnum::MissingLogtype}));
         }
 
         SECTION("Missing variables") {
             auto const [placeholder, expected_error_enum] = GENERATE(
-                    std::make_pair(
-                            enum_to_underlying_type(VariablePlaceholder::Integer),
-                            EncodedTextAstErrorEnum::MissingEncodedVar
-                    ),
-                    std::make_pair(
-                            enum_to_underlying_type(VariablePlaceholder::Float),
-                            EncodedTextAstErrorEnum::MissingEncodedVar
-                    ),
-                    std::make_pair(
-                            enum_to_underlying_type(VariablePlaceholder::Dictionary),
-                            EncodedTextAstErrorEnum::MissingDictVar
-                    )
-            );
+                    std::make_pair(enum_to_underlying_type(VariablePlaceholder::Integer),
+                                   EncodedTextAstErrorEnum::MissingEncodedVar),
+                    std::make_pair(enum_to_underlying_type(VariablePlaceholder::Float),
+                                   EncodedTextAstErrorEnum::MissingEncodedVar),
+                    std::make_pair(enum_to_underlying_type(VariablePlaceholder::Dictionary),
+                                   EncodedTextAstErrorEnum::MissingDictVar));
             std::string const logtype_with_single_int_var{placeholder};
             StringBlob string_blob;
             string_blob.append(logtype_with_single_int_var);
-            auto const encoded_text_ast_result{EncodedTextAst<TestType>::create(
-                    std::vector<TestType>{},
-                    std::move(string_blob)
-            )};
+            auto const encoded_text_ast_result{
+                    EncodedTextAst<TestType>::create(std::vector<TestType>{},
+                                                     std::move(string_blob))};
             REQUIRE_FALSE(encoded_text_ast_result.has_error());
             auto const decoded_result{encoded_text_ast_result.value().to_string()};
             REQUIRE(decoded_result.has_error());
@@ -158,23 +141,18 @@ TEMPLATE_TEST_CASE(
         SECTION("Trailing escape") {
             std::string const logtype_with_trailing_escape{
                     "This is a string with a trailing escape "
-                    + std::string(1, enum_to_underlying_type(VariablePlaceholder::Escape))
-            };
+                    + std::string(1, enum_to_underlying_type(VariablePlaceholder::Escape))};
             StringBlob string_blob;
             string_blob.append(logtype_with_trailing_escape);
-            auto const encoded_text_ast_result{EncodedTextAst<TestType>::create(
-                    std::vector<TestType>{},
-                    std::move(string_blob)
-            )};
+            auto const encoded_text_ast_result{
+                    EncodedTextAst<TestType>::create(std::vector<TestType>{},
+                                                     std::move(string_blob))};
             REQUIRE_FALSE(encoded_text_ast_result.has_error());
             auto const decoded_result{encoded_text_ast_result.value().to_string()};
             REQUIRE(decoded_result.has_error());
-            REQUIRE(
-                    (decoded_result.error()
+            REQUIRE((decoded_result.error()
                      == EncodedTextAstError{
-                             EncodedTextAstErrorEnum::UnexpectedTrailingEscapeCharacter
-                     })
-            );
+                             EncodedTextAstErrorEnum::UnexpectedTrailingEscapeCharacter}));
         }
     }
 }

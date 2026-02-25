@@ -38,10 +38,8 @@ TEST_CASE("clp-s-float-format-encoding-fuzzing", "[clp-s][FloatFormatEncoding]")
     std::mt19937 generator(rd());
 
     SECTION("Test round trips for 17 digit numbers across a large distribution.") {
-        std::uniform_real_distribution<double> distribution{
-                0.0,
-                std::numeric_limits<double>::max()
-        };
+        std::uniform_real_distribution<double> distribution{0.0,
+                                                            std::numeric_limits<double>::max()};
         for (size_t i{0ULL}; i < cNumTests; ++i) {
             auto const value{distribution(generator)};
             std::vector<std::pair<std::string, double>> representations{
@@ -67,8 +65,7 @@ TEST_CASE("clp-s-float-format-encoding-fuzzing", "[clp-s][FloatFormatEncoding]")
                     {fmt::format("{:.17g}", value), value},
                     {fmt::format("{:.16e}", -value), -value},
                     {fmt::format("{:.16E}", -value), -value},
-                    {fmt::format("{:.17g}", -value), -value}
-            };
+                    {fmt::format("{:.17g}", -value), -value}};
 
             test_representations(representations);
         }
@@ -82,11 +79,9 @@ TEST_CASE("clp-s-float-format-encoding-fuzzing", "[clp-s][FloatFormatEncoding]")
             auto const value{distribution(generator)};
             auto const neg_value{-value};
             auto const significant_digits{significant_digits_distribution(generator)};
-            std::vector<std::string> formats{
-                    fmt::format("{{:.{}e}}", significant_digits),
-                    fmt::format("{{:.{}E}}", significant_digits),
-                    fmt::format("{{:.{}f}}", significant_digits)
-            };
+            std::vector<std::string> formats{fmt::format("{{:.{}e}}", significant_digits),
+                                             fmt::format("{{:.{}E}}", significant_digits),
+                                             fmt::format("{{:.{}f}}", significant_digits)};
 
             std::vector<std::pair<std::string, double>> representations;
             for (auto const& format : formats) {
@@ -109,11 +104,9 @@ TEST_CASE("clp-s-float-format-encoding-fuzzing", "[clp-s][FloatFormatEncoding]")
         double const zero{0.0};
         double const neg_zero{-zero};
         for (size_t significant_digits{1ULL}; significant_digits < 17; ++significant_digits) {
-            std::vector<std::string> formats{
-                    fmt::format("{{:.{}e}}", significant_digits),
-                    fmt::format("{{:.{}E}}", significant_digits),
-                    fmt::format("{{:.{}f}}", significant_digits)
-            };
+            std::vector<std::string> formats{fmt::format("{{:.{}e}}", significant_digits),
+                                             fmt::format("{{:.{}E}}", significant_digits),
+                                             fmt::format("{{:.{}f}}", significant_digits)};
 
             std::vector<std::pair<std::string, double>> representations;
             for (auto const& format : formats) {

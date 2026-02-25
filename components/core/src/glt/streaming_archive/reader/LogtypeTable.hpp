@@ -53,11 +53,9 @@ public:
      */
     bool get_next_message(Message& msg);
 
-    void get_next_row(
-            std::vector<encoded_variable_t>& vars,
-            size_t var_ix_begin,
-            size_t var_ix_end
-    ) const;
+    void get_next_row(std::vector<encoded_variable_t>& vars,
+                      size_t var_ix_begin,
+                      size_t var_ix_end) const;
     /**
      *
      */
@@ -67,12 +65,10 @@ public:
 
     void load_timestamp();
     void load_variable_columns(size_t var_ix_begin, size_t var_ix_end);
-    void load_remaining_data_into_vec(
-            std::vector<epochtime_t>& ts,
-            std::vector<file_id_t>& id,
-            std::vector<encoded_variable_t>& vars,
-            std::vector<size_t> const& potential_matched_row
-    );
+    void load_remaining_data_into_vec(std::vector<epochtime_t>& ts,
+                                      std::vector<file_id_t>& id,
+                                      std::vector<encoded_variable_t>& vars,
+                                      std::vector<size_t> const& potential_matched_row);
 
     /**
      * Get row in the loaded 2D variable columns with row_index = offset
@@ -124,20 +120,14 @@ private:
 
     void load_column(size_t column_ix);
 
-    void load_ts_into_vec(
-            std::vector<epochtime_t>& ts,
-            std::vector<size_t> const& potential_matched_row
-    );
+    void load_ts_into_vec(std::vector<epochtime_t>& ts,
+                          std::vector<size_t> const& potential_matched_row);
 
-    void load_file_id_into_vec(
-            std::vector<file_id_t>& id,
-            std::vector<size_t> const& potential_matched_row
-    );
+    void load_file_id_into_vec(std::vector<file_id_t>& id,
+                               std::vector<size_t> const& potential_matched_row);
 
-    void load_vars_into_vec(
-            std::vector<encoded_variable_t>& vars,
-            std::vector<size_t> const& potential_matched_row
-    );
+    void load_vars_into_vec(std::vector<encoded_variable_t>& vars,
+                            std::vector<size_t> const& potential_matched_row);
 };
 }  // namespace glt::streaming_archive::reader
 

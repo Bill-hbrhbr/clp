@@ -25,29 +25,21 @@ void File::append_to_segment(LogTypeDictionaryWriter const& logtype_dict, Segmen
 
     // Append files to segment
     uint64_t segment_timestamps_uncompressed_pos;
-    segment.append(
-            reinterpret_cast<char const*>(m_timestamps->data()),
-            m_timestamps->size_in_bytes(),
-            segment_timestamps_uncompressed_pos
-    );
+    segment.append(reinterpret_cast<char const*>(m_timestamps->data()),
+                   m_timestamps->size_in_bytes(),
+                   segment_timestamps_uncompressed_pos);
     uint64_t segment_logtypes_uncompressed_pos;
-    segment.append(
-            reinterpret_cast<char const*>(m_logtypes->data()),
-            m_logtypes->size_in_bytes(),
-            segment_logtypes_uncompressed_pos
-    );
+    segment.append(reinterpret_cast<char const*>(m_logtypes->data()),
+                   m_logtypes->size_in_bytes(),
+                   segment_logtypes_uncompressed_pos);
     uint64_t segment_variables_uncompressed_pos;
-    segment.append(
-            reinterpret_cast<char const*>(m_variables->data()),
-            m_variables->size_in_bytes(),
-            segment_variables_uncompressed_pos
-    );
-    set_segment_metadata(
-            segment.get_id(),
-            segment_timestamps_uncompressed_pos,
-            segment_logtypes_uncompressed_pos,
-            segment_variables_uncompressed_pos
-    );
+    segment.append(reinterpret_cast<char const*>(m_variables->data()),
+                   m_variables->size_in_bytes(),
+                   segment_variables_uncompressed_pos);
+    set_segment_metadata(segment.get_id(),
+                         segment_timestamps_uncompressed_pos,
+                         segment_logtypes_uncompressed_pos,
+                         segment_variables_uncompressed_pos);
     m_segmentation_state = SegmentationState_MovingToSegment;
 
     // Mark file as written out and clear in-memory columns and clear the in-memory data (except
@@ -58,13 +50,11 @@ void File::append_to_segment(LogTypeDictionaryWriter const& logtype_dict, Segmen
     m_variables.reset(nullptr);
 }
 
-void File::write_encoded_msg(
-        epochtime_t timestamp,
-        logtype_dictionary_id_t logtype_id,
-        vector<encoded_variable_t> const& encoded_vars,
-        vector<variable_dictionary_id_t> const& var_ids,
-        size_t num_uncompressed_bytes
-) {
+void File::write_encoded_msg(epochtime_t timestamp,
+                             logtype_dictionary_id_t logtype_id,
+                             vector<encoded_variable_t> const& encoded_vars,
+                             vector<variable_dictionary_id_t> const& var_ids,
+                             size_t num_uncompressed_bytes) {
     m_timestamps->push_back(timestamp);
     m_logtypes->push_back(logtype_id);
     m_variables->push_back_all(encoded_vars);
@@ -128,12 +118,10 @@ string File::get_encoded_timestamp_patterns() const {
     return encoded_timestamp_patterns;
 }
 
-void File::set_segment_metadata(
-        segment_id_t segment_id,
-        uint64_t segment_timestamps_uncompressed_pos,
-        uint64_t segment_logtypes_uncompressed_pos,
-        uint64_t segment_variables_uncompressed_pos
-) {
+void File::set_segment_metadata(segment_id_t segment_id,
+                                uint64_t segment_timestamps_uncompressed_pos,
+                                uint64_t segment_logtypes_uncompressed_pos,
+                                uint64_t segment_variables_uncompressed_pos) {
     m_segment_id = segment_id;
     m_segment_timestamps_pos = segment_timestamps_uncompressed_pos;
     m_segment_logtypes_pos = segment_logtypes_uncompressed_pos;

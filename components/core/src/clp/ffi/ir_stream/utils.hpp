@@ -60,9 +60,9 @@ template <IntegerType integer_t>
  * @return Whether serialization succeeded.
  */
 template <typename encoded_variable_t>
-[[nodiscard]] auto
-serialize_clp_string(std::string_view str, std::string& logtype, std::vector<int8_t>& output_buf)
-        -> bool;
+[[nodiscard]] auto serialize_clp_string(std::string_view str,
+                                        std::string& logtype,
+                                        std::vector<int8_t>& output_buf) -> bool;
 
 /**
  * Serializes a string.
@@ -92,16 +92,13 @@ template <IntegerType T>
  * @return true on success.
  * @return false if the ID exceeds the representable range.
  */
-template <
-        bool is_auto_generated_node,
-        int8_t one_byte_length_indicator_tag,
-        int8_t two_byte_length_indicator_tag,
-        int8_t four_byte_length_indicator_tag
->
-[[nodiscard]] auto encode_and_serialize_schema_tree_node_id(
-        SchemaTree::Node::id_t node_id,
-        std::vector<int8_t>& output_buf
-) -> bool;
+template <bool is_auto_generated_node,
+          int8_t one_byte_length_indicator_tag,
+          int8_t two_byte_length_indicator_tag,
+          int8_t four_byte_length_indicator_tag>
+[[nodiscard]] auto encode_and_serialize_schema_tree_node_id(SchemaTree::Node::id_t node_id,
+                                                            std::vector<int8_t>& output_buf)
+        -> bool;
 
 /**
  * Deserializes and decodes a schema tree node ID.
@@ -118,15 +115,12 @@ template <
  *   - std::errc::protocol_error if the given length indicator is unknown.
  * @return Forwards `size_dependent_deserialize_and_decode_schema_tree_node_id`'s return values.
  */
-template <
-        int8_t one_byte_length_indicator_tag,
-        int8_t two_byte_length_indicator_tag,
-        int8_t four_byte_length_indicator_tag
->
-[[nodiscard]] auto deserialize_and_decode_schema_tree_node_id(
-        encoded_tag_t length_indicator_tag,
-        ReaderInterface& reader
-) -> ystdlib::error_handling::Result<std::pair<bool, SchemaTree::Node::id_t>>;
+template <int8_t one_byte_length_indicator_tag,
+          int8_t two_byte_length_indicator_tag,
+          int8_t four_byte_length_indicator_tag>
+[[nodiscard]] auto deserialize_and_decode_schema_tree_node_id(encoded_tag_t length_indicator_tag,
+                                                              ReaderInterface& reader)
+        -> ystdlib::error_handling::Result<std::pair<bool, SchemaTree::Node::id_t>>;
 
 /**
  * @param ir_error_code
@@ -173,13 +167,11 @@ auto deserialize_int(ReaderInterface& reader, integer_t& value) -> bool {
 }
 
 template <typename encoded_variable_t>
-[[nodiscard]] auto
-serialize_clp_string(std::string_view str, std::string& logtype, std::vector<int8_t>& output_buf)
-        -> bool {
-    static_assert(
-            std::is_same_v<encoded_variable_t, clp::ir::eight_byte_encoded_variable_t>
-            || std::is_same_v<encoded_variable_t, clp::ir::four_byte_encoded_variable_t>
-    );
+[[nodiscard]] auto serialize_clp_string(std::string_view str,
+                                        std::string& logtype,
+                                        std::vector<int8_t>& output_buf) -> bool {
+    static_assert(std::is_same_v<encoded_variable_t, clp::ir::eight_byte_encoded_variable_t>
+                  || std::is_same_v<encoded_variable_t, clp::ir::four_byte_encoded_variable_t>);
     bool succeeded{};
     if constexpr (std::is_same_v<encoded_variable_t, clp::ir::four_byte_encoded_variable_t>) {
         output_buf.push_back(cProtocol::Payload::ValueFourByteEncodingClpStr);
@@ -197,16 +189,12 @@ auto get_ones_complement(T int_val) -> T {
     return static_cast<T>(~int_val);
 }
 
-template <
-        bool is_auto_generated_node,
-        int8_t one_byte_length_indicator_tag,
-        int8_t two_byte_length_indicator_tag,
-        int8_t four_byte_length_indicator_tag
->
-auto encode_and_serialize_schema_tree_node_id(
-        SchemaTree::Node::id_t node_id,
-        std::vector<int8_t>& output_buf
-) -> bool {
+template <bool is_auto_generated_node,
+          int8_t one_byte_length_indicator_tag,
+          int8_t two_byte_length_indicator_tag,
+          int8_t four_byte_length_indicator_tag>
+auto encode_and_serialize_schema_tree_node_id(SchemaTree::Node::id_t node_id,
+                                              std::vector<int8_t>& output_buf) -> bool {
     auto size_dependent_encode_and_serialize_schema_tree_node_id
             = [&output_buf,
                &node_id]<SignedIntegerType encoded_node_id_t>(int8_t length_indicator_tag) -> void {
@@ -220,31 +208,25 @@ auto encode_and_serialize_schema_tree_node_id(
 
     if (node_id <= static_cast<SchemaTree::Node::id_t>(INT8_MAX)) {
         size_dependent_encode_and_serialize_schema_tree_node_id.template operator()<int8_t>(
-                one_byte_length_indicator_tag
-        );
+                one_byte_length_indicator_tag);
     } else if (node_id <= static_cast<SchemaTree::Node::id_t>(INT16_MAX)) {
         size_dependent_encode_and_serialize_schema_tree_node_id.template operator()<int16_t>(
-                two_byte_length_indicator_tag
-        );
+                two_byte_length_indicator_tag);
     } else if (node_id <= static_cast<SchemaTree::Node::id_t>(INT32_MAX)) {
         size_dependent_encode_and_serialize_schema_tree_node_id.template operator()<int32_t>(
-                four_byte_length_indicator_tag
-        );
+                four_byte_length_indicator_tag);
     } else {
         return false;
     }
     return true;
 }
 
-template <
-        int8_t one_byte_length_indicator_tag,
-        int8_t two_byte_length_indicator_tag,
-        int8_t four_byte_length_indicator_tag
->
-auto deserialize_and_decode_schema_tree_node_id(
-        encoded_tag_t length_indicator_tag,
-        ReaderInterface& reader
-) -> ystdlib::error_handling::Result<std::pair<bool, SchemaTree::Node::id_t>> {
+template <int8_t one_byte_length_indicator_tag,
+          int8_t two_byte_length_indicator_tag,
+          int8_t four_byte_length_indicator_tag>
+auto deserialize_and_decode_schema_tree_node_id(encoded_tag_t length_indicator_tag,
+                                                ReaderInterface& reader)
+        -> ystdlib::error_handling::Result<std::pair<bool, SchemaTree::Node::id_t>> {
     auto size_dependent_deserialize_and_decode_schema_tree_node_id
             = [&reader]<SignedIntegerType encoded_node_id_t>()
             -> ystdlib::error_handling::Result<std::pair<bool, SchemaTree::Node::id_t>> {

@@ -11,11 +11,9 @@ namespace clp {
  * @tparam VariableDictionaryWriterType The type of the variable dictionary writer.
  */
 template <typename VariableDictionaryWriterType>
-concept VariableDictionaryWriterReq = requires(
-        VariableDictionaryWriterType writer,
-        std::string_view value,
-        variable_dictionary_id_t& id_ref
-) {
+concept VariableDictionaryWriterReq = requires(VariableDictionaryWriterType writer,
+                                               std::string_view value,
+                                               variable_dictionary_id_t& id_ref) {
     /**
      * Adds the given variable to the dictionary if it doesn't exist.
      * @param value

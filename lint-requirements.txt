@@ -1,5 +1,5 @@
 # C++
-clang-format>=21.1.2
+clang-format>=22.1.0
 # Lock to v19.x until we can upgrade our code to fix new v20 issues.
 clang-tidy~=19.1
 

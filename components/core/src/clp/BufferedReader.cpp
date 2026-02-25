@@ -17,18 +17,14 @@ using std::span;
 using std::string;
 
 namespace clp {
-BufferedReader::BufferedReader(
-        std::shared_ptr<ReaderInterface> reader_interface,
-        size_t base_buffer_size
-)
+BufferedReader::BufferedReader(std::shared_ptr<ReaderInterface> reader_interface,
+                               size_t base_buffer_size)
         : m_reader(std::move(reader_interface)) {
     if (nullptr == m_reader) {
-        throw OperationFailed(
-                ErrorCode_BadParam,
-                __FILENAME__,
-                __LINE__,
-                "`reader_interface` cannot be null"
-        );
+        throw OperationFailed(ErrorCode_BadParam,
+                              __FILENAME__,
+                              __LINE__,
+                              "`reader_interface` cannot be null");
     }
     if (base_buffer_size % cMinBufferSize != 0) {
         throw OperationFailed(ErrorCode_BadParam, __FILENAME__, __LINE__);
@@ -160,9 +156,10 @@ auto BufferedReader::try_read(char* buf, size_t num_bytes_to_read, size_t& num_b
     return ErrorCode_Success;
 }
 
-auto
-BufferedReader::try_read_to_delimiter(char delim, bool keep_delimiter, bool append, string& str)
-        -> ErrorCode {
+auto BufferedReader::try_read_to_delimiter(char delim,
+                                           bool keep_delimiter,
+                                           bool append,
+                                           string& str) -> ErrorCode {
     if (false == append) {
         str.clear();
     }
@@ -170,13 +167,11 @@ BufferedReader::try_read_to_delimiter(char delim, bool keep_delimiter, bool appe
     size_t total_num_bytes_read{0};
     while (true) {
         size_t num_bytes_read{0};
-        if (auto ret_code = m_buffer_reader.try_read_to_delimiter(
-                    delim,
-                    keep_delimiter,
-                    str,
-                    found_delim,
-                    num_bytes_read
-            );
+        if (auto ret_code = m_buffer_reader.try_read_to_delimiter(delim,
+                                                                  keep_delimiter,
+                                                                  str,
+                                                                  found_delim,
+                                                                  num_bytes_read);
             ret_code != ErrorCode_Success && ret_code != ErrorCode_EndOfFile)
         {
             return ret_code;
@@ -210,10 +205,8 @@ auto BufferedReader::refill_reader_buffer(size_t num_bytes_to_refill) -> ErrorCo
     size_t next_buffer_pos{0};
     auto next_buffer_begin_pos = m_buffer_begin_in_src_pos;
     if (m_checkpoint_pos.has_value()) {
-        num_bytes_to_read = int_round_up_to_multiple(
-                buffer_end_in_src_pos + num_bytes_to_refill,
-                m_base_buffer_size
-        );
+        num_bytes_to_read = int_round_up_to_multiple(buffer_end_in_src_pos + num_bytes_to_refill,
+                                                     m_base_buffer_size);
         // Grow the buffer if necessary
         if (num_bytes_to_read > available_buffer_space) {
             m_buffer.resize(data_size + num_bytes_to_read);

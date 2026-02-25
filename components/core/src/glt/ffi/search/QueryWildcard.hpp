@@ -31,11 +31,9 @@ public:
     class QueryWildcardOperationFailed : public TraceableException {
     public:
         // Constructors
-        QueryWildcardOperationFailed(
-                ErrorCode error_code,
-                char const* const filename,
-                int line_number
-        )
+        QueryWildcardOperationFailed(ErrorCode error_code,
+                                     char const* const filename,
+                                     int line_number)
                 : TraceableException(error_code, filename, line_number) {}
 
         // Methods

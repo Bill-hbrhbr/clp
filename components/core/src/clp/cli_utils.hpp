@@ -18,8 +18,7 @@ namespace clp {
 void parse_unrecognized_options(
         boost::program_options::options_description const& options_description,
         std::vector<boost::program_options::option> const& options,
-        boost::program_options::variables_map& parsed_options
-);
+        boost::program_options::variables_map& parsed_options);
 }  // namespace clp
 
 #endif  // CLP_CLI_UTILS_HPP

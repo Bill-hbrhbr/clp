@@ -17,8 +17,8 @@ namespace {
  * @param destination
  * @return true if the hex sequence could be converted to UTF-8 and false otherwise.
  */
-[[nodiscard]] auto
-convert_four_byte_hex_to_utf8(std::string_view const hex, std::string& destination) -> bool;
+[[nodiscard]] auto convert_four_byte_hex_to_utf8(std::string_view const hex,
+                                                 std::string& destination) -> bool;
 
 /**
  * Unescapes a KQL key or value with special handling for each case and append the unescaped
@@ -28,15 +28,14 @@ convert_four_byte_hex_to_utf8(std::string_view const hex, std::string& destinati
  * @param is_value
  * @return true if the value was unescaped succesfully and false otherwise.
  */
-[[nodiscard]] auto
-unescape_kql_internal(std::string const& value, std::string& unescaped, bool is_value) -> bool;
+[[nodiscard]] auto unescape_kql_internal(std::string const& value,
+                                         std::string& unescaped,
+                                         bool is_value) -> bool;
 }  // namespace
 
-void splice_into(
-        std::shared_ptr<Expression> const& parent,
-        std::shared_ptr<Expression> const& child,
-        OpList::iterator location
-) {
+void splice_into(std::shared_ptr<Expression> const& parent,
+                 std::shared_ptr<Expression> const& child,
+                 OpList::iterator location) {
     for (auto it = child->op_begin(); it != child->op_end(); it++) {
         auto sub_expr = std::static_pointer_cast<Expression>(*it);
         sub_expr->set_parent(parent.get());
@@ -64,11 +63,9 @@ bool double_as_int(double in, FilterOperation op, int64_t& out) {
     return true;
 }
 
-auto tokenize_column_descriptor(
-        std::string const& descriptor,
-        std::vector<std::string>& tokens,
-        std::string& descriptor_namespace
-) -> bool {
+auto tokenize_column_descriptor(std::string const& descriptor,
+                                std::vector<std::string>& tokens,
+                                std::string& descriptor_namespace) -> bool {
     std::string cur_tok;
     bool escaped{false};
     descriptor_namespace.clear();

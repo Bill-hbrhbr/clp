@@ -37,15 +37,13 @@ struct ArchiveWriterOption {
 class ArchiveStats {
 public:
     // Constructors
-    explicit ArchiveStats(
-            std::string id,
-            epochtime_t begin_timestamp,
-            epochtime_t end_timestamp,
-            size_t uncompressed_size,
-            size_t compressed_size,
-            nlohmann::json range_index,
-            bool is_split
-    )
+    explicit ArchiveStats(std::string id,
+                          epochtime_t begin_timestamp,
+                          epochtime_t end_timestamp,
+                          size_t uncompressed_size,
+                          size_t compressed_size,
+                          nlohmann::json range_index,
+                          bool is_split)
             : m_id{id},
               m_begin_timestamp{begin_timestamp},
               m_end_timestamp{end_timestamp},
@@ -63,14 +61,13 @@ public:
         namespace File = clp::streaming_archive::cMetadataDB::File;
         constexpr std::string_view cRangeIndex{"range_index"};
 
-        nlohmann::json json_msg
-                = {{Archive::Id, m_id},
-                   {Archive::BeginTimestamp, m_begin_timestamp},
-                   {Archive::EndTimestamp, m_end_timestamp},
-                   {Archive::UncompressedSize, m_uncompressed_size},
-                   {Archive::Size, m_compressed_size},
-                   {File::IsSplit, m_is_split},
-                   {cRangeIndex, m_range_index}};
+        nlohmann::json json_msg = {{Archive::Id, m_id},
+                                   {Archive::BeginTimestamp, m_begin_timestamp},
+                                   {Archive::EndTimestamp, m_end_timestamp},
+                                   {Archive::UncompressedSize, m_uncompressed_size},
+                                   {Archive::Size, m_compressed_size},
+                                   {File::IsSplit, m_is_split},
+                                   {cRangeIndex, m_range_index}};
         return json_msg.dump(-1, ' ', false, nlohmann::json::error_handler_t::ignore);
     }
 
@@ -117,12 +114,10 @@ public:
     };
 
     struct SchemaMetadata {
-        SchemaMetadata(
-                uint64_t stream_id,
-                uint64_t stream_offset,
-                int32_t schema_id,
-                uint64_t num_messages
-        )
+        SchemaMetadata(uint64_t stream_id,
+                       uint64_t stream_offset,
+                       int32_t schema_id,
+                       uint64_t num_messages)
                 : stream_id(stream_id),
                   stream_offset(stream_offset),
                   schema_id(schema_id),
@@ -200,12 +195,11 @@ public:
      * @param is_json_literal
      * @return Forwards `TimestampDictionaryWriter::ingest_string_timestamp`'s return values.
      */
-    [[nodiscard]] auto ingest_string_timestamp(
-            std::string_view key,
-            int32_t node_id,
-            std::string_view timestamp,
-            bool is_json_literal
-    ) -> std::pair<epochtime_t, uint64_t> {
+    [[nodiscard]] auto ingest_string_timestamp(std::string_view key,
+                                               int32_t node_id,
+                                               std::string_view timestamp,
+                                               bool is_json_literal)
+            -> std::pair<epochtime_t, uint64_t> {
         return m_timestamp_dict.ingest_string_timestamp(key, node_id, timestamp, is_json_literal);
     }
 
@@ -216,8 +210,9 @@ public:
      * @param timestamp
      * @return Forwards `TimestampDictionaryWriter::ingest_numeric_json_timestamp`'s return values.
      */
-    [[nodiscard]] auto
-    ingest_numeric_json_timestamp(std::string_view key, int32_t node_id, std::string_view timestamp)
+    [[nodiscard]] auto ingest_numeric_json_timestamp(std::string_view key,
+                                                     int32_t node_id,
+                                                     std::string_view timestamp)
             -> std::pair<epochtime_t, uint64_t> {
         return m_timestamp_dict.ingest_numeric_json_timestamp(key, node_id, timestamp);
     }
@@ -230,11 +225,10 @@ public:
      * @return Forwards `TimestampDictionaryWriter::ingest_unknown_precision_epoch_timestamp`'s
      * return values.
      */
-    [[nodiscard]] auto ingest_unknown_precision_epoch_timestamp(
-            std::string_view key,
-            int32_t node_id,
-            int64_t timestamp
-    ) -> std::pair<epochtime_t, uint64_t> {
+    [[nodiscard]] auto ingest_unknown_precision_epoch_timestamp(std::string_view key,
+                                                                int32_t node_id,
+                                                                int64_t timestamp)
+            -> std::pair<epochtime_t, uint64_t> {
         return m_timestamp_dict.ingest_unknown_precision_epoch_timestamp(key, node_id, timestamp);
     }
 
@@ -315,8 +309,8 @@ private:
      * @param files
      * @return The archive range index as a JSON object.
      */
-    [[nodiscard]] auto
-    write_archive_metadata(FileWriter& archive_writer, std::vector<ArchiveFileInfo> const& files)
+    [[nodiscard]] auto write_archive_metadata(FileWriter& archive_writer,
+                                              std::vector<ArchiveFileInfo> const& files)
             -> nlohmann::json;
 
     /**

@@ -22,12 +22,10 @@ public:
     class OperationFailed : public TraceableException {
     public:
         // Constructors
-        OperationFailed(
-                ErrorCode error_code,
-                char const* const filename,
-                int line_number,
-                std::string message = "S3Url operation failed"
-        )
+        OperationFailed(ErrorCode error_code,
+                        char const* const filename,
+                        int line_number,
+                        std::string message = "S3Url operation failed")
                 : TraceableException{error_code, filename, line_number},
                   m_message{std::move(message)} {}
 
@@ -82,11 +80,9 @@ public:
     static constexpr std::string_view cHttpGetMethod{"GET"};
 
     // Constructors
-    AwsAuthenticationSigner(
-            std::string access_key_id,
-            std::string secret_access_key,
-            std::optional<std::string> session_token
-    )
+    AwsAuthenticationSigner(std::string access_key_id,
+                            std::string secret_access_key,
+                            std::optional<std::string> session_token)
             : m_access_key_id{std::move(access_key_id)},
               m_secret_access_key{std::move(secret_access_key)},
               m_session_token{std::move(session_token)} {}
@@ -110,9 +106,8 @@ private:
      * @param timestamp
      * @return The canonical query string.
      */
-    [[nodiscard]] auto
-    get_canonical_query_string(std::string_view scope, std::string_view timestamp) const
-            -> std::string;
+    [[nodiscard]] auto get_canonical_query_string(std::string_view scope,
+                                                  std::string_view timestamp) const -> std::string;
 
     /**
      * Gets the signature signing key for the request.
@@ -122,11 +117,9 @@ private:
      * @return ErrorCode_Success on success.
      * @return Same as `get_hmac_sha256_hash` on Failure.
      */
-    [[nodiscard]] auto get_signing_key(
-            std::string_view region,
-            std::string_view date,
-            std::vector<unsigned char>& signing_key
-    ) const -> ErrorCode;
+    [[nodiscard]] auto get_signing_key(std::string_view region,
+                                       std::string_view date,
+                                       std::vector<unsigned char>& signing_key) const -> ErrorCode;
 
     /**
      * Signs the `string_to_sign` with a generated signing key.
@@ -137,12 +130,10 @@ private:
      * @return ErrorCode_Success on success.
      * @return Same as `get_hmac_sha256_hash` on Failure.
      */
-    [[nodiscard]] auto get_signature(
-            std::string_view region,
-            std::string_view date,
-            std::string_view string_to_sign,
-            std::vector<unsigned char>& signature
-    ) const -> ErrorCode;
+    [[nodiscard]] auto get_signature(std::string_view region,
+                                     std::string_view date,
+                                     std::string_view string_to_sign,
+                                     std::vector<unsigned char>& signature) const -> ErrorCode;
 
     // Variables
     std::string m_access_key_id;

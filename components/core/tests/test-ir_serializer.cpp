@@ -36,42 +36,38 @@ struct TestLogEvent {
 };
 }  // namespace
 
-TEMPLATE_TEST_CASE(
-        "Encode and serialize log events",
-        "[ir][serialize-log-event]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("Encode and serialize log events",
+                   "[ir][serialize-log-event]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
     vector<TestLogEvent> test_log_events;
 
     auto const ts_1 = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-    vector<string> const log_event_1_tokens
-            = {"Here is the first string with a small int ",
-               "4938",
-               " and a medium int ",
-               std::to_string(INT32_MAX),
-               " and a very large int ",
-               std::to_string(INT64_MAX),
-               " and a small float ",
-               "0.1",
-               "\n"};
+    vector<string> const log_event_1_tokens = {"Here is the first string with a small int ",
+                                               "4938",
+                                               " and a medium int ",
+                                               std::to_string(INT32_MAX),
+                                               " and a very large int ",
+                                               std::to_string(INT64_MAX),
+                                               " and a small float ",
+                                               "0.1",
+                                               "\n"};
     auto const log_event_1
             = std::accumulate(log_event_1_tokens.begin(), log_event_1_tokens.end(), string(""));
     test_log_events.push_back({ts_1, log_event_1});
 
     auto const ts_2 = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-    vector<string> const log_event_2_tokens
-            = {"Here is the second string with a medium float ",
-               "-25.519686",
-               " and a high precision float ",
-               "-25.5196868642755",
-               " and a weird float ",
-               "-00.00",
-               " and a string with numbers ",
-               "bin/python2.7.3",
-               " and another string with numbers ",
-               "abc123",
-               "\n"};
+    vector<string> const log_event_2_tokens = {"Here is the second string with a medium float ",
+                                               "-25.519686",
+                                               " and a high precision float ",
+                                               "-25.5196868642755",
+                                               " and a weird float ",
+                                               "-00.00",
+                                               " and a string with numbers ",
+                                               "bin/python2.7.3",
+                                               " and another string with numbers ",
+                                               "abc123",
+                                               "\n"};
     auto const log_event_2
             = std::accumulate(log_event_2_tokens.begin(), log_event_2_tokens.end(), string(""));
     test_log_events.push_back({ts_2, log_event_2});
@@ -91,10 +87,8 @@ TEMPLATE_TEST_CASE(
     ir_reader.open(ir_test_file);
 
     bool uses_four_byte_encoding{false};
-    REQUIRE(
-            (IRErrorCode_Success
-             == clp::ffi::ir_stream::get_encoding_type(ir_reader, uses_four_byte_encoding))
-    );
+    REQUIRE((IRErrorCode_Success
+             == clp::ffi::ir_stream::get_encoding_type(ir_reader, uses_four_byte_encoding)));
     REQUIRE((is_same_v<TestType, four_byte_encoded_variable_t> == uses_four_byte_encoding));
 
     auto result = LogEventDeserializer<TestType>::create(ir_reader);

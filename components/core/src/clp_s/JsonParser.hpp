@@ -79,11 +79,9 @@ private:
      * @param archive_creator_id
      * @return Whether ingestion was successful or not.
      */
-    [[nodiscard]] auto ingest_json(
-            std::shared_ptr<clp::ReaderInterface> reader,
-            Path const& path,
-            std::string const& archive_creator_id
-    ) -> bool;
+    [[nodiscard]] auto ingest_json(std::shared_ptr<clp::ReaderInterface> reader,
+                                   Path const& path,
+                                   std::string const& archive_creator_id) -> bool;
 
     /**
      * Parses KV-IR input and ingests it into the current archive, splitting the archive if it grows
@@ -93,11 +91,9 @@ private:
      * @param archive_creator_id
      * @return Whether ingestion was successful or not.
      */
-    [[nodiscard]] auto ingest_kvir(
-            std::shared_ptr<clp::ReaderInterface> reader,
-            Path const& path,
-            std::string const& archive_creator_id
-    ) -> bool;
+    [[nodiscard]] auto ingest_kvir(std::shared_ptr<clp::ReaderInterface> reader,
+                                   Path const& path,
+                                   std::string const& archive_creator_id) -> bool;
 
     /**
      * Parses a JSON line
@@ -118,8 +114,7 @@ private:
     static auto get_archive_node_type(
             clp::ffi::SchemaTree const& tree,
             std::pair<clp::ffi::SchemaTree::Node::id_t, std::optional<clp::ffi::Value>> const&
-                    kv_pair
-    ) -> NodeType;
+                    kv_pair) -> NodeType;
 
     /**
      * Adjusts the node type used to represent an IR node in an archive based on whether it is a
@@ -142,13 +137,11 @@ private:
      * @return The ID of the node added to the archive's Schema Tree
      */
     template <bool autogen>
-    auto add_node_to_archive_and_translations(
-            uint32_t ir_node_id,
-            clp::ffi::SchemaTree::Node const& ir_node_to_add,
-            NodeType archive_node_type,
-            int32_t parent_node_id,
-            bool matches_timestamp
-    ) -> int32_t;
+    auto add_node_to_archive_and_translations(uint32_t ir_node_id,
+                                              clp::ffi::SchemaTree::Node const& ir_node_to_add,
+                                              NodeType archive_node_type,
+                                              int32_t parent_node_id,
+                                              bool matches_timestamp) -> int32_t;
 
     /**
      * Gets the archive node ID for an IR node.
@@ -160,11 +153,10 @@ private:
      * whether the field should be treated as a timestamp.
      */
     template <bool autogen>
-    auto get_archive_node_id_and_check_timestamp(
-            uint32_t ir_node_id,
-            NodeType archive_node_type,
-            clp::ffi::SchemaTree const& ir_tree
-    ) -> std::pair<int32_t, bool>;
+    auto get_archive_node_id_and_check_timestamp(uint32_t ir_node_id,
+                                                 NodeType archive_node_type,
+                                                 clp::ffi::SchemaTree const& ir_tree)
+            -> std::pair<int32_t, bool>;
 
     /**
      * Parses a subtree (user-gen or auto-gen) of a Key Value Log Event.
@@ -175,8 +167,7 @@ private:
     template <bool autogen>
     void parse_kv_log_event_subtree(
             clp::ffi::KeyValuePairLogEvent::NodeIdValuePairs const& kv_pairs,
-            clp::ffi::SchemaTree const& tree
-    );
+            clp::ffi::SchemaTree const& tree);
 
     /**
      * Parses a Key Value Log Event.
@@ -218,8 +209,8 @@ private:
      * @param reader
      * @return true if the provided ReaderInterface has experienced a CURL error and false otherwise
      */
-    static bool
-    check_and_log_curl_error(Path const& path, std::shared_ptr<clp::ReaderInterface> reader);
+    static bool check_and_log_curl_error(Path const& path,
+                                         std::shared_ptr<clp::ReaderInterface> reader);
 
     std::vector<Path> m_input_paths;
     NetworkAuthOption m_network_auth{};

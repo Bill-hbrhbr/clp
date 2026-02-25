@@ -21,13 +21,11 @@ namespace glt::glt {
  * @param use_heuristic
  * @return true if compression was successful, false otherwise
  */
-bool compress(
-        CommandLineArguments& command_line_args,
-        std::vector<FileToCompress>& files_to_compress,
-        std::vector<std::string> const& empty_directory_paths,
-        std::vector<FileToCompress>& grouped_files_to_compress,
-        size_t target_encoded_file_size
-);
+bool compress(CommandLineArguments& command_line_args,
+              std::vector<FileToCompress>& files_to_compress,
+              std::vector<std::string> const& empty_directory_paths,
+              std::vector<FileToCompress>& grouped_files_to_compress,
+              size_t target_encoded_file_size);
 
 /**
  * Reads a list of grouped files and a list of their IDs
@@ -36,11 +34,9 @@ bool compress(
  * @param grouped_files
  * @return true on success, false otherwise
  */
-bool read_and_validate_grouped_file_list(
-        boost::filesystem::path const& path_prefix_to_remove,
-        std::string const& list_path,
-        std::vector<FileToCompress>& grouped_files
-);
+bool read_and_validate_grouped_file_list(boost::filesystem::path const& path_prefix_to_remove,
+                                         std::string const& list_path,
+                                         std::vector<FileToCompress>& grouped_files);
 }  // namespace glt::glt
 
 #endif  // GLT_GLT_COMPRESSION_HPP

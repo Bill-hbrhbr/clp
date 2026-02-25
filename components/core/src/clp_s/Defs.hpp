@@ -14,12 +14,10 @@ constexpr double cDoubleEpochTimeMax{std::numeric_limits<double>::max()};
 
 using variable_dictionary_id_t = uint64_t;
 constexpr variable_dictionary_id_t cVariableDictionaryIdMax{
-        std::numeric_limits<variable_dictionary_id_t>::max()
-};
+        std::numeric_limits<variable_dictionary_id_t>::max()};
 using logtype_dictionary_id_t = int64_t;
 constexpr logtype_dictionary_id_t cLogtypeDictionaryIdMax{
-        std::numeric_limits<logtype_dictionary_id_t>::max()
-};
+        std::numeric_limits<logtype_dictionary_id_t>::max()};
 
 using archive_format_version_t = uint16_t;
 // This flag is used to maintain two separate streams of archive format versions:

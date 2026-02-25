@@ -92,8 +92,8 @@ private:
      * @param node_id
      * @return true if matching is successful, false otherwise
      */
-    bool
-    populate_column_mapping(std::shared_ptr<ast::ColumnDescriptor> const& column, int32_t node_id);
+    bool populate_column_mapping(std::shared_ptr<ast::ColumnDescriptor> const& column,
+                                 int32_t node_id);
 
     /**
      * Populates the column mapping for a given column
@@ -108,8 +108,7 @@ private:
      * @return The transformed expression
      */
     std::shared_ptr<ast::Expression> populate_column_mapping(
-            std::shared_ptr<ast::Expression> const& cur
-    );
+            std::shared_ptr<ast::Expression> const& cur);
 
     /**
      * Populates the schema mapping
@@ -131,12 +130,10 @@ private:
      * @param first
      * @return true before firstly processing common schemas, false otherwise
      */
-    bool intersect_and_sub_expr(
-            std::shared_ptr<ast::Expression> const& cur,
-            std::set<int32_t>& common_schema,
-            std::set<ast::ColumnDescriptor*>& columns,
-            bool first
-    );
+    bool intersect_and_sub_expr(std::shared_ptr<ast::Expression> const& cur,
+                                std::set<int32_t>& common_schema,
+                                std::set<ast::ColumnDescriptor*>& columns,
+                                bool first);
 
     /**
      * Splits an expression into sub-expressions based on the schemas it searches against
@@ -144,11 +141,9 @@ private:
      * @param queries a map from schema id to expression
      * @param relevant_schemas
      */
-    void split_expression_by_schema(
-            std::shared_ptr<ast::Expression> const& expr,
-            std::map<int32_t, std::shared_ptr<ast::Expression>>& queries,
-            std::unordered_set<int32_t> const& relevant_schemas
-    );
+    void split_expression_by_schema(std::shared_ptr<ast::Expression> const& expr,
+                                    std::map<int32_t, std::shared_ptr<ast::Expression>>& queries,
+                                    std::unordered_set<int32_t> const& relevant_schemas);
 
     /**
      * @param column

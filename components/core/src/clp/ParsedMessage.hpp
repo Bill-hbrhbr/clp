@@ -32,13 +32,11 @@ public:
     void clear();
     void clear_except_ts_patt();
 
-    void set(
-            TimestampPattern const* timestamp_pattern,
-            epochtime_t timestamp,
-            std::string const& line,
-            size_t timestamp_begin_pos,
-            size_t timestamp_end_pos
-    );
+    void set(TimestampPattern const* timestamp_pattern,
+             epochtime_t timestamp,
+             std::string const& line,
+             size_t timestamp_begin_pos,
+             size_t timestamp_end_pos);
     void append_line(std::string const& line);
 
     /**

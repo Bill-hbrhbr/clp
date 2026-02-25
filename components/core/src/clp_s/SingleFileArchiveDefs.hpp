@@ -17,9 +17,9 @@ namespace clp_s {
  * @param patch_version
  * @return The archive version, composed of a major, minor, and patch version.
  */
-constexpr auto
-make_archive_version(uint8_t major_version, uint8_t minor_version, uint16_t patch_version)
-        -> uint32_t {
+constexpr auto make_archive_version(uint8_t major_version,
+                                    uint8_t minor_version,
+                                    uint16_t patch_version) -> uint32_t {
     constexpr uint32_t cMajorVersionOffset{24U};
     constexpr uint32_t cMinorVersionOffset{16U};
     return (static_cast<uint32_t>(major_version) << cMajorVersionOffset)
@@ -46,8 +46,7 @@ constexpr uint8_t cArchiveMajorVersion = 0;
 constexpr uint8_t cArchiveMinorVersion = 5;
 constexpr uint16_t cArchivePatchVersion = 0;
 constexpr uint32_t cArchiveVersion{
-        make_archive_version(cArchiveMajorVersion, cArchiveMinorVersion, cArchivePatchVersion)
-};
+        make_archive_version(cArchiveMajorVersion, cArchiveMinorVersion, cArchivePatchVersion)};
 
 // Format version markers for backwards compatibility.
 constexpr uint32_t cDeprecatedDateStringFormatVersionMarker{make_archive_version(0, 5, 0)};
@@ -58,23 +57,19 @@ constexpr std::array<uint8_t, 4> cStructuredSFAMagicNumber{0xFD, 0x2F, 0xC5, 0x3
 struct ArchiveHeader {
     ArchiveHeader() = default;
 
-    ArchiveHeader(
-            uint32_t version,
-            uint64_t uncompressed_size,
-            uint64_t compressed_size,
-            uint32_t metadata_section_size,
-            uint16_t compression_type
-    )
+    ArchiveHeader(uint32_t version,
+                  uint64_t uncompressed_size,
+                  uint64_t compressed_size,
+                  uint32_t metadata_section_size,
+                  uint16_t compression_type)
             : version{version},
               uncompressed_size{uncompressed_size},
               compressed_size{compressed_size},
               metadata_section_size{metadata_section_size},
               compression_type{compression_type} {
-        std::memcpy(
-                &magic_number,
-                cStructuredSFAMagicNumber.data(),
-                cStructuredSFAMagicNumber.size()
-        );
+        std::memcpy(&magic_number,
+                    cStructuredSFAMagicNumber.data(),
+                    cStructuredSFAMagicNumber.size());
     }
 
     /**

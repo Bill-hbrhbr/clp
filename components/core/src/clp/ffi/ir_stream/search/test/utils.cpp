@@ -44,8 +44,7 @@ auto ColumnQueryPossibleMatches::get_matchable_node_ids_from_literal_type(Litera
 }
 
 auto ColumnQueryPossibleMatches::get_matchable_node_ids_from_schema_tree_type(
-        SchemaTree::Node::Type type
-) const -> std::vector<SchemaTree::Node::id_t> {
+        SchemaTree::Node::Type type) const -> std::vector<SchemaTree::Node::id_t> {
     std::vector<SchemaTree::Node::id_t> node_ids;
     for (auto const node_id : m_matchable_node_ids) {
         if (m_schema_tree->get_node(node_id).get_type() == type) {
@@ -57,18 +56,16 @@ auto ColumnQueryPossibleMatches::get_matchable_node_ids_from_schema_tree_type(
 
 auto ColumnQueryPossibleMatches::serialize() const -> std::string {
     constexpr size_t cBitsetSize{sizeof(m_matchable_types) * 8};
-    return fmt::format(
-            "Types: {}; Node IDs: {{{}}}",
-            std::bitset<cBitsetSize>(m_matchable_types).to_string(),
-            fmt::join(m_matchable_node_ids, ",")
-    );
+    return fmt::format("Types: {}; Node IDs: {{{}}}",
+                       std::bitset<cBitsetSize>(m_matchable_types).to_string(),
+                       fmt::join(m_matchable_node_ids, ","));
 }
 
 auto trivial_new_projected_schema_tree_node_callback(
         [[maybe_unused]] bool is_auto_generated,
         [[maybe_unused]] SchemaTree::Node::id_t node_id,
-        [[maybe_unused]] std::pair<std::string_view, size_t> projected_key_path_and_index
-) -> ystdlib::error_handling::Result<void> {
+        [[maybe_unused]] std::pair<std::string_view, size_t> projected_key_path_and_index)
+        -> ystdlib::error_handling::Result<void> {
     return ystdlib::error_handling::success();
 }
 
@@ -104,27 +101,23 @@ auto get_schema_tree_column_queries(std::shared_ptr<SchemaTree> const& schema_tr
         auto const& node{schema_tree->get_node(node_id)};
         bool const is_parent_query_empty{parent_query.empty()};
         bool const parent_query_end_with_wildcard{
-                is_parent_query_empty ? false : parent_query.back() == '*'
-        };
+                is_parent_query_empty ? false : parent_query.back() == '*'};
 
         if (parent_query_end_with_wildcard) {
             // Handle the trailing wildcard from the parent node
             auto [it, inserted] = column_query_to_possible_matches.try_emplace(
                     parent_query,
-                    ColumnQueryPossibleMatches{schema_tree}
-            );
+                    ColumnQueryPossibleMatches{schema_tree});
             it->second.set_matchable_node(node_id, node.get_type());
             push_all_children_to_stack(node, parent_query);
         }
 
-        auto const query_with_curr_key{
-                parent_query + (is_parent_query_empty ? "" : ".") + std::string{node.get_key_name()}
-        };
+        auto const query_with_curr_key{parent_query + (is_parent_query_empty ? "" : ".")
+                                       + std::string{node.get_key_name()}};
         auto [without_wildcard_it, without_wildcard_inserted]
                 = column_query_to_possible_matches.try_emplace(
                         query_with_curr_key,
-                        ColumnQueryPossibleMatches{schema_tree}
-                );
+                        ColumnQueryPossibleMatches{schema_tree});
         without_wildcard_it->second.set_matchable_node(node_id, node.get_type());
         push_all_children_to_stack(node, query_with_curr_key);
 
@@ -132,8 +125,7 @@ auto get_schema_tree_column_queries(std::shared_ptr<SchemaTree> const& schema_tr
         auto [with_wildcard_it, with_wildcard_inserted]
                 = column_query_to_possible_matches.try_emplace(
                         query_with_trailing_wildcard,
-                        ColumnQueryPossibleMatches{schema_tree}
-                );
+                        ColumnQueryPossibleMatches{schema_tree});
         with_wildcard_it->second.set_matchable_node(node_id, node.get_type());
         push_all_children_to_stack(node, query_with_trailing_wildcard);
     }
@@ -143,8 +135,8 @@ auto get_schema_tree_column_queries(std::shared_ptr<SchemaTree> const& schema_tr
 
 auto operator<<(
         std::ostream& os,
-        std::map<std::string, ColumnQueryPossibleMatches> const& column_query_to_possible_matches
-) -> std::ostream& {
+        std::map<std::string, ColumnQueryPossibleMatches> const& column_query_to_possible_matches)
+        -> std::ostream& {
     for (auto const& [query, possible_matches] : column_query_to_possible_matches) {
         os << fmt::format("Query: {}; {}\n", query, possible_matches.serialize());
     }

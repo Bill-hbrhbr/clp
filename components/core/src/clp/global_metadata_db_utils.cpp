@@ -16,8 +16,7 @@
 namespace clp {
 auto create_global_metadata_db(
         std::optional<GlobalMetadataDBConfig> const& optional_metadata_db_config,
-        std::filesystem::path const& archives_dir
-) -> std::unique_ptr<GlobalMetadataDB> {
+        std::filesystem::path const& archives_dir) -> std::unique_ptr<GlobalMetadataDB> {
     constexpr std::string_view cErrorMsgPrefix = "Failed to load global metadata DB config";
 
     if (false == optional_metadata_db_config.has_value()) {
@@ -37,10 +36,8 @@ auto create_global_metadata_db(
             if (false == metadata_db_username.has_value()
                 || false == metadata_db_password.has_value())
             {
-                SPDLOG_ERROR(
-                        "{}: Global MySQL metadata DB credentials unexpectedly not set.",
-                        cErrorMsgPrefix
-                );
+                SPDLOG_ERROR("{}: Global MySQL metadata DB credentials unexpectedly not set.",
+                             cErrorMsgPrefix);
                 return {};
             }
             return std::make_unique<GlobalMySQLMetadataDB>(
@@ -49,14 +46,11 @@ auto create_global_metadata_db(
                     metadata_db_username.value(),
                     metadata_db_password.value(),
                     metadata_db_config.get_metadata_db_name(),
-                    metadata_db_config.get_metadata_table_prefix()
-            );
+                    metadata_db_config.get_metadata_table_prefix());
         }
         default:
-            SPDLOG_ERROR(
-                    "Unhandled metadata DB type: {}",
-                    static_cast<int>(metadata_db_config.get_metadata_db_type())
-            );
+            SPDLOG_ERROR("Unhandled metadata DB type: {}",
+                         static_cast<int>(metadata_db_config.get_metadata_db_type()));
             return {};
     }
     return {};

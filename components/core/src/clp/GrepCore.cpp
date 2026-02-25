@@ -14,12 +14,10 @@ using clp::string_utils::is_wildcard;
 using std::string;
 
 namespace clp {
-bool GrepCore::get_bounds_of_next_potential_var(
-        string const& value,
-        size_t& begin_pos,
-        size_t& end_pos,
-        bool& is_var
-) {
+bool GrepCore::get_bounds_of_next_potential_var(string const& value,
+                                                size_t& begin_pos,
+                                                size_t& end_pos,
+                                                bool& is_var) {
     auto const value_length = value.length();
     if (end_pos >= value_length) {
         return false;

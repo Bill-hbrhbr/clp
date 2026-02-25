@@ -11,10 +11,8 @@ namespace clp::regex_utils {
  */
 class RegexToWildcardTranslatorConfig {
 public:
-    RegexToWildcardTranslatorConfig(
-            bool case_insensitive_wildcard,
-            bool add_prefix_suffix_wildcards
-    )
+    RegexToWildcardTranslatorConfig(bool case_insensitive_wildcard,
+                                    bool add_prefix_suffix_wildcards)
             : m_case_insensitive_wildcard{case_insensitive_wildcard},
               m_add_prefix_suffix_wildcards{add_prefix_suffix_wildcards} {}
 

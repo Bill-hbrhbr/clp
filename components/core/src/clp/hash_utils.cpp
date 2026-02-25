@@ -50,19 +50,15 @@ public:
     public:
         // Constructors
         OperationFailed(ErrorCode error_code, char const* const filename, int line_number)
-                : OperationFailed(
-                          error_code,
-                          filename,
-                          line_number,
-                          "EvpDigestContext operation failed"
-                  ) {}
+                : OperationFailed(error_code,
+                                  filename,
+                                  line_number,
+                                  "EvpDigestContext operation failed") {}
 
-        OperationFailed(
-                ErrorCode error_code,
-                char const* const filename,
-                int line_number,
-                string message
-        )
+        OperationFailed(ErrorCode error_code,
+                        char const* const filename,
+                        int line_number,
+                        string message)
                 : TraceableException(error_code, filename, line_number),
                   m_message(std::move(message)) {}
 
@@ -89,12 +85,10 @@ public:
         }
         // Set impl to nullptr to use the default implementation of digest type
         if (1 != EVP_DigestInit_ex(m_md_ctx, type, nullptr)) {
-            throw OperationFailed(
-                    ErrorCode_Failure,
-                    __FILENAME__,
-                    __LINE__,
-                    get_openssl_error_string()
-            );
+            throw OperationFailed(ErrorCode_Failure,
+                                  __FILENAME__,
+                                  __LINE__,
+                                  get_openssl_error_string());
         }
     }
 
@@ -150,12 +144,10 @@ auto EvpDigestContext::digest_final(vector<unsigned char>& hash) -> ErrorCode {
     }
 
     if (1 != EVP_DigestInit_ex(m_md_ctx, EVP_get_digestbynid(m_digest_nid), nullptr)) {
-        throw OperationFailed(
-                ErrorCode_Failure,
-                __FILENAME__,
-                __LINE__,
-                get_openssl_error_string()
-        );
+        throw OperationFailed(ErrorCode_Failure,
+                              __FILENAME__,
+                              __LINE__,
+                              get_openssl_error_string());
     }
     return ErrorCode_Success;
 }
@@ -169,11 +161,9 @@ auto convert_to_hex_string(span<unsigned char> input) -> string {
     return hex_string;
 }
 
-auto get_hmac_sha256_hash(
-        span<unsigned char const> input,
-        span<unsigned char const> key,
-        vector<unsigned char>& hash
-) -> ErrorCode {
+auto get_hmac_sha256_hash(span<unsigned char const> input,
+                          span<unsigned char const> key,
+                          vector<unsigned char>& hash) -> ErrorCode {
     if (key.size() > INT32_MAX) {
         return ErrorCode_BadParam;
     }

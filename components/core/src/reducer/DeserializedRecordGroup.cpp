@@ -7,19 +7,15 @@
 namespace reducer {
 DeserializedRecordGroup::DeserializedRecordGroup(std::vector<uint8_t>& serialized_data)
         : m_record_group(nlohmann::json::from_msgpack(serialized_data)),
-          m_record_it(
-                  m_record_group[static_cast<char const*>(cRecordsKey)]
-                          .template get<nlohmann::json::array_t>()
-          ) {
+          m_record_it(m_record_group[static_cast<char const*>(cRecordsKey)]
+                              .template get<nlohmann::json::array_t>()) {
     init_tags_from_json();
 }
 
 DeserializedRecordGroup::DeserializedRecordGroup(char* buf, size_t len)
         : m_record_group(nlohmann::json::from_msgpack(buf, buf + len)),
-          m_record_it(
-                  m_record_group[static_cast<char const*>(cRecordsKey)]
-                          .template get<nlohmann::json::array_t>()
-          ) {
+          m_record_it(m_record_group[static_cast<char const*>(cRecordsKey)]
+                              .template get<nlohmann::json::array_t>()) {
     init_tags_from_json();
 }
 
@@ -31,11 +27,9 @@ void DeserializedRecordGroup::init_tags_from_json() {
     }
 }
 
-std::vector<uint8_t> serialize(
-        GroupTags const& tags,
-        ConstRecordIterator& record_it,
-        std::vector<uint8_t>(serializer)(nlohmann::json const& j)
-) {
+std::vector<uint8_t> serialize(GroupTags const& tags,
+                               ConstRecordIterator& record_it,
+                               std::vector<uint8_t>(serializer)(nlohmann::json const& j)) {
     nlohmann::json json;
     json[static_cast<char const*>(DeserializedRecordGroup::cGroupTagsKey)] = tags;
     auto records = nlohmann::json::array();

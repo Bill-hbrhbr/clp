@@ -94,11 +94,9 @@ public:
      * @return Same as streaming_compression::zstd::Decompressor::try_seek_from_begin
      * @return Same as ReaderInterface::try_read_exact_length
      */
-    ErrorCode get_decompressed_stream_region(
-            size_t decompressed_stream_pos,
-            char* extraction_buf,
-            size_t extraction_len
-    ) override;
+    ErrorCode get_decompressed_stream_region(size_t decompressed_stream_pos,
+                                             char* extraction_buf,
+                                             size_t extraction_len) override;
 
     // Methods
     /***

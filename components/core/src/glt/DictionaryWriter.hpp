@@ -48,11 +48,9 @@ public:
      * @param dictionary_path
      * @param segment_index_path
      */
-    void open(
-            std::string const& dictionary_path,
-            std::string const& segment_index_path,
-            DictionaryIdType max_id
-    );
+    void open(std::string const& dictionary_path,
+              std::string const& segment_index_path,
+              DictionaryIdType max_id);
     /**
      * Closes the dictionary
      */
@@ -69,11 +67,9 @@ public:
      * @param segment_index_path
      * @param max_id
      */
-    void open_and_preload(
-            std::string const& dictionary_path,
-            std::string const& segment_index_path,
-            variable_dictionary_id_t max_id
-    );
+    void open_and_preload(std::string const& dictionary_path,
+                          std::string const& segment_index_path,
+                          variable_dictionary_id_t max_id);
 
     /**
      * Adds the given segment and IDs to the segment index
@@ -126,11 +122,9 @@ protected:
 };
 
 template <typename DictionaryIdType, typename EntryType>
-void DictionaryWriter<DictionaryIdType, EntryType>::open(
-        std::string const& dictionary_path,
-        std::string const& segment_index_path,
-        DictionaryIdType max_id
-) {
+void DictionaryWriter<DictionaryIdType, EntryType>::open(std::string const& dictionary_path,
+                                                         std::string const& segment_index_path,
+                                                         DictionaryIdType max_id) {
     if (m_is_open) {
         throw OperationFailed(ErrorCode_NotReady, __FILENAME__, __LINE__);
     }
@@ -195,8 +189,7 @@ template <typename DictionaryIdType, typename EntryType>
 void DictionaryWriter<DictionaryIdType, EntryType>::open_and_preload(
         std::string const& dictionary_path,
         std::string const& segment_index_path,
-        variable_dictionary_id_t const max_id
-) {
+        variable_dictionary_id_t const max_id) {
     if (m_is_open) {
         throw OperationFailed(ErrorCode_NotReady, __FILENAME__, __LINE__);
     }
@@ -215,15 +208,13 @@ void DictionaryWriter<DictionaryIdType, EntryType>::open_and_preload(
     static_assert(false, "Unsupported compression mode.");
 #endif
     constexpr size_t cDecompressorFileReadBufferCapacity = 64 * 1024;  // 64 KiB
-    open_dictionary_for_reading(
-            dictionary_path,
-            segment_index_path,
-            cDecompressorFileReadBufferCapacity,
-            dictionary_file_reader,
-            dictionary_decompressor,
-            segment_index_file_reader,
-            segment_index_decompressor
-    );
+    open_dictionary_for_reading(dictionary_path,
+                                segment_index_path,
+                                cDecompressorFileReadBufferCapacity,
+                                dictionary_file_reader,
+                                dictionary_decompressor,
+                                segment_index_file_reader,
+                                segment_index_decompressor);
 
     auto num_dictionary_entries = read_dictionary_header(dictionary_file_reader);
     if (num_dictionary_entries > m_max_id) {
@@ -253,17 +244,14 @@ void DictionaryWriter<DictionaryIdType, EntryType>::open_and_preload(
     dictionary_decompressor.close();
     dictionary_file_reader.close();
 
-    m_dictionary_file_writer.open(
-            dictionary_path,
-            FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING
-    );
+    m_dictionary_file_writer.open(dictionary_path,
+                                  FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING);
     // Open compressor
     m_dictionary_compressor.open(m_dictionary_file_writer);
 
     m_segment_index_file_writer.open(
             segment_index_path,
-            FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING
-    );
+            FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING);
     // Open compressor
     m_segment_index_compressor.open(m_segment_index_file_writer);
 
@@ -273,8 +261,7 @@ void DictionaryWriter<DictionaryIdType, EntryType>::open_and_preload(
 template <typename DictionaryIdType, typename EntryType>
 void DictionaryWriter<DictionaryIdType, EntryType>::index_segment(
         segment_id_t segment_id,
-        ArrayBackedPosIntSet<DictionaryIdType> const& ids
-) {
+        ArrayBackedPosIntSet<DictionaryIdType> const& ids) {
     if (false == m_is_open) {
         throw OperationFailed(ErrorCode_NotInit, __FILENAME__, __LINE__);
     }

@@ -53,10 +53,8 @@ auto get_subtree_node_type(std::string_view subtree_type) -> NodeType {
 
 // TODO: write proper iterators on the AST to make this code less awful.
 // In particular schema intersection needs AST iterators and a proper refactor
-SchemaMatch::SchemaMatch(
-        std::shared_ptr<SchemaTree> tree,
-        std::shared_ptr<ReaderUtils::SchemaMap> schemas
-)
+SchemaMatch::SchemaMatch(std::shared_ptr<SchemaTree> tree,
+                         std::shared_ptr<ReaderUtils::SchemaMap> schemas)
         : m_tree(std::move(tree)),
           m_schemas(std::move(schemas)) {}
 
@@ -95,8 +93,7 @@ std::shared_ptr<Expression> SchemaMatch::run(std::shared_ptr<Expression>& expr) 
 }
 
 std::shared_ptr<Expression> SchemaMatch::populate_column_mapping(
-        std::shared_ptr<Expression> const& cur
-) {
+        std::shared_ptr<Expression> const& cur) {
     for (auto it = cur->op_begin(); it != cur->op_end(); it++) {
         if (auto child = std::dynamic_pointer_cast<Expression>(*it)) {
             auto new_child = populate_column_mapping(child);
@@ -134,21 +131,17 @@ std::shared_ptr<Expression> SchemaMatch::populate_column_mapping(
                     // multiple nodes.
                     while (node->get_id()
                            != m_tree->get_object_subtree_node_id_for_namespace(
-                                   column->get_namespace()
-                           ))
+                                   column->get_namespace()))
                     {
                         descriptors.emplace_back(
                                 DescriptorToken::create_descriptor_from_literal_token(
-                                        node->get_key_name()
-                                )
-                        );
+                                        node->get_key_name()));
                         node = &m_tree->get_node(node->get_parent_id());
                     }
                     std::reverse(descriptors.begin(), descriptors.end());
-                    auto resolved_column = ColumnDescriptor::create_from_descriptors(
-                            descriptors,
-                            column->get_namespace()
-                    );
+                    auto resolved_column
+                            = ColumnDescriptor::create_from_descriptors(descriptors,
+                                                                        column->get_namespace());
                     resolved_column->set_matching_type(literal_type);
                     *it = resolved_column;
                     cur->copy_append(possibilities.get());
@@ -211,10 +204,8 @@ bool SchemaMatch::populate_column_mapping(std::shared_ptr<ast::ColumnDescriptor>
     return matched;
 }
 
-bool SchemaMatch::populate_column_mapping(
-        std::shared_ptr<ast::ColumnDescriptor> const& column,
-        int32_t node_id
-) {
+bool SchemaMatch::populate_column_mapping(std::shared_ptr<ast::ColumnDescriptor> const& column,
+                                          int32_t node_id) {
     /**
      * This function is the core of Column Resolution. The general idea is to walk down different
      * branches of the mst while advancing an iterator over the column descriptor in step.
@@ -381,8 +372,7 @@ std::shared_ptr<Expression> SchemaMatch::intersect_schemas(std::shared_ptr<Expre
             for (int32_t schema : common_schema) {
                 if (m_descriptor_to_schema[column].count(schema)) {
                     types |= node_to_literal_type(
-                            m_tree->get_node(m_descriptor_to_schema[column][schema]).get_type()
-                    );
+                            m_tree->get_node(m_descriptor_to_schema[column][schema]).get_type());
                 }
             }
             column->set_matching_types(types);
@@ -394,8 +384,7 @@ std::shared_ptr<Expression> SchemaMatch::intersect_schemas(std::shared_ptr<Expre
             for (auto column : columns) {
                 if (false == column->is_pure_wildcard()) {
                     m_schema_to_searched_columns[schema].insert(
-                            get_column_id_for_descriptor(column, schema)
-                    );
+                            get_column_id_for_descriptor(column, schema));
                 }
             }
         }
@@ -412,12 +401,10 @@ std::shared_ptr<Expression> SchemaMatch::intersect_schemas(std::shared_ptr<Expre
     return cur;
 }
 
-bool SchemaMatch::intersect_and_sub_expr(
-        std::shared_ptr<Expression> const& cur,
-        std::set<int32_t>& common_schema,
-        std::set<ColumnDescriptor*>& columns,
-        bool first
-) {
+bool SchemaMatch::intersect_and_sub_expr(std::shared_ptr<Expression> const& cur,
+                                         std::set<int32_t>& common_schema,
+                                         std::set<ColumnDescriptor*>& columns,
+                                         bool first) {
     // Note: EmptyExpr are already constant propogated out of the ands, so don't
     // need to check for them here
     for (auto it = cur->op_begin(); it != cur->op_end(); it++) {
@@ -482,8 +469,7 @@ bool SchemaMatch::intersect_and_sub_expr(
 void SchemaMatch::split_expression_by_schema(
         std::shared_ptr<Expression> const& expr,
         std::map<int32_t, std::shared_ptr<Expression>>& queries,
-        std::unordered_set<int32_t> const& relevant_schemas
-) {
+        std::unordered_set<int32_t> const& relevant_schemas) {
     if (auto filter = std::dynamic_pointer_cast<FilterExpr>(expr)) {
         for (int32_t schema_id : relevant_schemas) {
             auto new_filter = filter->copy();
@@ -535,11 +521,9 @@ void SchemaMatch::split_expression_by_schema(
         std::map<int32_t, std::shared_ptr<Expression>> sub_expressions;
         for (auto const& op : expr->get_op_list()) {
             auto sub_expr = std::static_pointer_cast<Expression>(op);
-            split_expression_by_schema(
-                    sub_expr,
-                    sub_expressions,
-                    m_expression_to_schemas.at(sub_expr.get())
-            );
+            split_expression_by_schema(sub_expr,
+                                       sub_expressions,
+                                       m_expression_to_schemas.at(sub_expr.get()));
 
             for (auto const& it : sub_expressions) {
                 if (queries.count(it.first)) {
@@ -594,8 +578,7 @@ bool SchemaMatch::has_array_search(int32_t schema_id) {
 
 LiteralType SchemaMatch::get_literal_type_for_column(ColumnDescriptor* column, int32_t schema) {
     return node_to_literal_type(
-            m_tree->get_node(get_column_id_for_descriptor(column, schema)).get_type()
-    );
+            m_tree->get_node(get_column_id_for_descriptor(column, schema)).get_type());
 }
 
 std::shared_ptr<Expression> SchemaMatch::get_query_for_schema(int32_t schema) {

@@ -66,13 +66,11 @@ public:
     // Constructor
     SchemaNode() : m_parent_id(-1), m_id(-1), m_type(NodeType::Integer), m_count(0) {}
 
-    SchemaNode(
-            int32_t parent_id,
-            int32_t id,
-            std::string_view const key_name,
-            NodeType type,
-            int32_t depth
-    )
+    SchemaNode(int32_t parent_id,
+               int32_t id,
+               std::string_view const key_name,
+               NodeType type,
+               int32_t depth)
             : m_parent_id(parent_id),
               m_id(id),
               m_key_name_buf(std::make_unique<char[]>(key_name.size())),
@@ -209,11 +207,9 @@ public:
      * @param subtree_type The type of the ancestor node to find
      * @return The ID of the ancestor node if it exists, otherwise -1
      */
-    [[nodiscard]] int32_t find_matching_subtree_root_in_subtree(
-            int32_t const subtree_root_node,
-            int32_t node,
-            NodeType type
-    ) const;
+    [[nodiscard]] int32_t find_matching_subtree_root_in_subtree(int32_t const subtree_root_node,
+                                                                int32_t node,
+                                                                NodeType type) const;
 
 private:
     std::vector<SchemaNode> m_nodes;

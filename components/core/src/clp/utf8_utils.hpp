@@ -62,13 +62,11 @@ namespace utf8_utils_internal {
  * character.
  * @return Whether the input byte is a valid lead byte for a multi-byte UTF-8 character.
  */
-[[nodiscard]] auto parse_and_validate_lead_byte(
-        uint8_t byte,
-        size_t& num_continuation_bytes,
-        uint32_t& code_point,
-        uint32_t& code_point_lower_bound,
-        uint32_t& code_point_upper_bound
-) -> bool;
+[[nodiscard]] auto parse_and_validate_lead_byte(uint8_t byte,
+                                                size_t& num_continuation_bytes,
+                                                uint32_t& code_point,
+                                                uint32_t& code_point_lower_bound,
+                                                uint32_t& code_point_upper_bound) -> bool;
 
 /**
  * @param byte
@@ -113,8 +111,7 @@ auto validate_utf8_string(std::string_view src, EscapeHandler escape_handler) ->
                                num_continuation_bytes_to_validate,
                                code_point,
                                code_point_lower_bound,
-                               code_point_upper_bound
-                       ))
+                               code_point_upper_bound))
             {
                 return false;
             }

@@ -30,17 +30,15 @@ constexpr std::string_view cTimestampSchema{
         R"(((Jan(uary){0,1})|(Feb(ruary){0,1})|(Mar(ch){0,1})|(Apr(il){0,1})|(May)|(Jun(e){0,1})|)"
         R"((Jul(y){0,1})|(Aug(ust){0,1})|(Sep(tember){0,1})|(Oct(ober){0,1})|(Nov(ember){0,1})|)"
         R"((Dec(ember){0,1}))[ /\-]\d{2,4}))[ T:][ 0-9]{2}:[ 0-9]{2}:[ 0-9]{2})"
-        R"(([,\.:]\d{1,9}){0,1}([ ]{0,1}(UTC){0,1}[\+\-]\d{2}(:{0,1}\d{2}){0,1}Z{0,1}){0,1}))"
-};
+        R"(([,\.:]\d{1,9}){0,1}([ ]{0,1}(UTC){0,1}[\+\-]\d{2}(:{0,1}\d{2}){0,1}Z{0,1}){0,1}))"};
 
 constexpr std::string_view cDelimiters{R"(delimiters: \t\r\n[(:)"};
 }  // namespace
 
-auto LogConverter::convert_file(
-        clp_s::Path const& path,
-        clp::ReaderInterface* reader,
-        std::string_view output_dir
-) -> ystdlib::error_handling::Result<void> {
+auto LogConverter::convert_file(clp_s::Path const& path,
+                                clp::ReaderInterface* reader,
+                                std::string_view output_dir)
+        -> ystdlib::error_handling::Result<void> {
     log_surgeon::Schema schema;
     schema.add_delimiters(cDelimiters);
     schema.add_variable(cTimestampSchema, -1);
@@ -59,12 +57,10 @@ auto LogConverter::convert_file(
         reached_end_of_stream = 0ULL == num_bytes_read;
 
         while (m_parser_offset < m_num_bytes_buffered) {
-            auto const err{parser.parse_next_event(
-                    m_buffer.data(),
-                    m_num_bytes_buffered,
-                    m_parser_offset,
-                    reached_end_of_stream
-            )};
+            auto const err{parser.parse_next_event(m_buffer.data(),
+                                                   m_num_bytes_buffered,
+                                                   m_parser_offset,
+                                                   reached_end_of_stream)};
             if (log_surgeon::ErrorCode::BufferOutOfBounds == err) {
                 break;
             }
@@ -76,11 +72,9 @@ auto LogConverter::convert_file(
             auto const message{event.to_string()};
             if (auto timestamp{event.get_timestamp()}; timestamp.has_value()) {
                 auto const message_without_timestamp{
-                        std::string_view{message}.substr(timestamp->length())
-                };
-                YSTDLIB_ERROR_HANDLING_TRYV(
-                        serializer.add_message(timestamp.value(), message_without_timestamp)
-                );
+                        std::string_view{message}.substr(timestamp->length())};
+                YSTDLIB_ERROR_HANDLING_TRYV(serializer.add_message(timestamp.value(),
+                                                                   message_without_timestamp));
             } else {
                 YSTDLIB_ERROR_HANDLING_TRYV(serializer.add_message(message));
             }
@@ -97,11 +91,9 @@ auto LogConverter::refill_buffer(clp::ReaderInterface* reader)
 
     size_t num_bytes_read{};
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    auto const rc{reader->try_read(
-            m_buffer.data() + m_num_bytes_buffered,
-            m_buffer.size() - m_num_bytes_buffered,
-            num_bytes_read
-    )};
+    auto const rc{reader->try_read(m_buffer.data() + m_num_bytes_buffered,
+                                   m_buffer.size() - m_num_bytes_buffered,
+                                   num_bytes_read)};
     // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     m_num_bytes_buffered += num_bytes_read;
     if (clp::ErrorCode_EndOfFile == rc) {
@@ -120,11 +112,9 @@ void LogConverter::compact_buffer() {
     }
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    std::memmove(
-            m_buffer.data(),
-            m_buffer.data() + m_parser_offset,
-            m_num_bytes_buffered - m_parser_offset
-    );
+    std::memmove(m_buffer.data(),
+                 m_buffer.data() + m_parser_offset,
+                 m_num_bytes_buffered - m_parser_offset);
     // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     m_num_bytes_buffered -= m_parser_offset;
     m_parser_offset = 0;

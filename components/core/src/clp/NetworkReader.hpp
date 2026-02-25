@@ -109,8 +109,7 @@ public:
             size_t buffer_pool_size = cDefaultBufferPoolSize,
             size_t buffer_size = cDefaultBufferSize,
             std::optional<std::unordered_map<std::string, std::string>> http_header_kv_pairs
-            = std::nullopt
-    );
+            = std::nullopt);
 
     // Destructor
     ~NetworkReader() override;
@@ -255,8 +254,7 @@ private:
                 NetworkReader& reader,
                 size_t offset,
                 bool disable_caching,
-                std::optional<std::unordered_map<std::string, std::string>> http_header_kv_pairs
-        )
+                std::optional<std::unordered_map<std::string, std::string>> http_header_kv_pairs)
                 : m_reader{reader},
                   m_offset{offset},
                   m_disable_caching{disable_caching},
@@ -306,9 +304,9 @@ private:
      * @return ErrorCode_EndOfFile if the buffer doesn't contain any more data.
      * @return ErrorCode_Success on success.
      */
-    [[nodiscard]] auto
-    read_from_filled_buffers(size_t num_bytes_to_read, size_t& num_bytes_read, char* dst)
-            -> ErrorCode;
+    [[nodiscard]] auto read_from_filled_buffers(size_t num_bytes_to_read,
+                                                size_t& num_bytes_read,
+                                                char* dst) -> ErrorCode;
 
     /**
      * Sets the download completion status with the return code from curl.
@@ -362,8 +360,7 @@ private:
     std::atomic<std::optional<CURLcode>> m_curl_ret_code;
 
     std::shared_ptr<CurlDownloadHandler::ErrorMsgBuf> m_curl_error_msg_buf{
-            std::make_shared<CurlDownloadHandler::ErrorMsgBuf>()
-    };
+            std::make_shared<CurlDownloadHandler::ErrorMsgBuf>()};
 };
 }  // namespace clp
 

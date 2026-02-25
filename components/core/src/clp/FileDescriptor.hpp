@@ -29,12 +29,10 @@ public:
 
     class OperationFailed : public TraceableException {
     public:
-        OperationFailed(
-                ErrorCode error_code,
-                char const* const filename,
-                int line_number,
-                std::string msg
-        )
+        OperationFailed(ErrorCode error_code,
+                        char const* const filename,
+                        int line_number,
+                        std::string msg)
                 : TraceableException{error_code, filename, line_number},
                   m_msg{std::move(msg)} {}
 
@@ -54,11 +52,9 @@ public:
     };
 
     // Constructors
-    FileDescriptor(
-            std::string_view path,
-            OpenMode open_mode,
-            CloseFailureCallback close_failure_callback = nullptr
-    );
+    FileDescriptor(std::string_view path,
+                   OpenMode open_mode,
+                   CloseFailureCallback close_failure_callback = nullptr);
 
     // Destructor
     ~FileDescriptor();

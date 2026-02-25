@@ -52,17 +52,14 @@ auto get_test_input_path_relative_to_tests_dir(std::string_view test_input_path)
         -> std::filesystem::path;
 auto get_test_input_local_path(std::string_view test_input_path) -> std::string;
 auto create_first_record_match_metadata_query() -> std::shared_ptr<clp_s::search::ast::Expression>;
-void
-search(std::string const& query, bool ignore_case, std::vector<int64_t> const& expected_results);
-void search(
-        std::shared_ptr<clp_s::search::ast::Expression> expr,
-        bool ignore_case,
-        std::vector<int64_t> const& expected_results
-);
-void validate_results(
-        std::vector<clp_s::VectorOutputHandler::QueryResult> const& results,
-        std::vector<int64_t> const& expected_results
-);
+void search(std::string const& query,
+            bool ignore_case,
+            std::vector<int64_t> const& expected_results);
+void search(std::shared_ptr<clp_s::search::ast::Expression> expr,
+            bool ignore_case,
+            std::vector<int64_t> const& expected_results);
+void validate_results(std::vector<clp_s::VectorOutputHandler::QueryResult> const& results,
+                      std::vector<int64_t> const& expected_results);
 
 auto get_test_input_path_relative_to_tests_dir(std::string_view test_input_path)
         -> std::filesystem::path {
@@ -81,38 +78,30 @@ auto create_first_record_match_metadata_query() -> std::shared_ptr<clp_s::search
     auto column_with_no_subtree_type
             = clp_s::search::ast::ColumnDescriptor::create_from_escaped_tokens(
                     {std::string{clp_s::constants::cLogEventIdxName}},
-                    std::string{clp_s::constants::cDefaultNamespace}
-            );
+                    std::string{clp_s::constants::cDefaultNamespace});
     auto column_with_object_subtree_type = column_with_no_subtree_type->copy();
     column_with_object_subtree_type->set_subtree_type(
-            std::string{clp_s::constants::cObjectSubtreeType}
-    );
+            std::string{clp_s::constants::cObjectSubtreeType});
     auto column_with_metadata_subtree_type = column_with_no_subtree_type->copy();
     column_with_metadata_subtree_type->set_subtree_type(
-            std::string{clp_s::constants::cMetadataSubtreeType}
-    );
+            std::string{clp_s::constants::cMetadataSubtreeType});
     auto const op = clp_s::search::ast::FilterOperation::EQ;
-    auto matching_filter = clp_s::search::ast::FilterExpr::create(
-            column_with_metadata_subtree_type,
-            op,
-            zero_literal
-    );
+    auto matching_filter = clp_s::search::ast::FilterExpr::create(column_with_metadata_subtree_type,
+                                                                  op,
+                                                                  zero_literal);
     auto non_matching_filter
             = clp_s::search::ast::FilterExpr::create(column_with_no_subtree_type, op, one_literal);
-    auto object_subtree_non_matching_filter = clp_s::search::ast::FilterExpr::create(
-            column_with_object_subtree_type,
-            op,
-            one_literal
-    );
+    auto object_subtree_non_matching_filter
+            = clp_s::search::ast::FilterExpr::create(column_with_object_subtree_type,
+                                                     op,
+                                                     one_literal);
     auto expr = clp_s::search::ast::OrExpr::create(matching_filter, non_matching_filter);
     expr->add_operand(object_subtree_non_matching_filter);
     return expr;
 }
 
-void validate_results(
-        std::vector<clp_s::VectorOutputHandler::QueryResult> const& results,
-        std::vector<int64_t> const& expected_results
-) {
+void validate_results(std::vector<clp_s::VectorOutputHandler::QueryResult> const& results,
+                      std::vector<int64_t> const& expected_results) {
     std::set<int64_t> results_set;
     bool results_are_valid_json = true;
     for (auto const& result : results) {
@@ -129,18 +118,17 @@ void validate_results(
     REQUIRE(results.size() == expected_results.size());
 }
 
-void
-search(std::string const& query, bool ignore_case, std::vector<int64_t> const& expected_results) {
+void search(std::string const& query,
+            bool ignore_case,
+            std::vector<int64_t> const& expected_results) {
     auto query_stream = std::istringstream{query};
     auto expr = clp_s::search::kql::parse_kql_expression(query_stream);
     search(expr, ignore_case, expected_results);
 }
 
-void search(
-        std::shared_ptr<clp_s::search::ast::Expression> expr,
-        bool ignore_case,
-        std::vector<int64_t> const& expected_results
-) {
+void search(std::shared_ptr<clp_s::search::ast::Expression> expr,
+            bool ignore_case,
+            std::vector<int64_t> const& expected_results) {
     REQUIRE(nullptr != expr);
     REQUIRE(nullptr == std::dynamic_pointer_cast<clp_s::search::ast::EmptyExpr>(expr));
 
@@ -159,18 +147,15 @@ void search(
     std::vector<clp_s::VectorOutputHandler::QueryResult> results;
     for (auto const& entry : std::filesystem::directory_iterator(cTestSearchArchiveDirectory)) {
         auto archive_reader = std::make_shared<clp_s::ArchiveReader>();
-        auto archive_path = clp_s::Path{
-                .source{clp_s::InputSource::Filesystem},
-                .path{entry.path().string()}
-        };
+        auto archive_path = clp_s::Path{.source{clp_s::InputSource::Filesystem},
+                                        .path{entry.path().string()}};
         archive_reader->open(archive_path, clp_s::NetworkAuthOption{});
 
         auto archive_expr = expr->copy();
 
         clp_s::search::EvaluateRangeIndexFilters metadata_filter_pass{
                 archive_reader->get_range_index(),
-                false == ignore_case
-        };
+                false == ignore_case};
         archive_expr = metadata_filter_pass.run(archive_expr);
         REQUIRE(nullptr != archive_expr);
         REQUIRE(nullptr == std::dynamic_pointer_cast<clp_s::search::ast::EmptyExpr>(archive_expr));
@@ -179,21 +164,18 @@ void search(
         clp_s::search::EvaluateTimestampIndex timestamp_index_pass(timestamp_dict);
         REQUIRE(clp_s::EvaluatedValue::False != timestamp_index_pass.run(archive_expr));
 
-        auto match_pass = std::make_shared<clp_s::search::SchemaMatch>(
-                archive_reader->get_schema_tree(),
-                archive_reader->get_schema_map()
-        );
+        auto match_pass
+                = std::make_shared<clp_s::search::SchemaMatch>(archive_reader->get_schema_tree(),
+                                                               archive_reader->get_schema_map());
         archive_expr = match_pass->run(archive_expr);
         REQUIRE(nullptr != archive_expr);
 
         auto output_handler = std::make_unique<clp_s::VectorOutputHandler>(results);
-        clp_s::search::Output output_pass(
-                match_pass,
-                archive_expr,
-                archive_reader,
-                std::move(output_handler),
-                ignore_case
-        );
+        clp_s::search::Output output_pass(match_pass,
+                                          archive_expr,
+                                          archive_reader,
+                                          std::move(output_handler),
+                                          ignore_case);
         output_pass.filter();
         archive_reader->close();
     }
@@ -215,11 +197,9 @@ TEST_CASE("clp-s-search", "[clp-s][search]") {
             {R"aa(arr.b > 1000)aa", {7, 8}},
             {R"aa(var_string: *)aa", {9}},
             {R"aa(clp_string: *)aa", {9}},
-            {fmt::format(
-                     R"aa($_filename: "{}" AND $_file_split_number: 0 AND )aa"
-                     R"aa($_archive_creator_id: * AND idx: 0)aa",
-                     get_test_input_local_path(cTestSearchInputFile)
-             ),
+            {fmt::format(R"aa($_filename: "{}" AND $_file_split_number: 0 AND )aa"
+                         R"aa($_archive_creator_id: * AND idx: 0)aa",
+                         get_test_input_local_path(cTestSearchInputFile)),
              {0}},
             {R"aa(idx: 0 AND NOT $_filename: "clp string")aa", {0}},
             {R"aa(idx: 0 AND NOT $*._filename.*: "clp string")aa", {0}},
@@ -229,23 +209,18 @@ TEST_CASE("clp-s-search", "[clp-s][search]") {
             {R"aa(ambiguous_varstring: "a*e")aa", {10, 11, 12}},
             {R"aa(ambiguous_varstring: "a\*e")aa", {12}},
             {R"aa(idx: * AND NOT idx: null AND idx: 0)aa", {0}},
-            {R"aa(one > 0.9 AND one < 1.1 AND one: 1.0)aa", {13}}
-    };
+            {R"aa(one > 0.9 AND one < 1.1 AND one: 1.0)aa", {13}}};
     auto structurize_arrays = GENERATE(true, false);
     auto single_file_archive = GENERATE(true, false);
 
     TestOutputCleaner const test_cleanup{{std::string{cTestSearchArchiveDirectory}}};
 
-    REQUIRE_NOTHROW(
-            std::ignore = compress_archive(
-                    get_test_input_local_path(cTestSearchInputFile),
-                    std::string{cTestSearchArchiveDirectory},
-                    std::string{cTestIdxKey},
-                    false,
-                    single_file_archive,
-                    structurize_arrays
-            )
-    );
+    REQUIRE_NOTHROW(std::ignore = compress_archive(get_test_input_local_path(cTestSearchInputFile),
+                                                   std::string{cTestSearchArchiveDirectory},
+                                                   std::string{cTestIdxKey},
+                                                   false,
+                                                   single_file_archive,
+                                                   structurize_arrays));
 
     for (auto const& [query, expected_results] : queries_and_results) {
         CAPTURE(query);
@@ -267,22 +242,18 @@ TEST_CASE("clp-s-search-formatted-float", "[clp-s][search]") {
             {R"aa(formattedFloatValue < 0.00 AND formattedFloatValue >= -0.01)aa", {1, 2}},
             {R"aa(idx: 0 AND NOT formattedFloatValue: -1000.0)aa", {}},
             {R"aa(msg: "xxx" AND formattedFloatValue: 3000.0)aa", {}},
-            {R"aa(msg: "xxx" OR formattedFloatValue: 3000.0)aa", {0, 9}}
-    };
+            {R"aa(msg: "xxx" OR formattedFloatValue: 3000.0)aa", {0, 9}}};
     auto single_file_archive = GENERATE(true, false);
 
     TestOutputCleaner const test_cleanup{{std::string{cTestSearchArchiveDirectory}}};
 
-    REQUIRE_NOTHROW(
-            std::ignore = compress_archive(
-                    get_test_input_local_path(cTestSearchFormattedFloatFile),
-                    std::string{cTestSearchArchiveDirectory},
-                    std::nullopt,
-                    true,
-                    single_file_archive,
-                    false
-            )
-    );
+    REQUIRE_NOTHROW(std::ignore
+                    = compress_archive(get_test_input_local_path(cTestSearchFormattedFloatFile),
+                                       std::string{cTestSearchArchiveDirectory},
+                                       std::nullopt,
+                                       true,
+                                       single_file_archive,
+                                       false));
 
     for (auto const& [query, expected_results] : queries_and_results) {
         CAPTURE(query);
@@ -301,23 +272,19 @@ TEST_CASE("clp-s-search-float-timestamp", "[clp-s][search]") {
             {R"aa(timestamp > timestamp("1759417024"))aa", {0, 1, 2}},
             {R"aa(timestamp > timestamp("1759417024.1") AND )aa"
              R"aa(timestamp < timestamp("1759417024.3"))aa",
-             {1}}
-    };
+             {1}}};
     auto single_file_archive = GENERATE(true, false);
     auto retain_float_format = GENERATE(true, false);
 
     TestOutputCleaner const test_cleanup{{std::string{cTestSearchArchiveDirectory}}};
 
-    REQUIRE_NOTHROW(
-            std::ignore = compress_archive(
-                    get_test_input_local_path(cTestSearchFloatTimestampFile),
-                    std::string{cTestSearchArchiveDirectory},
-                    std::string{cTestTimestampKey},
-                    retain_float_format,
-                    single_file_archive,
-                    false
-            )
-    );
+    REQUIRE_NOTHROW(std::ignore
+                    = compress_archive(get_test_input_local_path(cTestSearchFloatTimestampFile),
+                                       std::string{cTestSearchArchiveDirectory},
+                                       std::string{cTestTimestampKey},
+                                       retain_float_format,
+                                       single_file_archive,
+                                       false));
 
     for (auto const& [query, expected_results] : queries_and_results) {
         CAPTURE(query);
@@ -333,22 +300,18 @@ TEST_CASE("clp-s-search-epoch-timestamp", "[clp-s][search]") {
             {R"aa(timestamp > timestamp("1759417024100") AND )aa"
              R"aa(timestamp < timestamp("1759417024300"))aa",
              {1}},
-            {R"aa(timestamp > timestamp("1759417024.299"))aa", {2}}
-    };
+            {R"aa(timestamp > timestamp("1759417024.299"))aa", {2}}};
     auto single_file_archive = GENERATE(true, false);
 
     TestOutputCleaner const test_cleanup{{std::string{cTestSearchArchiveDirectory}}};
 
-    REQUIRE_NOTHROW(
-            std::ignore = compress_archive(
-                    get_test_input_local_path(cTestSearchIntTimestampFile),
-                    std::string{cTestSearchArchiveDirectory},
-                    std::string{cTestTimestampKey},
-                    true,
-                    single_file_archive,
-                    false
-            )
-    );
+    REQUIRE_NOTHROW(std::ignore
+                    = compress_archive(get_test_input_local_path(cTestSearchIntTimestampFile),
+                                       std::string{cTestSearchArchiveDirectory},
+                                       std::string{cTestTimestampKey},
+                                       true,
+                                       single_file_archive,
+                                       false));
 
     for (auto const& [query, expected_results] : queries_and_results) {
         CAPTURE(query);

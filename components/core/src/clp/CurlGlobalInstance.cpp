@@ -12,13 +12,11 @@ CurlGlobalInstance::CurlGlobalInstance() {
     std::scoped_lock const global_lock{m_ref_count_mutex};
     if (0 == m_ref_count) {
         if (auto const err{curl_global_init(CURL_GLOBAL_ALL)}; 0 != err) {
-            throw CurlOperationFailed(
-                    ErrorCode_Failure,
-                    __FILE__,
-                    __LINE__,
-                    err,
-                    "`curl_global_init` failed."
-            );
+            throw CurlOperationFailed(ErrorCode_Failure,
+                                      __FILE__,
+                                      __LINE__,
+                                      err,
+                                      "`curl_global_init` failed.");
         }
     }
     ++m_ref_count;

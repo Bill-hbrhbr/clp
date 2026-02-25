@@ -19,10 +19,8 @@ public:
     // Constructors
     explicit QueryVar(encoded_variable_t precise_non_dict_var);
     QueryVar(encoded_variable_t precise_dict_var, variable_dictionary_id_t var_dict_id);
-    QueryVar(
-            std::unordered_set<encoded_variable_t> const& possible_dict_vars,
-            std::unordered_set<variable_dictionary_id_t> const& possible_var_dict_ids
-    );
+    QueryVar(std::unordered_set<encoded_variable_t> const& possible_dict_vars,
+             std::unordered_set<variable_dictionary_id_t> const& possible_var_dict_ids);
 
     // Methods
     auto operator==(QueryVar const& rhs) const -> bool = default;
@@ -42,8 +40,7 @@ public:
     void remove_segments_that_dont_contain_dict_var(
             std::set<segment_id_t>& segment_ids,
             std::function<std::set<segment_id_t> const&(variable_dictionary_id_t)> const&
-                    get_segments_containing_var_dict_id
-    ) const;
+                    get_segments_containing_var_dict_id) const;
 
     bool is_precise_var() const { return m_is_precise_var; }
 
@@ -98,8 +95,7 @@ public:
      */
     void add_imprecise_dict_var(
             std::unordered_set<encoded_variable_t> const& possible_dict_vars,
-            std::unordered_set<variable_dictionary_id_t> const& possible_var_dict_ids
-    );
+            std::unordered_set<variable_dictionary_id_t> const& possible_var_dict_ids);
     /**
      * Add a set of possible logtypes to the subquery
      * @param logtype_ids
@@ -117,8 +113,7 @@ public:
             std::function<std::set<segment_id_t> const&(logtype_dictionary_id_t)> const&
                     get_segments_containing_logtype_dict_id,
             std::function<std::set<segment_id_t> const&(variable_dictionary_id_t)> const&
-                    get_segments_containing_var_dict_id
-    );
+                    get_segments_containing_var_dict_id);
 
     void clear();
 
@@ -224,8 +219,7 @@ public:
             std::function<std::set<segment_id_t> const&(logtype_dictionary_id_t)> const&
                     get_segments_containing_logtype_dict_id,
             std::function<std::set<segment_id_t> const&(variable_dictionary_id_t)> const&
-                    get_segments_containing_var_dict_id
-    );
+                    get_segments_containing_var_dict_id);
 
 private:
     // Variables

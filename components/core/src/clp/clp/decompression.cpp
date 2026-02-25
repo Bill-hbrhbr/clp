@@ -23,10 +23,8 @@ using std::unique_ptr;
 using std::unordered_set;
 
 namespace clp::clp {
-bool decompress(
-        CommandLineArguments& command_line_args,
-        unordered_set<string> const& files_to_decompress
-) {
+bool decompress(CommandLineArguments& command_line_args,
+                unordered_set<string> const& files_to_decompress) {
     ErrorCode error_code;
 
     // Create output directory in case it doesn't exist
@@ -41,10 +39,9 @@ bool decompress(
 
     try {
         auto archives_dir = std::filesystem::path(command_line_args.get_archives_dir());
-        auto global_metadata_db = create_global_metadata_db(
-                command_line_args.get_metadata_db_config(),
-                archives_dir
-        );
+        auto global_metadata_db
+                = create_global_metadata_db(command_line_args.get_metadata_db_config(),
+                                            archives_dir);
         if (nullptr == global_metadata_db) {
             return false;
         }
@@ -61,8 +58,7 @@ bool decompress(
         global_metadata_db->open();
         if (files_to_decompress.empty()) {
             for (auto archive_ix = std::unique_ptr<GlobalMetadataDB::ArchiveIterator>(
-                         global_metadata_db->get_archive_iterator()
-                 );
+                         global_metadata_db->get_archive_iterator());
                  archive_ix->contains_element();
                  archive_ix->get_next())
             {
@@ -70,11 +66,9 @@ bool decompress(
                 auto archive_path = archives_dir / archive_id;
 
                 if (false == std::filesystem::exists(archive_path)) {
-                    SPDLOG_WARN(
-                            "Archive {} does not exist in '{}'.",
-                            archive_id,
-                            command_line_args.get_archives_dir()
-                    );
+                    SPDLOG_WARN("Archive {} does not exist in '{}'.",
+                                archive_id,
+                                command_line_args.get_archives_dir());
                     continue;
                 }
 
@@ -90,12 +84,10 @@ bool decompress(
                 {
                     // Decompress file
                     if (false
-                        == file_decompressor.decompress_file(
-                                file_metadata_ix,
-                                command_line_args.get_output_dir(),
-                                archive_reader,
-                                temp_path_to_final_path
-                        ))
+                        == file_decompressor.decompress_file(file_metadata_ix,
+                                                             command_line_args.get_output_dir(),
+                                                             archive_reader,
+                                                             temp_path_to_final_path))
                     {
                         return false;
                     }
@@ -109,8 +101,7 @@ bool decompress(
         } else if (files_to_decompress.size() == 1) {
             auto const& file_path = *files_to_decompress.begin();
             for (auto archive_ix = std::unique_ptr<GlobalMetadataDB::ArchiveIterator>(
-                         global_metadata_db->get_archive_iterator_for_file_path(file_path)
-                 );
+                         global_metadata_db->get_archive_iterator_for_file_path(file_path));
                  archive_ix->contains_element();
                  archive_ix->get_next())
             {
@@ -126,12 +117,10 @@ bool decompress(
                 {
                     // Decompress file
                     if (false
-                        == file_decompressor.decompress_file(
-                                file_metadata_ix,
-                                command_line_args.get_output_dir(),
-                                archive_reader,
-                                temp_path_to_final_path
-                        ))
+                        == file_decompressor.decompress_file(file_metadata_ix,
+                                                             command_line_args.get_output_dir(),
+                                                             archive_reader,
+                                                             temp_path_to_final_path))
                     {
                         return false;
                     }
@@ -143,8 +132,7 @@ bool decompress(
             }
         } else {  // files_to_decompress.size() > 1
             for (auto archive_ix = std::unique_ptr<GlobalMetadataDB::ArchiveIterator>(
-                         global_metadata_db->get_archive_iterator()
-                 );
+                         global_metadata_db->get_archive_iterator());
                  archive_ix->contains_element();
                  archive_ix->get_next())
             {
@@ -166,12 +154,10 @@ bool decompress(
 
                     // Decompress file
                     if (false
-                        == file_decompressor.decompress_file(
-                                file_metadata_ix,
-                                command_line_args.get_output_dir(),
-                                archive_reader,
-                                temp_path_to_final_path
-                        ))
+                        == file_decompressor.decompress_file(file_metadata_ix,
+                                                             command_line_args.get_output_dir(),
+                                                             archive_reader,
+                                                             temp_path_to_final_path))
                     {
                         return false;
                     }
@@ -206,22 +192,18 @@ bool decompress(
     } catch (TraceableException& e) {
         error_code = e.get_error_code();
         if (ErrorCode_errno == error_code) {
-            SPDLOG_ERROR(
-                    "Decompression failed: {}:{} {}, errno={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    errno
-            );
+            SPDLOG_ERROR("Decompression failed: {}:{} {}, errno={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         errno);
             return false;
         } else {
-            SPDLOG_ERROR(
-                    "Decompression failed: {}:{} {}, error_code={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    error_code
-            );
+            SPDLOG_ERROR("Decompression failed: {}:{} {}, error_code={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         error_code);
             return false;
         }
     }
@@ -251,10 +233,9 @@ bool decompress_to_ir(CommandLineArguments& command_line_args) {
 
     try {
         std::filesystem::path archives_dir{command_line_args.get_archives_dir()};
-        auto global_metadata_db = create_global_metadata_db(
-                command_line_args.get_metadata_db_config(),
-                archives_dir
-        );
+        auto global_metadata_db
+                = create_global_metadata_db(command_line_args.get_metadata_db_config(),
+                                            archives_dir);
         if (nullptr == global_metadata_db) {
             return false;
         }
@@ -263,17 +244,13 @@ bool decompress_to_ir(CommandLineArguments& command_line_args) {
         string archive_id;
         string file_split_id;
         if (false
-            == global_metadata_db->get_file_split(
-                    command_line_args.get_orig_file_id(),
-                    command_line_args.get_ir_msg_ix(),
-                    archive_id,
-                    file_split_id
-            ))
+            == global_metadata_db->get_file_split(command_line_args.get_orig_file_id(),
+                                                  command_line_args.get_ir_msg_ix(),
+                                                  archive_id,
+                                                  file_split_id))
         {
-            SPDLOG_ERROR(
-                    "Failed to find file split containing msg_ix {}",
-                    command_line_args.get_ir_msg_ix()
-            );
+            SPDLOG_ERROR("Failed to find file split containing msg_ix {}",
+                         command_line_args.get_ir_msg_ix());
             return false;
         }
         global_metadata_db->close();
@@ -303,12 +280,10 @@ bool decompress_to_ir(CommandLineArguments& command_line_args) {
             try {
                 std::filesystem::rename(src_ir_path, dest_ir_path);
             } catch (std::filesystem::filesystem_error const& e) {
-                SPDLOG_ERROR(
-                        "Failed to rename from {} to {}. Error: {}",
-                        src_ir_path.c_str(),
-                        dest_ir_path.c_str(),
-                        e.what()
-                );
+                SPDLOG_ERROR("Failed to rename from {} to {}. Error: {}",
+                             src_ir_path.c_str(),
+                             dest_ir_path.c_str(),
+                             e.what());
                 return false;
             }
             return true;
@@ -317,13 +292,11 @@ bool decompress_to_ir(CommandLineArguments& command_line_args) {
         // Decompress file split
         FileDecompressor file_decompressor;
         if (false
-            == file_decompressor.decompress_to_ir(
-                    archive_reader,
-                    *file_metadata_ix_ptr,
-                    command_line_args.get_ir_target_size(),
-                    command_line_args.get_output_dir(),
-                    ir_output_handler
-            ))
+            == file_decompressor.decompress_to_ir(archive_reader,
+                                                  *file_metadata_ix_ptr,
+                                                  command_line_args.get_ir_target_size(),
+                                                  command_line_args.get_output_dir(),
+                                                  ir_output_handler))
         {
             return false;
         }
@@ -334,22 +307,18 @@ bool decompress_to_ir(CommandLineArguments& command_line_args) {
     } catch (TraceableException& e) {
         error_code = e.get_error_code();
         if (ErrorCode_errno == error_code) {
-            SPDLOG_ERROR(
-                    "Decompression failed: {}:{} {}, errno={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    errno
-            );
+            SPDLOG_ERROR("Decompression failed: {}:{} {}, errno={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         errno);
             return false;
         } else {
-            SPDLOG_ERROR(
-                    "Decompression failed: {}:{} {}, error_code={}",
-                    e.get_filename(),
-                    e.get_line_number(),
-                    e.what(),
-                    error_code
-            );
+            SPDLOG_ERROR("Decompression failed: {}:{} {}, error_code={}",
+                         e.get_filename(),
+                         e.get_line_number(),
+                         e.what(),
+                         error_code);
             return false;
         }
     }

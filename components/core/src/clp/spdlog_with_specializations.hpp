@@ -29,15 +29,12 @@ struct fmt::formatter<clp::ffi::search::ExactVariableToken<encoded_variable_t>> 
     }
 
     template <typename FormatContext>
-    auto
-    format(clp::ffi::search::ExactVariableToken<encoded_variable_t> const& v,
-           FormatContext& ctx) const {
-        return fmt::format_to(
-                ctx.out(),
-                "ExactVariableToken(\"{}\") as {}",
-                v.get_value(),
-                v.get_encoded_value()
-        );
+    auto format(clp::ffi::search::ExactVariableToken<encoded_variable_t> const& v,
+                FormatContext& ctx) const {
+        return fmt::format_to(ctx.out(),
+                              "ExactVariableToken(\"{}\") as {}",
+                              v.get_value(),
+                              v.get_encoded_value());
     }
 };
 
@@ -49,16 +46,14 @@ struct fmt::formatter<clp::ffi::search::WildcardToken<encoded_variable_t>> {
     }
 
     template <typename FormatContext>
-    auto
-    format(clp::ffi::search::WildcardToken<encoded_variable_t> const& v, FormatContext& ctx) const {
-        return fmt::format_to(
-                ctx.out(),
-                "WildcardToken(\"{}\") as {}TokenType({}){}",
-                v.get_value(),
-                v.has_prefix_star_wildcard() ? "*" : "",
-                v.get_current_interpretation(),
-                v.has_suffix_star_wildcard() ? "*" : ""
-        );
+    auto format(clp::ffi::search::WildcardToken<encoded_variable_t> const& v,
+                FormatContext& ctx) const {
+        return fmt::format_to(ctx.out(),
+                              "WildcardToken(\"{}\") as {}TokenType({}){}",
+                              v.get_value(),
+                              v.has_prefix_star_wildcard() ? "*" : "",
+                              v.get_current_interpretation(),
+                              v.has_suffix_star_wildcard() ? "*" : "");
     }
 };
 

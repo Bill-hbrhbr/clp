@@ -24,22 +24,16 @@ void File::append_to_segment(LogTypeDictionaryWriter const& logtype_dict, Segmen
 
     // Append files to segment
     uint64_t segment_logtypes_uncompressed_pos;
-    segment.append(
-            reinterpret_cast<char const*>(m_logtypes->data()),
-            m_logtypes->size_in_bytes(),
-            segment_logtypes_uncompressed_pos
-    );
+    segment.append(reinterpret_cast<char const*>(m_logtypes->data()),
+                   m_logtypes->size_in_bytes(),
+                   segment_logtypes_uncompressed_pos);
     uint64_t segment_offset_uncompressed_pos;
-    segment.append(
-            reinterpret_cast<char const*>(m_offset->data()),
-            m_offset->size_in_bytes(),
-            segment_offset_uncompressed_pos
-    );
-    set_segment_metadata(
-            segment.get_id(),
-            segment_logtypes_uncompressed_pos,
-            segment_offset_uncompressed_pos
-    );
+    segment.append(reinterpret_cast<char const*>(m_offset->data()),
+                   m_offset->size_in_bytes(),
+                   segment_offset_uncompressed_pos);
+    set_segment_metadata(segment.get_id(),
+                         segment_logtypes_uncompressed_pos,
+                         segment_offset_uncompressed_pos);
 
     // Mark file as written out and clear in-memory columns and clear the in-memory data (except
     // metadata)
@@ -47,13 +41,11 @@ void File::append_to_segment(LogTypeDictionaryWriter const& logtype_dict, Segmen
     m_offset.reset(nullptr);
 }
 
-void File::write_encoded_msg(
-        epochtime_t timestamp,
-        logtype_dictionary_id_t logtype_id,
-        offset_t vars_offset,
-        size_t num_uncompressed_bytes,
-        size_t num_vars
-) {
+void File::write_encoded_msg(epochtime_t timestamp,
+                             logtype_dictionary_id_t logtype_id,
+                             offset_t vars_offset,
+                             size_t num_uncompressed_bytes,
+                             size_t num_vars) {
     m_logtypes->push_back(logtype_id);
 
     // For each file, the offset is only needed for a
@@ -108,11 +100,9 @@ string File::get_encoded_timestamp_patterns() const {
     return encoded_timestamp_patterns;
 }
 
-void File::set_segment_metadata(
-        segment_id_t segment_id,
-        uint64_t segment_logtypes_uncompressed_pos,
-        uint64_t segment_offset_uncompressed_pos
-) {
+void File::set_segment_metadata(segment_id_t segment_id,
+                                uint64_t segment_logtypes_uncompressed_pos,
+                                uint64_t segment_offset_uncompressed_pos) {
     m_segment_id = segment_id;
     m_segment_logtypes_pos = segment_logtypes_uncompressed_pos;
     m_segment_offset_pos = segment_offset_uncompressed_pos;

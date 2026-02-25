@@ -84,8 +84,7 @@ void ServerContext::stop_event_loop() {
 }
 
 bool ServerContext::register_with_scheduler(
-        boost::asio::ip::tcp::resolver::results_type const& endpoints
-) {
+        boost::asio::ip::tcp::resolver::results_type const& endpoints) {
     try {
         boost::asio::connect(m_scheduler_socket, endpoints);
     } catch (boost::system::system_error& error) {
@@ -101,11 +100,9 @@ bool ServerContext::register_with_scheduler(
     auto serialized_advertisement = nlohmann::json::to_msgpack(reducer_advertisement);
     auto message_size = serialized_advertisement.size();
 
-    boost::asio::write(
-            m_scheduler_socket,
-            boost::asio::buffer(&message_size, sizeof(message_size)),
-            error
-    );
+    boost::asio::write(m_scheduler_socket,
+                       boost::asio::buffer(&message_size, sizeof(message_size)),
+                       error);
     if (error) {
         m_scheduler_socket.close();
         return false;
@@ -187,11 +184,9 @@ bool ServerContext::upsert_timeline_results() {
 
         auto& result = results.back();
         mongocxx::model::replace_one replace_op{
-                bsoncxx::builder::basic::make_document(
-                        bsoncxx::builder::basic::kvp("timestamp", timestamp)
-                ),
-                bsoncxx::document::view{result.data(), result.size()}
-        };
+                bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("timestamp",
+                                                                                    timestamp)),
+                bsoncxx::document::view{result.data(), result.size()}};
         replace_op.upsert(true);
         bulk_write.append(replace_op);
 
@@ -216,8 +211,7 @@ bool ServerContext::publish_pipeline_results() {
     for (auto group_it = m_pipeline->finish(); false == group_it->done(); group_it->next()) {
         auto& group = group_it->get();
         results.push_back(
-                serialize(group.get_tags(), group.record_iter(), nlohmann::json::to_bson)
-        );
+                serialize(group.get_tags(), group.record_iter(), nlohmann::json::to_bson));
 
         vector<uint8_t>& encoded_result = results.back();
         result_documents.emplace_back(encoded_result.data(), encoded_result.size());

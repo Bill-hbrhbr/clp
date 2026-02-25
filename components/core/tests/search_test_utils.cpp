@@ -74,13 +74,11 @@ auto generate_expected_logtype_string(vector<variant<string_view, char>> const& 
     return result;
 }
 
-auto check_sub_query(
-        size_t id,
-        vector<SubQuery> const& sub_queries,
-        bool const wildcard_match_required,
-        vector<VarInfo> const& vars_info,
-        unordered_set<logtype_dictionary_id_t> const& logtype_ids
-) -> void {
+auto check_sub_query(size_t id,
+                     vector<SubQuery> const& sub_queries,
+                     bool const wildcard_match_required,
+                     vector<VarInfo> const& vars_info,
+                     unordered_set<logtype_dictionary_id_t> const& logtype_ids) -> void {
     CAPTURE(id);
     REQUIRE(id < sub_queries.size());
     auto const& sub_query{sub_queries[id]};

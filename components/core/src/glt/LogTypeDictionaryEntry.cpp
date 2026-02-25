@@ -10,10 +10,8 @@ using std::string;
 using std::string_view;
 
 namespace glt {
-size_t LogTypeDictionaryEntry::get_placeholder_info(
-        size_t placeholder_ix,
-        VariablePlaceholder& placeholder
-) const {
+size_t LogTypeDictionaryEntry::get_placeholder_info(size_t placeholder_ix,
+                                                    VariablePlaceholder& placeholder) const {
     if (placeholder_ix >= m_placeholder_positions.size()) {
         return SIZE_MAX;
     }
@@ -24,10 +22,8 @@ size_t LogTypeDictionaryEntry::get_placeholder_info(
     return m_placeholder_positions[placeholder_ix];
 }
 
-size_t LogTypeDictionaryEntry::get_variable_info(
-        size_t var_ix,
-        ir::VariablePlaceholder& placeholder
-) const {
+size_t LogTypeDictionaryEntry::get_variable_info(size_t var_ix,
+                                                 ir::VariablePlaceholder& placeholder) const {
     if (var_ix >= m_variable_positions.size()) {
         return SIZE_MAX;
     }
@@ -47,11 +43,9 @@ size_t LogTypeDictionaryEntry::get_data_size() const {
            + m_ids_of_segments_containing_entry.size() * sizeof(segment_id_t);
 }
 
-void LogTypeDictionaryEntry::add_constant(
-        string const& value_containing_constant,
-        size_t begin_pos,
-        size_t length
-) {
+void LogTypeDictionaryEntry::add_constant(string const& value_containing_constant,
+                                          size_t begin_pos,
+                                          size_t length) {
     m_value.append(value_containing_constant, begin_pos, length);
 }
 
@@ -76,12 +70,10 @@ void LogTypeDictionaryEntry::add_escape() {
     ++m_num_escaped_placeholders;
 }
 
-bool LogTypeDictionaryEntry::parse_next_var(
-        string const& msg,
-        size_t& var_begin_pos,
-        size_t& var_end_pos,
-        string& var
-) {
+bool LogTypeDictionaryEntry::parse_next_var(string const& msg,
+                                            size_t& var_begin_pos,
+                                            size_t& var_end_pos,
+                                            string& var) {
     auto last_var_end_pos = var_end_pos;
     // clang-format off
     auto escape_handler = [&](
@@ -96,10 +88,8 @@ bool LogTypeDictionaryEntry::parse_next_var(
     // clang-format on
     if (ir::get_bounds_of_next_var(msg, var_begin_pos, var_end_pos)) {
         // Append to log type: from end of last variable to start of current variable
-        auto constant = static_cast<string_view>(msg).substr(
-                last_var_end_pos,
-                var_begin_pos - last_var_end_pos
-        );
+        auto constant = static_cast<string_view>(msg).substr(last_var_end_pos,
+                                                             var_begin_pos - last_var_end_pos);
         ir::append_constant_to_logtype(constant, escape_handler, m_value);
 
         var.assign(msg, var_begin_pos, var_end_pos - var_begin_pos);
@@ -107,10 +97,8 @@ bool LogTypeDictionaryEntry::parse_next_var(
     }
     if (last_var_end_pos < msg.length()) {
         // Append to log type: from end of last variable to end
-        auto constant = static_cast<string_view>(msg).substr(
-                last_var_end_pos,
-                msg.length() - last_var_end_pos
-        );
+        auto constant = static_cast<string_view>(msg).substr(last_var_end_pos,
+                                                             msg.length() - last_var_end_pos);
         ir::append_constant_to_logtype(constant, escape_handler, m_value);
     }
 
@@ -132,8 +120,7 @@ void LogTypeDictionaryEntry::write_to_file(streaming_compression::Compressor& co
 }
 
 ErrorCode LogTypeDictionaryEntry::try_read_from_file(
-        streaming_compression::Decompressor& decompressor
-) {
+        streaming_compression::Decompressor& decompressor) {
     clear();
 
     ErrorCode error_code;

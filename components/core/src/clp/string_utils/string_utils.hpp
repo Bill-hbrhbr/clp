@@ -33,12 +33,10 @@ inline bool is_decimal_digit(char c) {
  * @param needle_ix The index of the needle found
  * @return The position of the match or string::npos if none
  */
-size_t find_first_of(
-        std::string const& haystack,
-        char const* needles,
-        size_t search_start_pos,
-        size_t& needle_ix
-);
+size_t find_first_of(std::string const& haystack,
+                     char const* needles,
+                     size_t search_start_pos,
+                     size_t& needle_ix);
 
 /**
  * Replaces the given characters in the given value with the given replacements
@@ -49,12 +47,10 @@ size_t find_first_of(
  * line-feed character is output as "\n")
  * @return The string with replacements
  */
-std::string replace_characters(
-        char const* characters_to_escape,
-        char const* replacement_characters,
-        std::string const& value,
-        bool escape
-);
+std::string replace_characters(char const* characters_to_escape,
+                               char const* replacement_characters,
+                               std::string const& value,
+                               bool escape);
 
 /**
  * Replace unescaped instances of `from_char` with `to_char` in `str`.
@@ -115,11 +111,9 @@ bool is_wildcard(char c);
  * @param case_sensitive_match Whether to consider case when matching
  * @return Whether the two strings match
  */
-bool wildcard_match_unsafe(
-        std::string_view tame,
-        std::string_view wild,
-        bool case_sensitive_match = true
-);
+bool wildcard_match_unsafe(std::string_view tame,
+                           std::string_view wild,
+                           bool case_sensitive_match = true);
 /**
  * Checks if a string matches a wildcard string. Two wildcards are currently
  * supported: '*' to match 0 or more characters, and '?' to match any single

@@ -36,12 +36,10 @@ public:
     class OperationFailed : public TraceableException {
     public:
         // Constructors
-        OperationFailed(
-                ErrorCode error_code,
-                char const* const filename,
-                int line_number,
-                std::string message
-        )
+        OperationFailed(ErrorCode error_code,
+                        char const* const filename,
+                        int line_number,
+                        std::string message)
                 : TraceableException(error_code, filename, line_number),
                   m_message(std::move(message)) {}
 

@@ -25,8 +25,8 @@ namespace clp::regex_utils {
  * @param regex_str The regex string to be translated.
  * @return The translated wildcard string.
  */
-[[nodiscard]] auto
-regex_to_wildcard(std::string_view regex_str, RegexToWildcardTranslatorConfig const& config)
+[[nodiscard]] auto regex_to_wildcard(std::string_view regex_str,
+                                     RegexToWildcardTranslatorConfig const& config)
         -> ystdlib::error_handling::Result<std::string>;
 }  // namespace clp::regex_utils
 

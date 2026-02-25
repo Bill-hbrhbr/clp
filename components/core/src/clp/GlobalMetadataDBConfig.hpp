@@ -24,9 +24,9 @@ public:
 
     // Constants
     // NOTE: The strings in the array must match the order of the enums values in `MetadataDBType`.
-    static constexpr std::
-            array<std::string_view, enum_to_underlying_type(MetadataDBType::MetadataDBTypeLength)>
-                    cMetadataDBTypeNames{"sqlite", "mysql"};
+    static constexpr std::array<std::string_view,
+                                enum_to_underlying_type(MetadataDBType::MetadataDBTypeLength)>
+            cMetadataDBTypeNames{"sqlite", "mysql"};
 
     /**
      * Overloads operator >> to read MetadataDBType from an input stream.
@@ -44,8 +44,7 @@ public:
      * @param options_description
      */
     explicit GlobalMetadataDBConfig(
-            boost::program_options::options_description& options_description
-    );
+            boost::program_options::options_description& options_description);
 
     // Methods
     /**

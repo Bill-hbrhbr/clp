@@ -75,11 +75,10 @@ private:
     // Variables
     TimestampPattern m_timestamp_pattern{0, "%Y-%m-%dT%H:%M:%S.%3"};
     UtcOffset m_utc_offset{0};
-    [[no_unique_address]] std::conditional_t<
-            std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>,
-            epoch_time_ms_t,
-            EmptyType
-    > m_prev_msg_timestamp{};
+    [[no_unique_address]] std::conditional_t<std::is_same_v<encoded_variable_t,
+                                                            four_byte_encoded_variable_t>,
+                                             epoch_time_ms_t,
+                                             EmptyType> m_prev_msg_timestamp{};
     ReaderInterface& m_reader;
 };
 }  // namespace clp::ir

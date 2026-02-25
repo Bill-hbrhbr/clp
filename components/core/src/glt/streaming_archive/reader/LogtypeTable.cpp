@@ -18,11 +18,9 @@ void LogtypeTable::load_all() {
     m_timestamps.resize(m_num_row);
     m_decompressor.try_read(m_read_buffer_ptr, m_buffer_size, num_bytes_read);
     if (num_bytes_read != m_buffer_size) {
-        SPDLOG_ERROR(
-                "Wrong number of Bytes read: Expect: {}, Got: {}",
-                m_buffer_size,
-                num_bytes_read
-        );
+        SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                     m_buffer_size,
+                     num_bytes_read);
         throw ErrorCode_Failure;
     }
     m_decompressor.close();
@@ -38,11 +36,9 @@ void LogtypeTable::load_all() {
     size_t read_size = sizeof(file_id_t) * m_num_row;
     m_decompressor.try_read(m_read_buffer_ptr, read_size, num_bytes_read);
     if (num_bytes_read != read_size) {
-        SPDLOG_ERROR(
-                "Wrong number of Bytes read: Expect: {}, Got: {}",
-                m_buffer_size,
-                num_bytes_read
-        );
+        SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                     m_buffer_size,
+                     num_bytes_read);
         throw ErrorCode_Failure;
     }
     m_decompressor.close();
@@ -57,11 +53,9 @@ void LogtypeTable::load_all() {
         m_decompressor.open(var_start, m_metadata.column_size[column_ix]);
         m_decompressor.try_read(m_read_buffer_ptr, m_buffer_size, num_bytes_read);
         if (num_bytes_read != m_buffer_size) {
-            SPDLOG_ERROR(
-                    "Wrong number of Bytes read: Expect: {}, Got: {}",
-                    m_buffer_size,
-                    num_bytes_read
-            );
+            SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                         m_buffer_size,
+                         num_bytes_read);
             throw ErrorCode_Failure;
         }
         m_decompressor.close();
@@ -120,11 +114,9 @@ bool LogtypeTable::get_next_message(Message& msg) {
     return true;
 }
 
-void LogtypeTable::get_next_row(
-        std::vector<encoded_variable_t>& vars,
-        size_t var_ix_begin,
-        size_t var_ix_end
-) const {
+void LogtypeTable::get_next_row(std::vector<encoded_variable_t>& vars,
+                                size_t var_ix_begin,
+                                size_t var_ix_end) const {
     for (size_t ix = var_ix_begin; ix < var_ix_end; ix++) {
         vars[ix] = m_column_based_variables[ix * m_num_row + m_current_row];
     }
@@ -143,12 +135,10 @@ bool LogtypeTable::peek_next_ts(epochtime_t& ts) {
 }
 
 // loading the data in TS->file_id->variable columns should be the right order
-void LogtypeTable::load_remaining_data_into_vec(
-        std::vector<epochtime_t>& ts,
-        std::vector<file_id_t>& id,
-        std::vector<encoded_variable_t>& vars,
-        std::vector<size_t> const& potential_matched_row
-) {
+void LogtypeTable::load_remaining_data_into_vec(std::vector<epochtime_t>& ts,
+                                                std::vector<file_id_t>& id,
+                                                std::vector<encoded_variable_t>& vars,
+                                                std::vector<size_t> const& potential_matched_row) {
     load_ts_into_vec(ts, potential_matched_row);
     load_file_id_into_vec(id, potential_matched_row);
     load_vars_into_vec(vars, potential_matched_row);
@@ -161,11 +151,9 @@ void LogtypeTable::load_timestamp() {
     m_decompressor.open(ts_start, m_metadata.ts_size);
     m_decompressor.try_read(m_read_buffer_ptr, m_buffer_size, num_bytes_read);
     if (num_bytes_read != m_buffer_size) {
-        SPDLOG_ERROR(
-                "Wrong number of Bytes read: Expect: {}, Got: {}",
-                m_buffer_size,
-                num_bytes_read
-        );
+        SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                     m_buffer_size,
+                     num_bytes_read);
         throw ErrorCode_Failure;
     }
     m_decompressor.close();
@@ -210,11 +198,9 @@ void LogtypeTable::load_column(size_t column_ix) {
     size_t num_bytes_read;
     m_decompressor.try_read(m_read_buffer_ptr, m_buffer_size, num_bytes_read);
     if (num_bytes_read != m_buffer_size) {
-        SPDLOG_ERROR(
-                "Wrong number of Bytes read: Expect: {}, Got: {}",
-                m_buffer_size,
-                num_bytes_read
-        );
+        SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                     m_buffer_size,
+                     num_bytes_read);
         throw ErrorCode_Failure;
     }
     m_decompressor.close();
@@ -227,10 +213,8 @@ void LogtypeTable::load_column(size_t column_ix) {
     m_column_loaded[column_ix] = true;
 }
 
-void LogtypeTable::load_file_id_into_vec(
-        std::vector<file_id_t>& id,
-        std::vector<size_t> const& potential_matched_row
-) {
+void LogtypeTable::load_file_id_into_vec(std::vector<file_id_t>& id,
+                                         std::vector<size_t> const& potential_matched_row) {
     size_t num_bytes_read = 0;
     char const* file_id_start = m_file_offset + m_metadata.file_id_offset;
     size_t last_matching_row_ix = potential_matched_row.back();
@@ -238,11 +222,9 @@ void LogtypeTable::load_file_id_into_vec(
     m_decompressor.open(file_id_start, m_metadata.file_id_size);
     m_decompressor.try_read(m_read_buffer_ptr, size_to_read, num_bytes_read);
     if (num_bytes_read != size_to_read) {
-        SPDLOG_ERROR(
-                "Wrong number of Bytes read: Expect: {}, Got: {}",
-                size_to_read,
-                num_bytes_read
-        );
+        SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                     size_to_read,
+                     num_bytes_read);
         throw ErrorCode_Failure;
     }
     m_decompressor.close();
@@ -252,10 +234,8 @@ void LogtypeTable::load_file_id_into_vec(
     }
 }
 
-void LogtypeTable::load_ts_into_vec(
-        std::vector<epochtime_t>& ts,
-        std::vector<size_t> const& potential_matched_row
-) {
+void LogtypeTable::load_ts_into_vec(std::vector<epochtime_t>& ts,
+                                    std::vector<size_t> const& potential_matched_row) {
     if (!m_ts_loaded) {
         size_t num_bytes_read = 0;
         char const* ts_start = m_file_offset + m_metadata.ts_offset;
@@ -264,11 +244,9 @@ void LogtypeTable::load_ts_into_vec(
         m_decompressor.open(ts_start, m_metadata.ts_size);
         m_decompressor.try_read(m_read_buffer_ptr, size_to_read, num_bytes_read);
         if (num_bytes_read != size_to_read) {
-            SPDLOG_ERROR(
-                    "Wrong number of Bytes read: Expect: {}, Got: {}",
-                    size_to_read,
-                    num_bytes_read
-            );
+            SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                         size_to_read,
+                         num_bytes_read);
             throw ErrorCode_Failure;
         }
         m_decompressor.close();
@@ -283,10 +261,8 @@ void LogtypeTable::load_ts_into_vec(
     }
 }
 
-void LogtypeTable::load_vars_into_vec(
-        std::vector<encoded_variable_t>& vars,
-        std::vector<size_t> const& potential_matched_row
-) {
+void LogtypeTable::load_vars_into_vec(std::vector<encoded_variable_t>& vars,
+                                      std::vector<size_t> const& potential_matched_row) {
     size_t num_bytes_read = 0;
     size_t last_matching_row_ix = potential_matched_row.back();
     size_t size_to_read = (last_matching_row_ix + 1) * sizeof(size_t);
@@ -296,11 +272,9 @@ void LogtypeTable::load_vars_into_vec(
             m_decompressor.open(var_start, m_metadata.column_size[column_ix]);
             m_decompressor.try_read(m_read_buffer_ptr, size_to_read, num_bytes_read);
             if (num_bytes_read != size_to_read) {
-                SPDLOG_ERROR(
-                        "Wrong number of Bytes read: Expect: {}, Got: {}",
-                        size_to_read,
-                        num_bytes_read
-                );
+                SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                             size_to_read,
+                             num_bytes_read);
                 throw ErrorCode_Failure;
             }
             m_decompressor.close();
@@ -312,8 +286,9 @@ void LogtypeTable::load_vars_into_vec(
             }
         } else {
             for (size_t ix = 0; ix < potential_matched_row.size(); ix++) {
-                vars[ix * m_num_columns + column_ix] = m_column_based_variables
-                        [column_ix * m_num_row + potential_matched_row[ix]];
+                vars[ix * m_num_columns + column_ix]
+                        = m_column_based_variables[column_ix * m_num_row
+                                                   + potential_matched_row[ix]];
             }
         }
     }

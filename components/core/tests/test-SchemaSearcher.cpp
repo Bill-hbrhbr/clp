@@ -73,14 +73,12 @@ TEST_CASE("get_wildcard_encodable_positions_for_empty_interpretation", "[dfa_sea
 }
 
 TEST_CASE("get_wildcard_encodable_positions_for_multi_variable_interpretation", "[dfa_search]") {
-    auto const interpretation{make_query_interpretation(
-            {"text",
-             pair{cIntId, "100"},
-             pair{cFloatId, "32.2"},
-             pair{cIntId, "10?"},
-             pair{cFloatId, "3.14*"},
-             pair{cHasNumId, "3.14*"}}
-    )};
+    auto const interpretation{make_query_interpretation({"text",
+                                                         pair{cIntId, "100"},
+                                                         pair{cFloatId, "32.2"},
+                                                         pair{cIntId, "10?"},
+                                                         pair{cFloatId, "3.14*"},
+                                                         pair{cHasNumId, "3.14*"}})};
 
     auto const positions{clp::SchemaSearcherTest::get_wildcard_encodable_positions(interpretation)};
     REQUIRE(2 == positions.size());
@@ -92,15 +90,13 @@ TEST_CASE("generate_logtype_string_for_empty_interpretation", "[dfa_search]") {
     QueryInterpretation const interpretation{};
 
     auto const wildcard_encodable_positions{
-            clp::SchemaSearcherTest::get_wildcard_encodable_positions(interpretation)
-    };
+            clp::SchemaSearcherTest::get_wildcard_encodable_positions(interpretation)};
 
     REQUIRE(wildcard_encodable_positions.empty());
-    auto const logtype_string{clp::SchemaSearcherTest::generate_logtype_string(
-            interpretation,
-            wildcard_encodable_positions,
-            {}
-    )};
+    auto const logtype_string{
+            clp::SchemaSearcherTest::generate_logtype_string(interpretation,
+                                                             wildcard_encodable_positions,
+                                                             {})};
     REQUIRE(logtype_string.empty());
 }
 
@@ -110,15 +106,13 @@ TEST_CASE("generate_logtype_string_for_single_variable_interpretation", "[dfa_se
     auto const interpretation{make_query_interpretation({pair{cIntId, "100"}})};
 
     auto const wildcard_encodable_positions{
-            clp::SchemaSearcherTest::get_wildcard_encodable_positions(interpretation)
-    };
+            clp::SchemaSearcherTest::get_wildcard_encodable_positions(interpretation)};
 
     REQUIRE(wildcard_encodable_positions.empty());
-    auto const logtype_string{clp::SchemaSearcherTest::generate_logtype_string(
-            interpretation,
-            wildcard_encodable_positions,
-            {false}
-    )};
+    auto const logtype_string{
+            clp::SchemaSearcherTest::generate_logtype_string(interpretation,
+                                                             wildcard_encodable_positions,
+                                                             {false})};
     REQUIRE(expected_logtype_string == logtype_string);
 }
 
@@ -127,21 +121,17 @@ TEST_CASE("generate_logtype_string_for_multi_variable_interpretation", "[dfa_sea
             generate_expected_logtype_string({"text", 'i', 'f', 'd', 'd', 'd'}),
             generate_expected_logtype_string({"text", 'i', 'f', 'i', 'd', 'd'}),
             generate_expected_logtype_string({"text", 'i', 'f', 'd', 'f', 'd'}),
-            generate_expected_logtype_string({"text", 'i', 'f', 'i', 'f', 'd'})
-    };
+            generate_expected_logtype_string({"text", 'i', 'f', 'i', 'f', 'd'})};
 
-    auto const interpretation{make_query_interpretation(
-            {"text",
-             pair{cIntId, "100"},
-             pair{cFloatId, "32.2"},
-             pair{cIntId, "10?"},
-             pair{cFloatId, "3.14*"},
-             pair{cHasNumId, "3.14*"}}
-    )};
+    auto const interpretation{make_query_interpretation({"text",
+                                                         pair{cIntId, "100"},
+                                                         pair{cFloatId, "32.2"},
+                                                         pair{cIntId, "10?"},
+                                                         pair{cFloatId, "3.14*"},
+                                                         pair{cHasNumId, "3.14*"}})};
 
     auto const wildcard_encodable_positions{
-            clp::SchemaSearcherTest::get_wildcard_encodable_positions(interpretation)
-    };
+            clp::SchemaSearcherTest::get_wildcard_encodable_positions(interpretation)};
 
     uint64_t const num_combos{1ULL << wildcard_encodable_positions.size()};
     REQUIRE(num_combos == 4);
@@ -152,12 +142,9 @@ TEST_CASE("generate_logtype_string_for_multi_variable_interpretation", "[dfa_sea
             mask_encoded_flags[wildcard_encodable_positions[i]] = (mask >> i) & 1ULL;
         }
         logtype_strings.insert(
-                clp::SchemaSearcherTest::generate_logtype_string(
-                        interpretation,
-                        wildcard_encodable_positions,
-                        mask_encoded_flags
-                )
-        );
+                clp::SchemaSearcherTest::generate_logtype_string(interpretation,
+                                                                 wildcard_encodable_positions,
+                                                                 mask_encoded_flags));
     }
     REQUIRE(expected_logtype_strings == logtype_strings);
 }
@@ -252,13 +239,12 @@ TEST_CASE("process_schema_encoded_non_greedy_wildcard_token", "[dfa_search]") {
 // this. In the future if CLP is more sophisticated, the two sections behave differently.
 TEST_CASE("process_schema_non_encoded_non_greedy_wildcard_token", "[dfa_search]") {
     size_t id{0};
-    MockVariableDictionary const var_dict{make_var_dict(
-            {pair{id++, "100000000000000000000000010"},
-             pair{id++, "100000000000000000000000020"},
-             pair{id++, "100000000000000000000000030"},
-             pair{id++, "1000000000000000000000000.0"},
-             pair{id++, "1000000000000000000000000a0"}}
-    )};
+    MockVariableDictionary const var_dict{
+            make_var_dict({pair{id++, "100000000000000000000000010"},
+                           pair{id++, "100000000000000000000000020"},
+                           pair{id++, "100000000000000000000000030"},
+                           pair{id++, "1000000000000000000000000.0"},
+                           pair{id++, "1000000000000000000000000a0"}})};
 
     SECTION("interpret_as_int") {
         SubQuery sub_query;
@@ -308,15 +294,14 @@ TEST_CASE("process_schema_non_encoded_non_greedy_wildcard_token", "[dfa_search]"
 
 TEST_CASE("process_schema_greedy_wildcard_token", "[dfa_search]") {
     size_t id{0};
-    MockVariableDictionary const var_dict{make_var_dict(
-            {pair{id++, "10a0"},
-             pair{id++, "10b0"},
-             pair{id++, "100000000000000000000000010"},
-             pair{id++, "100000000000000000000000020"},
-             pair{id++, "100000000000000000000000030"},
-             pair{id++, "1000000000000000000000000.0"},
-             pair{id++, "1000000000000000000000000a0"}}
-    )};
+    MockVariableDictionary const var_dict{
+            make_var_dict({pair{id++, "10a0"},
+                           pair{id++, "10b0"},
+                           pair{id++, "100000000000000000000000010"},
+                           pair{id++, "100000000000000000000000020"},
+                           pair{id++, "100000000000000000000000030"},
+                           pair{id++, "1000000000000000000000000.0"},
+                           pair{id++, "1000000000000000000000000a0"}})};
 
     SECTION("interpret_as_non_encoded_int") {
         SubQuery sub_query;
@@ -395,16 +380,14 @@ TEST_CASE("process_schema_greedy_wildcard_token", "[dfa_search]") {
 
 TEST_CASE("generate_schema_sub_queries", "[dfa_search]") {
     MockVariableDictionary const var_dict{
-            make_var_dict({pair{0, "1a3"}, pair{1, "10a"}, pair{2, "10b"}})
-    };
-    MockLogTypeDictionary const logtype_dict{make_logtype_dict(
-            {{"text ", 'i', " ", 'i', " ", 'f'},
-             {"text ", 'i', " ", 'd', " ", 'f'},
-             {"text ", 'i', " ", 'd', " 3.14ab$"},
-             {"text ", 'i', " ", 'd', " 3.14abc$"},
-             {"text ", 'i', " ", 'd', " 3.15ab$"},
-             {"text ", 'i', " 10$ ", 'f'}}
-    )};
+            make_var_dict({pair{0, "1a3"}, pair{1, "10a"}, pair{2, "10b"}})};
+    MockLogTypeDictionary const logtype_dict{
+            make_logtype_dict({{"text ", 'i', " ", 'i', " ", 'f'},
+                               {"text ", 'i', " ", 'd', " ", 'f'},
+                               {"text ", 'i', " ", 'd', " 3.14ab$"},
+                               {"text ", 'i', " ", 'd', " 3.14abc$"},
+                               {"text ", 'i', " ", 'd', " 3.15ab$"},
+                               {"text ", 'i', " 10$ ", 'f'}})};
 
     using V = pair<uint32_t, string>;
     vector<vector<variant<string, V>>> raw_interpretations{
@@ -416,18 +399,15 @@ TEST_CASE("generate_schema_sub_queries", "[dfa_search]") {
             {"text ", V{cIntId, "100"}, " ", V{cHasNumId, "10?"}, " 3.14*"},
             {"text ", V{cIntId, "100"}, " 10? ", V{cFloatId, " 3.14*"}},
             {"text ", V{cIntId, "100"}, " 10? ", V{cHasNumId, "3.14*"}},
-            {"text ", V{cIntId, "100"}, " 10? 3.14*"}
-    };
+            {"text ", V{cIntId, "100"}, " 10? 3.14*"}};
     set<QueryInterpretation> interpretations;
     for (auto const& raw_interpretation : raw_interpretations) {
         interpretations.insert(make_query_interpretation(raw_interpretation));
     }
 
-    auto const sub_queries{clp::SchemaSearcherTest::generate_schema_sub_queries(
-            interpretations,
-            logtype_dict,
-            var_dict
-    )};
+    auto const sub_queries{clp::SchemaSearcherTest::generate_schema_sub_queries(interpretations,
+                                                                                logtype_dict,
+                                                                                var_dict)};
 
     VarInfo const wild_int{false, true, {}};
     VarInfo const wild_has_num{true, false, {1LL, 2LL}};
@@ -441,14 +421,13 @@ TEST_CASE("generate_schema_sub_queries", "[dfa_search]") {
 
 TEST_CASE("generate_schema_sub_queries_with_wildcard_duplication", "[dfa_search]") {
     MockVariableDictionary const var_dict{make_var_dict({pair{0, "1a3"}, pair{1, "10a"}})};
-    MockLogTypeDictionary const logtype_dict{make_logtype_dict(
-            {{"text ", 'i', " ", 'i', " ", 'f'},
-             {"text ", 'i', " ", 'd', " ", 'f'},
-             {"text ", 'i', " ", 'd', " 3.14ab$"},
-             {"text ", 'i', " ", 'd', " 3.14abc$"},
-             {"text ", 'i', " ", 'd', " 3.15ab$"},
-             {"text ", 'i', " 10$ ", 'f'}}
-    )};
+    MockLogTypeDictionary const logtype_dict{
+            make_logtype_dict({{"text ", 'i', " ", 'i', " ", 'f'},
+                               {"text ", 'i', " ", 'd', " ", 'f'},
+                               {"text ", 'i', " ", 'd', " 3.14ab$"},
+                               {"text ", 'i', " ", 'd', " 3.14abc$"},
+                               {"text ", 'i', " ", 'd', " 3.15ab$"},
+                               {"text ", 'i', " 10$ ", 'f'}})};
 
     using V = pair<uint32_t, string>;
     vector<vector<variant<string, V>>> raw_interpretations{
@@ -460,21 +439,18 @@ TEST_CASE("generate_schema_sub_queries_with_wildcard_duplication", "[dfa_search]
             {"text ", V{cIntId, "100"}, " ", V{cHasNumId, "10?"}, " 3.14**"},
             {"text ", V{cIntId, "100"}, " 10? ", V{cFloatId, " 3.14*"}, "*"},
             {"text ", V{cIntId, "100"}, " 10? ", V{cHasNumId, "3.14*"}, "*"},
-            {"text ", V{cIntId, "100"}, " 10? 3.14**"}
-    };
+            {"text ", V{cIntId, "100"}, " 10? 3.14**"}};
     set<QueryInterpretation> interpretations;
     for (auto const& raw_interpretation : raw_interpretations) {
         interpretations.insert(make_query_interpretation(raw_interpretation));
     }
     auto const normalized_interpretations{
-            clp::SchemaSearcherTest::normalize_interpretations(interpretations)
-    };
+            clp::SchemaSearcherTest::normalize_interpretations(interpretations)};
 
-    auto const sub_queries{clp::SchemaSearcherTest::generate_schema_sub_queries(
-            normalized_interpretations,
-            logtype_dict,
-            var_dict
-    )};
+    auto const sub_queries{
+            clp::SchemaSearcherTest::generate_schema_sub_queries(normalized_interpretations,
+                                                                 logtype_dict,
+                                                                 var_dict)};
 
     VarInfo const wild_int{false, true, {}};
     VarInfo const wild_has_num{true, true, {1LL}};

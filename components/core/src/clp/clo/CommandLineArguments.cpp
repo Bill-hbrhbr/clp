@@ -23,8 +23,8 @@ using std::string_view;
 using std::vector;
 
 namespace clp::clo {
-CommandLineArgumentsBase::ParsingResult
-CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
+CommandLineArgumentsBase::ParsingResult CommandLineArguments::parse_arguments(int argc,
+                                                                              char const* argv[]) {
     // Print out basic usage if user doesn't specify any options
     if (1 == argc) {
         print_basic_usage();
@@ -62,8 +62,7 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
     char command_input{};
     general_positional_options.add_options()("command", po::value<char>(&command_input))(
             "command-args",
-            po::value<vector<string>>()
-    );
+            po::value<vector<string>>());
     po::positional_options_description general_positional_options_description;
     general_positional_options_description.add("command", 1);
     general_positional_options_description.add("command-args", -1);
@@ -145,20 +144,16 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
         switch (command_input) {
             case enum_to_underlying_type(Command::Search):
                 m_command = static_cast<Command>(command_input);
-                return parse_search_arguments(
-                        options_general,
-                        parsed_command_line_options,
-                        parsed.options,
-                        argc
-                );
+                return parse_search_arguments(options_general,
+                                              parsed_command_line_options,
+                                              parsed.options,
+                                              argc);
             case enum_to_underlying_type(Command::ExtractIr):
                 m_command = static_cast<Command>(command_input);
-                return parse_ir_extraction_arguments(
-                        options_general,
-                        parsed_command_line_options,
-                        parsed.options,
-                        argc
-                );
+                return parse_ir_extraction_arguments(options_general,
+                                                     parsed_command_line_options,
+                                                     parsed.options,
+                                                     argc);
             default:
                 throw invalid_argument(string("Unknown command '") + command_input + "'");
         }
@@ -174,8 +169,7 @@ auto CommandLineArguments::parse_ir_extraction_arguments(
         po::options_description const& options_general,
         po::variables_map& parsed_command_line_options,
         vector<po::option> const& options,
-        int argc
-) -> CommandLineArgumentsBase::ParsingResult {
+        int argc) -> CommandLineArgumentsBase::ParsingResult {
     // Define IR extraction options
     po::options_description options_ir_extraction("IR Extraction Options");
     // clang-format off
@@ -233,13 +227,11 @@ auto CommandLineArguments::parse_ir_extraction_arguments(
     auto extraction_options{po::collect_unrecognized(options, po::include_positional)};
     // Erase the command from the beginning
     extraction_options.erase(extraction_options.begin());
-    po::store(
-            po::command_line_parser(extraction_options)
-                    .options(all_options)
-                    .positional(positional_options_description)
-                    .run(),
-            parsed_command_line_options
-    );
+    po::store(po::command_line_parser(extraction_options)
+                      .options(all_options)
+                      .positional(positional_options_description)
+                      .run(),
+              parsed_command_line_options);
     notify(parsed_command_line_options);
 
     // Handle --help
@@ -291,43 +283,34 @@ auto CommandLineArguments::parse_ir_extraction_arguments(
     return ParsingResult::Success;
 }
 
-auto CommandLineArguments::parse_search_arguments(
-        po::options_description const& options_general,
-        po::variables_map& parsed_command_line_options,
-        vector<po::option> const& options,
-        int argc
-) -> CommandLineArgumentsBase::ParsingResult {
+auto CommandLineArguments::parse_search_arguments(po::options_description const& options_general,
+                                                  po::variables_map& parsed_command_line_options,
+                                                  vector<po::option> const& options,
+                                                  int argc)
+        -> CommandLineArgumentsBase::ParsingResult {
     // Define match controls
     po::options_description options_match_control("Match Controls");
-    options_match_control.add_options()(
-            "tgt",
-            po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp >  TS ms"
-    )(
+    options_match_control.add_options()("tgt",
+                                        po::value<epochtime_t>()->value_name("TS"),
+                                        "Find messages with UNIX timestamp >  TS ms")(
             "tge",
             po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp >= TS ms"
-    )(
+            "Find messages with UNIX timestamp >= TS ms")(
             "teq",
             po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp == TS ms"
-    )(
+            "Find messages with UNIX timestamp == TS ms")(
             "tlt",
             po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp <  TS ms"
-    )(
+            "Find messages with UNIX timestamp <  TS ms")(
             "tle",
             po::value<epochtime_t>()->value_name("TS"),
-            "Find messages with UNIX timestamp <= TS ms"
-    )(
+            "Find messages with UNIX timestamp <= TS ms")(
             "ignore-case,i",
             po::bool_switch(&m_ignore_case),
-            "Ignore case distinctions in both WILDCARD STRING and the input files"
-    )(
+            "Ignore case distinctions in both WILDCARD STRING and the input files")(
             "file-path",
             po::value<string>(&m_file_path)->value_name("PATH"),
-            "Limit search to files with the path PATH"
-    );
+            "Limit search to files with the path PATH");
 
     po::options_description options_aggregation("Aggregation Options");
     // clang-format off
@@ -359,20 +342,15 @@ auto CommandLineArguments::parse_search_arguments(
     options_reducer_output_handler.add_options()(
             "host",
             po::value<string>(&m_reducer_host)->value_name("HOST"),
-            "Host the reducer is running on"
-    )(
-            "port",
-            po::value<int>(&m_reducer_port)->value_name("PORT"),
-            "Port the reducer is listening on"
-    )(
+            "Host the reducer is running on")("port",
+                                              po::value<int>(&m_reducer_port)->value_name("PORT"),
+                                              "Port the reducer is listening on")(
             "job-id",
             po::value<reducer::job_id_t>(&m_job_id)->value_name("ID"),
-            "Job ID for the requested aggregation operation"
-    );
+            "Job ID for the requested aggregation operation");
 
     po::options_description options_results_cache_output_handler(
-            "Results Cache Output Handler Options"
-    );
+            "Results Cache Output Handler Options");
     // clang-format off
     options_results_cache_output_handler.add_options()(
             "uri",
@@ -510,8 +488,7 @@ auto CommandLineArguments::parse_search_arguments(
             > 0)
         {
             throw invalid_argument(
-                    "--teq cannot be specified with any other timestamp filtering option."
-            );
+                    "--teq cannot be specified with any other timestamp filtering option.");
         }
 
         m_search_begin_ts = parsed_command_line_options["teq"].as<epochtime_t>();
@@ -543,8 +520,7 @@ auto CommandLineArguments::parse_search_arguments(
 
         if (m_search_begin_ts > m_search_end_ts) {
             throw invalid_argument(
-                    "Timestamp range is invalid - begin timestamp is after end timestamp."
-            );
+                    "Timestamp range is invalid - begin timestamp is after end timestamp.");
         }
     }
 
@@ -567,25 +543,19 @@ auto CommandLineArguments::parse_search_arguments(
     }
     if (cNetworkOutputHandlerName == output_handler_name) {
         m_output_handler_type = OutputHandlerType::Network;
-        parse_network_dest_output_handler_options(
-                options_network_output_handler,
-                parsed.options,
-                parsed_command_line_options
-        );
+        parse_network_dest_output_handler_options(options_network_output_handler,
+                                                  parsed.options,
+                                                  parsed_command_line_options);
     } else if (cReducerOutputHandlerName == output_handler_name) {
         m_output_handler_type = OutputHandlerType::Reducer;
-        parse_reducer_output_handler_options(
-                options_reducer_output_handler,
-                parsed.options,
-                parsed_command_line_options
-        );
+        parse_reducer_output_handler_options(options_reducer_output_handler,
+                                             parsed.options,
+                                             parsed_command_line_options);
     } else if (cResultsCacheOutputHandlerName == output_handler_name) {
         m_output_handler_type = OutputHandlerType::ResultsCache;
-        parse_results_cache_output_handler_options(
-                options_results_cache_output_handler,
-                parsed.options,
-                parsed_command_line_options
-        );
+        parse_results_cache_output_handler_options(options_results_cache_output_handler,
+                                                   parsed.options,
+                                                   parsed_command_line_options);
     } else if (output_handler_name.empty()) {
         throw invalid_argument("OUTPUT_HANDLER cannot be an empty string.");
     } else {
@@ -601,14 +571,12 @@ auto CommandLineArguments::parse_search_arguments(
     {
         throw invalid_argument(
                 "The reducer output handler currently only supports count and count-by-time"
-                " aggregations."
-        );
+                " aggregations.");
     }
 
     if (m_do_count_by_time_aggregation && m_do_count_results_aggregation) {
         throw std::invalid_argument(
-                "The --count-by-time and --count options are mutually exclusive."
-        );
+                "The --count-by-time and --count options are mutually exclusive.");
     }
     return ParsingResult::Success;
 }
@@ -616,8 +584,7 @@ auto CommandLineArguments::parse_search_arguments(
 void CommandLineArguments::parse_network_dest_output_handler_options(
         po::options_description const& options_description,
         std::vector<po::option> const& options,
-        po::variables_map& parsed_options
-) {
+        po::variables_map& parsed_options) {
     clp::parse_unrecognized_options(options_description, options, parsed_options);
 
     if (parsed_options.count("host") == 0) {
@@ -638,8 +605,7 @@ void CommandLineArguments::parse_network_dest_output_handler_options(
 void CommandLineArguments::parse_reducer_output_handler_options(
         po::options_description const& options_description,
         vector<po::option> const& options,
-        po::variables_map& parsed_options
-) {
+        po::variables_map& parsed_options) {
     parse_unrecognized_options(options_description, options, parsed_options);
 
     if (parsed_options.count("host") == 0) {
@@ -667,8 +633,7 @@ void CommandLineArguments::parse_reducer_output_handler_options(
 void CommandLineArguments::parse_results_cache_output_handler_options(
         po::options_description const& options_description,
         vector<po::option> const& options,
-        po::variables_map& parsed_options
-) {
+        po::variables_map& parsed_options) {
     parse_unrecognized_options(options_description, options, parsed_options);
 
     // Validate mongodb uri was specified

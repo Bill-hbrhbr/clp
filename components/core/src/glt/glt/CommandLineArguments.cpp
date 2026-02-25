@@ -21,8 +21,8 @@ using std::string;
 using std::vector;
 
 namespace glt::glt {
-CommandLineArgumentsBase::ParsingResult
-CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
+CommandLineArgumentsBase::ParsingResult CommandLineArguments::parse_arguments(int argc,
+                                                                              char const* argv[]) {
     // Print out basic usage if user doesn't specify any options
     if (1 == argc) {
         print_basic_usage();
@@ -43,30 +43,23 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
     }
     config_file_path += cDefaultConfigFilename;
     string global_metadata_db_config_file_path;
-    options_general.add_options()
-            ("help,h", "Print help")
-            ("version,V", "Print version")
-            (
-                    "config-file",
-                    po::value<string>(&config_file_path)
-                            ->value_name("FILE")
-                            ->default_value(config_file_path),
-                    "Use configuration options from FILE"
-            )
-            (
-                    "db-config-file",
-                    po::value<string>(&global_metadata_db_config_file_path)
-                            ->value_name("FILE")
-                            ->default_value(global_metadata_db_config_file_path),
-                    "Global metadata DB YAML config"
-            );
+    options_general.add_options()("help,h", "Print help")("version,V", "Print version")(
+            "config-file",
+            po::value<string>(&config_file_path)
+                    ->value_name("FILE")
+                    ->default_value(config_file_path),
+            "Use configuration options from FILE")(
+            "db-config-file",
+            po::value<string>(&global_metadata_db_config_file_path)
+                    ->value_name("FILE")
+                    ->default_value(global_metadata_db_config_file_path),
+            "Global metadata DB YAML config");
 
     po::options_description general_positional_options;
     char command_input;
     general_positional_options.add_options()("command", po::value<char>(&command_input))(
             "command-args",
-            po::value<vector<string>>()
-    );
+            po::value<vector<string>>());
     po::positional_options_description general_positional_options_description;
     general_positional_options_description.add("command", 1);
     general_positional_options_description.add("command-args", -1);
@@ -163,13 +156,11 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
 
         // Define functional options shared by extract and compression
         po::options_description options_functional("Input Options");
-        options_functional.add_options()(
-                "files-from,f",
-                po::value<string>(&m_path_list_path)
-                        ->value_name("FILE")
-                        ->default_value(m_path_list_path),
-                "Compress/extract files specified in FILE"
-        );
+        options_functional.add_options()("files-from,f",
+                                         po::value<string>(&m_path_list_path)
+                                                 ->value_name("FILE")
+                                                 ->default_value(m_path_list_path),
+                                         "Compress/extract files specified in FILE");
 
         if (Command::Extract == m_command) {
             // Define extraction hidden positional options
@@ -193,13 +184,11 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             vector<string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
             unrecognized_options.erase(unrecognized_options.begin());
-            po::store(
-                    po::command_line_parser(unrecognized_options)
-                            .options(all_extraction_options)
-                            .positional(extraction_positional_options_description)
-                            .run(),
-                    parsed_command_line_options
-            );
+            po::store(po::command_line_parser(unrecognized_options)
+                              .options(all_extraction_options)
+                              .positional(extraction_positional_options_description)
+                              .run(),
+                      parsed_command_line_options);
 
             notify(parsed_command_line_options);
 
@@ -254,47 +243,38 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
                     po::value<string>(&m_path_prefix_to_remove)
                             ->value_name("DIR")
                             ->default_value(m_path_prefix_to_remove),
-                    "Remove the given path prefix from each compressed file/dir."
-            )(
+                    "Remove the given path prefix from each compressed file/dir.")(
                     "target-encoded-file-size",
                     po::value<size_t>(&m_target_encoded_file_size)
                             ->value_name("SIZE")
                             ->default_value(m_target_encoded_file_size),
-                    "Target size (B) for an encoded file before a new one is created"
-            )(
+                    "Target size (B) for an encoded file before a new one is created")(
                     "target-segment-size",
                     po::value<size_t>(&m_target_segment_uncompressed_size)
                             ->value_name("SIZE")
                             ->default_value(m_target_segment_uncompressed_size),
-                    "Target uncompressed size (B) of a segment before a new one is created"
-            )(
+                    "Target uncompressed size (B) of a segment before a new one is created")(
                     "target-dictionaries-size",
                     po::value<size_t>(&m_target_data_size_of_dictionaries)
                             ->value_name("SIZE")
                             ->default_value(m_target_data_size_of_dictionaries),
-                    "Target size (B) for the dictionaries before a new archive is created"
-            )(
+                    "Target size (B) for the dictionaries before a new archive is created")(
                     "compression-level",
                     po::value<int>(&m_compression_level)
                             ->value_name("LEVEL")
                             ->default_value(m_compression_level),
-                    "1 (fast/low compression) to 19 (slow/high compression)"
-            )(
+                    "1 (fast/low compression) to 19 (slow/high compression)")(
                     "print-archive-stats-progress",
                     po::bool_switch(&m_print_archive_stats_progress),
-                    "Print statistics (ndjson) about each archive as it's compressed"
-            )(
+                    "Print statistics (ndjson) about each archive as it's compressed")(
                     "table-combine-threshold",
                     po::value<double>(&m_combine_threshold)
                             ->value_name("VALUE")
                             ->default_value(m_combine_threshold, "0.1"),
                     "Target size (%) of a table (relative to the archive's size) for it to be"
-                    " stored in the combined table"
-            )(
-                    "progress",
-                    po::bool_switch(&m_show_progress),
-                    "Show progress during compression"
-            );
+                    " stored in the combined table")("progress",
+                                                     po::bool_switch(&m_show_progress),
+                                                     "Show progress during compression");
 
             po::options_description all_compression_options;
             all_compression_options.add(options_compression);
@@ -304,13 +284,11 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             vector<string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
             unrecognized_options.erase(unrecognized_options.begin());
-            po::store(
-                    po::command_line_parser(unrecognized_options)
-                            .options(all_compression_options)
-                            .positional(compression_positional_options_description)
-                            .run(),
-                    parsed_command_line_options
-            );
+            po::store(po::command_line_parser(unrecognized_options)
+                              .options(all_compression_options)
+                              .positional(compression_positional_options_description)
+                              .run(),
+                      parsed_command_line_options);
 
             notify(parsed_command_line_options);
 
@@ -359,10 +337,9 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             }
 
             if (m_combine_threshold < 0 || m_combine_threshold > 100) {
-                throw invalid_argument(
-                        "table-combined-threshold " + std::to_string(m_combine_threshold)
-                        + " is invalid - threshold must be between 0 and 100"
-                );
+                throw invalid_argument("table-combined-threshold "
+                                       + std::to_string(m_combine_threshold)
+                                       + " is invalid - threshold must be between 0 and 100");
             }
 
             // Validate an output directory was specified
@@ -378,36 +355,28 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             options_search_input.add_options()(
                     "file,f",
                     po::value<string>(&m_search_strings_file_path)->value_name("FILE"),
-                    "Obtain wildcard strings from FILE, one per line"
-            );
+                    "Obtain wildcard strings from FILE, one per line");
 
             // Define match controls
             po::options_description options_match_control("Match Controls");
-            options_match_control.add_options()(
-                    "tgt",
-                    po::value<epochtime_t>()->value_name("TS"),
-                    "Find messages with UNIX timestamp >  TS ms"
-            )(
+            options_match_control.add_options()("tgt",
+                                                po::value<epochtime_t>()->value_name("TS"),
+                                                "Find messages with UNIX timestamp >  TS ms")(
                     "tge",
                     po::value<epochtime_t>()->value_name("TS"),
-                    "Find messages with UNIX timestamp >= TS ms"
-            )(
+                    "Find messages with UNIX timestamp >= TS ms")(
                     "teq",
                     po::value<epochtime_t>()->value_name("TS"),
-                    "Find messages with UNIX timestamp == TS ms"
-            )(
+                    "Find messages with UNIX timestamp == TS ms")(
                     "tlt",
                     po::value<epochtime_t>()->value_name("TS"),
-                    "Find messages with UNIX timestamp <  TS ms"
-            )(
+                    "Find messages with UNIX timestamp <  TS ms")(
                     "tle",
                     po::value<epochtime_t>()->value_name("TS"),
-                    "Find messages with UNIX timestamp <= TS ms"
-            )(
+                    "Find messages with UNIX timestamp <= TS ms")(
                     "ignore-case,i",
                     po::bool_switch(&m_ignore_case),
-                    "Ignore case distinctions in both WILDCARD STRING and the input files"
-            );
+                    "Ignore case distinctions in both WILDCARD STRING and the input files");
 
             // Define visible options
             po::options_description visible_options;
@@ -444,13 +413,11 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
             vector<string> unrecognized_options
                     = po::collect_unrecognized(parsed.options, po::include_positional);
             unrecognized_options.erase(unrecognized_options.begin());
-            po::store(
-                    po::command_line_parser(unrecognized_options)
-                            .options(all_search_options)
-                            .positional(positional_options_description)
-                            .run(),
-                    parsed_command_line_options
-            );
+            po::store(po::command_line_parser(unrecognized_options)
+                              .options(all_search_options)
+                              .positional(positional_options_description)
+                              .run(),
+                      parsed_command_line_options);
 
             notify(parsed_command_line_options);
 
@@ -476,8 +443,7 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
                 if (m_search_string.empty() == false) {
                     throw invalid_argument(
                             "Wildcard strings cannot be specified both through the command line"
-                            " and a file."
-                    );
+                            " and a file.");
                 }
             } else if (m_search_string.empty()) {
                 throw invalid_argument("Wildcard string not specified or empty.");
@@ -492,8 +458,7 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
                     > 0)
                 {
                     throw invalid_argument(
-                            "--teq cannot be specified with any other timestamp filtering option."
-                    );
+                            "--teq cannot be specified with any other timestamp filtering option.");
                 }
 
                 m_search_begin_ts = parsed_command_line_options["teq"].as<epochtime_t>();
@@ -529,8 +494,7 @@ CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
 
                 if (m_search_begin_ts > m_search_end_ts) {
                     throw invalid_argument(
-                            "Timestamp range is invalid - begin timestamp is after end timestamp."
-                    );
+                            "Timestamp range is invalid - begin timestamp is after end timestamp.");
                 }
             }
         }

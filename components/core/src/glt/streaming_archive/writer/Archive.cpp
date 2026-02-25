@@ -59,11 +59,9 @@ void Archive::open(UserConfig const& user_config) {
         throw OperationFailed(ErrorCode_Unsupported, __FILENAME__, __LINE__);
     }
     auto const& archive_path_string = archive_path.string();
-    m_local_metadata = std::make_optional<ArchiveMetadata>(
-            cArchiveFormatVersion,
-            m_creator_id_as_string,
-            m_creation_num
-    );
+    m_local_metadata = std::make_optional<ArchiveMetadata>(cArchiveFormatVersion,
+                                                           m_creator_id_as_string,
+                                                           m_creation_num);
 
     // Create internal directories if necessary
     retval = mkdir(archive_path_string.c_str(), 0750);
@@ -75,11 +73,9 @@ void Archive::open(UserConfig const& user_config) {
     // Get archive directory's file descriptor
     int archive_dir_fd = ::open(archive_path_string.c_str(), O_RDONLY);
     if (-1 == archive_dir_fd) {
-        SPDLOG_ERROR(
-                "Failed to get file descriptor for {}, errno={}",
-                archive_path_string.c_str(),
-                errno
-        );
+        SPDLOG_ERROR("Failed to get file descriptor for {}, errno={}",
+                     archive_path_string.c_str(),
+                     errno);
         throw OperationFailed(ErrorCode_errno, __FILENAME__, __LINE__);
     }
 
@@ -97,11 +93,9 @@ void Archive::open(UserConfig const& user_config) {
     // Get segments directory's file descriptor
     m_segments_dir_fd = ::open(m_segments_dir_path.c_str(), O_RDONLY);
     if (-1 == m_segments_dir_fd) {
-        SPDLOG_ERROR(
-                "Failed to open file descriptor for {}, errno={}",
-                m_segments_dir_path.c_str(),
-                errno
-        );
+        SPDLOG_ERROR("Failed to open file descriptor for {}, errno={}",
+                     m_segments_dir_path.c_str(),
+                     errno);
         throw OperationFailed(ErrorCode_errno, __FILENAME__, __LINE__);
     }
 
@@ -120,15 +114,12 @@ void Archive::open(UserConfig const& user_config) {
     try {
         m_metadata_file_writer.open(
                 metadata_file_path.string(),
-                FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING
-        );
+                FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING);
         m_local_metadata->write_to_file(m_metadata_file_writer);
         m_metadata_file_writer.flush();
     } catch (FileWriter::OperationFailed& e) {
-        SPDLOG_CRITICAL(
-                "Failed to write archive file metadata collection in file: {}",
-                metadata_file_path.c_str()
-        );
+        SPDLOG_CRITICAL("Failed to write archive file metadata collection in file: {}",
+                        metadata_file_path.c_str());
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
 
@@ -144,8 +135,9 @@ void Archive::open(UserConfig const& user_config) {
     string logtype_dict_path = archive_path_string + '/' + cLogTypeDictFilename;
     string logtype_dict_segment_index_path
             = archive_path_string + '/' + cLogTypeSegmentIndexFilename;
-    m_logtype_dict
-            .open(logtype_dict_path, logtype_dict_segment_index_path, cLogtypeDictionaryIdMax);
+    m_logtype_dict.open(logtype_dict_path,
+                        logtype_dict_segment_index_path,
+                        cLogtypeDictionaryIdMax);
 
     // Open variable dictionary
     string var_dict_path = archive_path_string + '/' + cVarDictFilename;
@@ -161,11 +153,9 @@ void Archive::open(UserConfig const& user_config) {
 #endif
     if (::close(archive_dir_fd) != 0) {
         // We've already fsynced, so this error shouldn't affect us. Therefore, just log it.
-        SPDLOG_WARN(
-                "Error when closing file descriptor for {}, errno={}",
-                archive_path_string.c_str(),
-                errno
-        );
+        SPDLOG_WARN("Error when closing file descriptor for {}, errno={}",
+                    archive_path_string.c_str(),
+                    errno);
     }
 
     m_path = archive_path_string;
@@ -177,8 +167,7 @@ void Archive::open(UserConfig const& user_config) {
     try {
         m_filename_dict_writer.open(
                 file_id_file_path,
-                FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING
-        );
+                FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING);
     } catch (FileWriter::OperationFailed& e) {
         SPDLOG_CRITICAL("Failed to create file: {}", file_id_file_path.c_str());
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
@@ -194,13 +183,11 @@ void Archive::close() {
 
     // Close segments if necessary
     if (m_message_order_table.is_open()) {
-        close_segment_and_persist_file_metadata(
-                m_message_order_table,
-                m_glt_segment,
-                m_files_in_segment,
-                m_logtype_ids_in_segment,
-                m_var_ids_in_segment
-        );
+        close_segment_and_persist_file_metadata(m_message_order_table,
+                                                m_glt_segment,
+                                                m_files_in_segment,
+                                                m_logtype_ids_in_segment,
+                                                m_var_ids_in_segment);
         m_logtype_ids_in_segment.clear();
         m_var_ids_in_segment.clear();
     }
@@ -232,12 +219,10 @@ void Archive::close() {
     m_path.clear();
 }
 
-void Archive::create_and_open_file(
-        string const& path,
-        group_id_t const group_id,
-        boost::uuids::uuid const& orig_file_id,
-        size_t split_ix
-) {
+void Archive::create_and_open_file(string const& path,
+                                   group_id_t const group_id,
+                                   boost::uuids::uuid const& orig_file_id,
+                                   size_t split_ix) {
     if (m_file != nullptr) {
         throw OperationFailed(ErrorCode_NotReady, __FILENAME__, __LINE__);
     }
@@ -276,31 +261,28 @@ void Archive::change_ts_pattern(TimestampPattern const* pattern) {
     m_file->change_ts_pattern(pattern);
 }
 
-void
-Archive::write_msg(epochtime_t timestamp, string const& message, size_t num_uncompressed_bytes) {
+void Archive::write_msg(epochtime_t timestamp,
+                        string const& message,
+                        size_t num_uncompressed_bytes) {
     // Encode message and add components to dictionaries
     vector<encoded_variable_t> encoded_vars;
     vector<variable_dictionary_id_t> var_ids;
-    EncodedVariableInterpreter::encode_and_add_to_dictionary(
-            message,
-            m_logtype_dict_entry,
-            m_var_dict,
-            encoded_vars,
-            var_ids
-    );
+    EncodedVariableInterpreter::encode_and_add_to_dictionary(message,
+                                                             m_logtype_dict_entry,
+                                                             m_var_dict,
+                                                             encoded_vars,
+                                                             var_ids);
     logtype_dictionary_id_t logtype_id;
     m_logtype_dict.add_entry(m_logtype_dict_entry, logtype_id);
     size_t offset = m_glt_segment.append_to_segment(logtype_id, timestamp, m_file_id, encoded_vars);
     // Issue: the offset of var_segments is per file based. However, we still need to add the offset
     // of segments. the offset of segment is not known because we don't know if the segment should
     // be timestamped... Here for simplicity, we add the segment offset back when we close the file
-    m_file->write_encoded_msg(
-            timestamp,
-            logtype_id,
-            offset,
-            num_uncompressed_bytes,
-            encoded_vars.size()
-    );
+    m_file->write_encoded_msg(timestamp,
+                              logtype_id,
+                              offset,
+                              num_uncompressed_bytes,
+                              encoded_vars.size());
     // Update segment indices
     m_logtype_ids_in_segment.insert(logtype_id);
     m_var_ids_in_segment.insert_all(var_ids);
@@ -317,8 +299,7 @@ void Archive::append_file_contents_to_segment(
         GLTSegment& glt_segment,
         ArrayBackedPosIntSet<logtype_dictionary_id_t>& logtype_ids_in_segment,
         ArrayBackedPosIntSet<variable_dictionary_id_t>& var_ids_in_segment,
-        vector<File*>& files_in_segment
-) {
+        vector<File*>& files_in_segment) {
     if (!segment.is_open()) {
         segment.open(m_segments_dir_path, m_next_segment_id++, m_compression_level);
     }
@@ -332,13 +313,11 @@ void Archive::append_file_contents_to_segment(
     if (segment.get_uncompressed_size() + glt_segment.get_uncompressed_size()
         >= m_target_segment_uncompressed_size)
     {
-        close_segment_and_persist_file_metadata(
-                segment,
-                glt_segment,
-                files_in_segment,
-                logtype_ids_in_segment,
-                var_ids_in_segment
-        );
+        close_segment_and_persist_file_metadata(segment,
+                                                glt_segment,
+                                                files_in_segment,
+                                                logtype_ids_in_segment,
+                                                var_ids_in_segment);
         logtype_ids_in_segment.clear();
         var_ids_in_segment.clear();
     }
@@ -352,22 +331,18 @@ void Archive::append_file_to_segment() {
     // because the open happens after file content gets appended
     // to m_glt_segment.
     if (!m_message_order_table.is_open()) {
-        m_glt_segment.open(
-                m_segments_dir_path,
-                m_next_segment_id,
-                m_compression_level,
-                m_combine_threshold
-        );
+        m_glt_segment.open(m_segments_dir_path,
+                           m_next_segment_id,
+                           m_compression_level,
+                           m_combine_threshold);
         m_message_order_table.open(m_segments_dir_path, m_next_segment_id, m_compression_level);
         m_next_segment_id++;
     }
-    append_file_contents_to_segment(
-            m_message_order_table,
-            m_glt_segment,
-            m_logtype_ids_in_segment,
-            m_var_ids_in_segment,
-            m_files_in_segment
-    );
+    append_file_contents_to_segment(m_message_order_table,
+                                    m_glt_segment,
+                                    m_logtype_ids_in_segment,
+                                    m_var_ids_in_segment,
+                                    m_files_in_segment);
 
     // Make sure file pointer is nulled and cannot be accessed outside
     m_file = nullptr;
@@ -388,8 +363,7 @@ void Archive::close_segment_and_persist_file_metadata(
         GLTSegment& glt_segment,
         std::vector<File*>& files,
         ArrayBackedPosIntSet<logtype_dictionary_id_t>& segment_logtype_ids,
-        ArrayBackedPosIntSet<variable_dictionary_id_t>& segment_var_ids
-) {
+        ArrayBackedPosIntSet<variable_dictionary_id_t>& segment_var_ids) {
     auto segment_id = on_disk_stream.get_id();
     m_logtype_dict.index_segment(segment_id, segment_logtype_ids);
     m_var_dict.index_segment(segment_id, segment_var_ids);

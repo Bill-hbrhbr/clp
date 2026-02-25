@@ -62,8 +62,8 @@ public:
      * - KvIrSearchErrorEnum::UnsupportedOutputHandlerType if the output handler type is not
      *   supported.
      */
-    [[nodiscard]] static auto
-    create(CommandLineArguments const& command_line_arguments, int reducer_socket_fd)
+    [[nodiscard]] static auto create(CommandLineArguments const& command_line_arguments,
+                                     int reducer_socket_fd)
             -> ystdlib::error_handling::Result<IrUnitHandler>;
 
     // Delete copy constructor and assignment operator
@@ -78,22 +78,20 @@ public:
     ~IrUnitHandler() = default;
 
     // Methods implementing `IrUnitHandlerInterface`
-    [[nodiscard]] auto
-    handle_log_event(KeyValuePairLogEvent log_event, [[maybe_unused]] size_t log_event_idx)
-            -> IRErrorCode;
+    [[nodiscard]] auto handle_log_event(KeyValuePairLogEvent log_event,
+                                        [[maybe_unused]] size_t log_event_idx) -> IRErrorCode;
 
-    [[nodiscard]] static auto handle_utc_offset_change(
-            [[maybe_unused]] UtcOffset utc_offset_old,
-            [[maybe_unused]] UtcOffset utc_offset_new
-    ) -> IRErrorCode {
+    [[nodiscard]] static auto handle_utc_offset_change([[maybe_unused]] UtcOffset utc_offset_old,
+                                                       [[maybe_unused]] UtcOffset utc_offset_new)
+            -> IRErrorCode {
         return IRErrorCode::IRErrorCode_Success;
     }
 
     [[nodiscard]] static auto handle_schema_tree_node_insertion(
             [[maybe_unused]] bool is_auto_generated,
             [[maybe_unused]] clp::ffi::SchemaTree::NodeLocator schema_tree_node_locator,
-            [[maybe_unused]] std::shared_ptr<clp::ffi::SchemaTree const> const& schema_tree
-    ) -> IRErrorCode {
+            [[maybe_unused]] std::shared_ptr<clp::ffi::SchemaTree const> const& schema_tree)
+            -> IRErrorCode {
         return IRErrorCode::IRErrorCode_Success;
     }
 
@@ -125,13 +123,11 @@ private:
         clp::ReaderInterface& stream_reader,
         CommandLineArguments const& command_line_arguments,
         std::shared_ptr<search::ast::Expression> query,
-        int reducer_socket_fd
-) -> ystdlib::error_handling::Result<void>;
+        int reducer_socket_fd) -> ystdlib::error_handling::Result<void>;
 
-auto IrUnitHandler::create(
-        CommandLineArguments const& command_line_arguments,
-        [[maybe_unused]] int reducer_socket_fd
-) -> ystdlib::error_handling::Result<IrUnitHandler> {
+auto IrUnitHandler::create(CommandLineArguments const& command_line_arguments,
+                           [[maybe_unused]] int reducer_socket_fd)
+        -> ystdlib::error_handling::Result<IrUnitHandler> {
     switch (command_line_arguments.get_output_handler_type()) {
         case CommandLineArguments::OutputHandlerType::Stdout:
             break;
@@ -139,8 +135,7 @@ auto IrUnitHandler::create(
         case CommandLineArguments::OutputHandlerType::Reducer:
         case CommandLineArguments::OutputHandlerType::ResultsCache:
             SPDLOG_ERROR(
-                    "kv-ir search: Only stdout output is supported in the current implementation."
-            );
+                    "kv-ir search: Only stdout output is supported in the current implementation.");
             return KvIrSearchError{KvIrSearchErrorEnum::UnsupportedOutputHandlerType};
         default:
             SPDLOG_ERROR("kv-ir search: Unknown output method.");
@@ -157,18 +152,14 @@ auto IrUnitHandler::create(
  *   necessary validations are performed.
  */
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto IrUnitHandler::handle_log_event(
-        clp::ffi::KeyValuePairLogEvent log_event,
-        [[maybe_unused]] size_t log_event_idx
-) -> IRErrorCode {
+auto IrUnitHandler::handle_log_event(clp::ffi::KeyValuePairLogEvent log_event,
+                                     [[maybe_unused]] size_t log_event_idx) -> IRErrorCode {
     auto const serialize_result{log_event.serialize_to_json()};
     if (serialize_result.has_error()) {
-        SPDLOG_ERROR(
-                "kv-ir search: Failed to serialize kv-pair log event to JSON objects."
-                " error_category={}, error={}",
-                serialize_result.error().category().name(),
-                serialize_result.error().message()
-        );
+        SPDLOG_ERROR("kv-ir search: Failed to serialize kv-pair log event to JSON objects."
+                     " error_category={}, error={}",
+                     serialize_result.error().category().name(),
+                     serialize_result.error().message());
         return IRErrorCode::IRErrorCode_Decode_Error;
     }
     auto const& [auto_gen_kv_pairs, user_gen_kv_pairs] = serialize_result.value();
@@ -176,31 +167,26 @@ auto IrUnitHandler::handle_log_event(
     try {
         constexpr std::string_view cAutoGenKey{"\"auto_generated_kv_pairs\""};
         constexpr std::string_view cUserGenKey{"\"user_generated_kv_pairs\""};
-        std::cout << fmt::format(
-                "{{{}:{},{}:{}}}\n",
-                cAutoGenKey,
-                auto_gen_kv_pairs.dump(),
-                cUserGenKey,
-                user_gen_kv_pairs.dump()
-        );
+        std::cout << fmt::format("{{{}:{},{}:{}}}\n",
+                                 cAutoGenKey,
+                                 auto_gen_kv_pairs.dump(),
+                                 cUserGenKey,
+                                 user_gen_kv_pairs.dump());
     } catch (nlohmann::json::exception const& ex) {
-        SPDLOG_ERROR(
-                "kv-ir search: Failed to serialize kv-pair log event into JSON strings."
-                " ErrorMessage={}",
-                ex.what()
-        );
+        SPDLOG_ERROR("kv-ir search: Failed to serialize kv-pair log event into JSON strings."
+                     " ErrorMessage={}",
+                     ex.what());
         return IRErrorCode::IRErrorCode_Corrupted_IR;
     }
 
     return IRErrorCode::IRErrorCode_Success;
 }
 
-auto deserialize_and_search_kv_ir_stream(
-        clp::ReaderInterface& stream_reader,
-        CommandLineArguments const& command_line_arguments,
-        std::shared_ptr<search::ast::Expression> query,
-        int reducer_socket_fd
-) -> ystdlib::error_handling::Result<void> {
+auto deserialize_and_search_kv_ir_stream(clp::ReaderInterface& stream_reader,
+                                         CommandLineArguments const& command_line_arguments,
+                                         std::shared_ptr<search::ast::Expression> query,
+                                         int reducer_socket_fd)
+        -> ystdlib::error_handling::Result<void> {
     auto trivial_new_projected_schema_tree_node_callback
             = []([[maybe_unused]] bool is_auto_generated,
                  [[maybe_unused]] SchemaTree::Node::id_t node_id,
@@ -209,21 +195,16 @@ auto deserialize_and_search_kv_ir_stream(
     using QueryHandlerType = clp::ffi::ir_stream::search::
             QueryHandler<decltype(trivial_new_projected_schema_tree_node_callback)>;
 
-    auto ir_unit_handler{YSTDLIB_ERROR_HANDLING_TRYX(
-            IrUnitHandler::create(command_line_arguments, reducer_socket_fd)
-    )};
+    auto ir_unit_handler{YSTDLIB_ERROR_HANDLING_TRYX(IrUnitHandler::create(command_line_arguments,
+                                                                           reducer_socket_fd))};
     auto query_handler{YSTDLIB_ERROR_HANDLING_TRYX(
-            QueryHandlerType::create(
-                    trivial_new_projected_schema_tree_node_callback,
-                    std::move(query),
-                    {},
-                    false == command_line_arguments.get_ignore_case()
-            )
-    )};
+            QueryHandlerType::create(trivial_new_projected_schema_tree_node_callback,
+                                     std::move(query),
+                                     {},
+                                     false == command_line_arguments.get_ignore_case()))};
 
     auto deserializer_result{
-            make_deserializer(stream_reader, std::move(ir_unit_handler), std::move(query_handler))
-    };
+            make_deserializer(stream_reader, std::move(ir_unit_handler), std::move(query_handler))};
 
     if (deserializer_result.has_error()) {
         return KvIrSearchError{KvIrSearchErrorEnum::DeserializerCreationFailure};
@@ -238,12 +219,10 @@ auto deserialize_and_search_kv_ir_stream(
 }
 }  // namespace
 
-auto search_kv_ir_stream(
-        Path const& stream_path,
-        CommandLineArguments const& command_line_arguments,
-        std::shared_ptr<search::ast::Expression> query,
-        int reducer_socket_fd
-) -> ystdlib::error_handling::Result<void> {
+auto search_kv_ir_stream(Path const& stream_path,
+                         CommandLineArguments const& command_line_arguments,
+                         std::shared_ptr<search::ast::Expression> query,
+                         int reducer_socket_fd) -> ystdlib::error_handling::Result<void> {
     if (false == command_line_arguments.get_projection_columns().empty()) {
         SPDLOG_ERROR("kv-ir search: Projection support is not implemented.");
         return KvIrSearchError{KvIrSearchErrorEnum::ProjectionSupportNotImplemented};
@@ -257,8 +236,7 @@ auto search_kv_ir_stream(
     }
 
     auto const raw_reader{
-            try_create_reader(stream_path, command_line_arguments.get_network_auth())
-    };
+            try_create_reader(stream_path, command_line_arguments.get_network_auth())};
     if (nullptr == raw_reader) {
         return KvIrSearchError{KvIrSearchErrorEnum::StreamReaderCreationFailure};
     }
@@ -266,10 +244,8 @@ auto search_kv_ir_stream(
     if (command_line_arguments.get_search_begin_ts().has_value()
         || command_line_arguments.get_search_end_ts().has_value())
     {
-        SPDLOG_WARN(
-                "kv-ir search: Timestamp filters are currently not supported."
-                " Values will be ignored."
-        );
+        SPDLOG_WARN("kv-ir search: Timestamp filters are currently not supported."
+                    " Values will be ignored.");
     }
 
     SetTimestampLiteralPrecision date_precision_pass{TimestampLiteral::Precision::Milliseconds};
@@ -279,27 +255,21 @@ auto search_kv_ir_stream(
         clp::streaming_compression::zstd::Decompressor decompressor;
         constexpr size_t cReaderBufferSize{64L * 1024L};  // 64 KiB
         decompressor.open(*raw_reader, cReaderBufferSize);
-        YSTDLIB_ERROR_HANDLING_TRYV(deserialize_and_search_kv_ir_stream(
-                decompressor,
-                command_line_arguments,
-                std::move(query),
-                reducer_socket_fd
-        ));
+        YSTDLIB_ERROR_HANDLING_TRYV(deserialize_and_search_kv_ir_stream(decompressor,
+                                                                        command_line_arguments,
+                                                                        std::move(query),
+                                                                        reducer_socket_fd));
         decompressor.close();
     } catch (clp::TraceableException const& ex) {
         auto const err{ex.get_error_code()};
         if (clp::ErrorCode_errno == err) {
-            SPDLOG_ERROR(
-                    "kv-ir search failed on `clp::TraceableException`: errno={}, msg={}",
-                    errno,
-                    ex.what()
-            );
+            SPDLOG_ERROR("kv-ir search failed on `clp::TraceableException`: errno={}, msg={}",
+                         errno,
+                         ex.what());
         } else {
-            SPDLOG_ERROR(
-                    "kv-ir search failed on `clp::TraceableException`: error_code={}, msg={}",
-                    err,
-                    ex.what()
-            );
+            SPDLOG_ERROR("kv-ir search failed on `clp::TraceableException`: error_code={}, msg={}",
+                         err,
+                         ex.what());
         }
         return KvIrSearchError{KvIrSearchErrorEnum::ClpLegacyError};
     }

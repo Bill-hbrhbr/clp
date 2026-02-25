@@ -66,10 +66,9 @@ public:
      * code indicating the failure:
      * - Forwards `find_first_matching_prefix`'s return values on failure.
      */
-    [[nodiscard]] auto find_first_matching_month_and_advance_pattern_idx(
-            std::string_view timestamp,
-            size_t& pattern_idx
-    ) const -> ystdlib::error_handling::Result<std::pair<size_t, size_t>>;
+    [[nodiscard]] auto find_first_matching_month_and_advance_pattern_idx(std::string_view timestamp,
+                                                                         size_t& pattern_idx) const
+            -> ystdlib::error_handling::Result<std::pair<size_t, size_t>>;
 
     /**
      * Finds the first matching weekday as a prefix of `timestamp`.
@@ -82,8 +81,8 @@ public:
      */
     [[nodiscard]] auto find_first_matching_weekday_and_advance_pattern_idx(
             std::string_view timestamp,
-            size_t& pattern_idx
-    ) const -> ystdlib::error_handling::Result<std::pair<size_t, size_t>>;
+            size_t& pattern_idx) const
+            -> ystdlib::error_handling::Result<std::pair<size_t, size_t>>;
 
     /**
      * Gets the month at `month_idx` in a month name format specifier, and advances `pattern_idx` to
@@ -94,8 +93,8 @@ public:
      * @return A result containing the month, or an error code indicating the failure:
      * - ErrorCodeEnum::IncompatibleTimestampPattern if `month_idx` is out of bounds.
      */
-    [[nodiscard]] auto
-    get_month_and_advance_pattern_idx(size_t month_idx, size_t& pattern_idx) const
+    [[nodiscard]] auto get_month_and_advance_pattern_idx(size_t month_idx,
+                                                         size_t& pattern_idx) const
             -> ystdlib::error_handling::Result<std::string_view>;
 
     /**
@@ -107,23 +106,21 @@ public:
      * @return A result containing the weekday, or an error code indicating the failure:
      * - ErrorCodeEnum::IncompatibleTimestampPattern if `weekday_idx` is out of bounds.
      */
-    [[nodiscard]] auto
-    get_weekday_and_advance_pattern_idx(size_t weekday_idx, size_t& pattern_idx) const
+    [[nodiscard]] auto get_weekday_and_advance_pattern_idx(size_t weekday_idx,
+                                                           size_t& pattern_idx) const
             -> ystdlib::error_handling::Result<std::string_view>;
 
 private:
     // Constructor
-    TimestampPattern(
-            std::string_view pattern,
-            std::optional<std::pair<size_t, int>> optional_timezone_size_and_offset,
-            std::vector<std::pair<uint16_t, uint16_t>> month_name_offsets_and_lengths,
-            std::vector<std::pair<uint16_t, uint16_t>> weekday_name_offsets_and_lengths,
-            uint16_t month_name_bracket_pattern_length,
-            uint16_t weekday_name_bracket_pattern_length,
-            bool uses_date_type_representation,
-            bool uses_twelve_hour_clock,
-            bool is_quoted_pattern
-    )
+    TimestampPattern(std::string_view pattern,
+                     std::optional<std::pair<size_t, int>> optional_timezone_size_and_offset,
+                     std::vector<std::pair<uint16_t, uint16_t>> month_name_offsets_and_lengths,
+                     std::vector<std::pair<uint16_t, uint16_t>> weekday_name_offsets_and_lengths,
+                     uint16_t month_name_bracket_pattern_length,
+                     uint16_t weekday_name_bracket_pattern_length,
+                     bool uses_date_type_representation,
+                     bool uses_twelve_hour_clock,
+                     bool is_quoted_pattern)
             : m_pattern{pattern},
               m_optional_timezone_size_and_offset{std::move(optional_timezone_size_and_offset)},
               m_month_name_offsets_and_lengths{std::move(month_name_offsets_and_lengths)},
@@ -234,12 +231,11 @@ private:
  *     doesn't match up with the rest of the timestamp information).
  *   - ErrorCodeEnum::InvalidEscapeSequence if the pattern contains an unsupported escape sequence.
  */
-[[nodiscard]] auto parse_timestamp(
-        std::string_view timestamp,
-        TimestampPattern const& pattern,
-        bool is_json_literal,
-        std::string& generated_pattern
-) -> ystdlib::error_handling::Result<std::pair<epochtime_t, std::string_view>>;
+[[nodiscard]] auto parse_timestamp(std::string_view timestamp,
+                                   TimestampPattern const& pattern,
+                                   bool is_json_literal,
+                                   std::string& generated_pattern)
+        -> ystdlib::error_handling::Result<std::pair<epochtime_t, std::string_view>>;
 
 /**
  * Marshals a timestamp as a JSON literal according to a timestamp pattern.
@@ -250,9 +246,9 @@ private:
  * - Forwards `marshal_date_time_timestamp`'s return values.
  * - Forwards `marshal_numeric_timestamp`'s return values.
  */
-[[nodiscard]] auto
-marshal_timestamp(epochtime_t timestamp, TimestampPattern const& pattern, std::string& buffer)
-        -> ystdlib::error_handling::Result<void>;
+[[nodiscard]] auto marshal_timestamp(epochtime_t timestamp,
+                                     TimestampPattern const& pattern,
+                                     std::string& buffer) -> ystdlib::error_handling::Result<void>;
 
 /**
  * Parses a timestamp according to the first matching pattern in a list of patterns.
@@ -267,12 +263,11 @@ marshal_timestamp(epochtime_t timestamp, TimestampPattern const& pattern, std::s
  *     - The lifetime of the `std::string_view` is the least of `patterns` and `generated_pattern`.
  * @return std::nullopt if no pattern can be used to parse the timestamp.
  */
-[[nodiscard]] auto search_known_timestamp_patterns(
-        std::string_view timestamp,
-        std::vector<TimestampPattern> const& patterns,
-        bool is_json_literal,
-        std::string& generated_pattern
-) -> std::optional<std::pair<epochtime_t, std::string_view>>;
+[[nodiscard]] auto search_known_timestamp_patterns(std::string_view timestamp,
+                                                   std::vector<TimestampPattern> const& patterns,
+                                                   bool is_json_literal,
+                                                   std::string& generated_pattern)
+        -> std::optional<std::pair<epochtime_t, std::string_view>>;
 
 /**
  * Estimates the precision of an epoch timestamp based on its proximity to 1971 in different

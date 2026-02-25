@@ -21,16 +21,14 @@ namespace clp::ffi::ir_stream {
  * @tparam IrUnitHandlerType The type of the IR unit handler.
  */
 template <typename IrUnitHandlerType>
-concept IrUnitHandlerInterfaceReq = requires(
-        IrUnitHandlerType handler,
-        KeyValuePairLogEvent&& log_event,
-        size_t log_event_idx,
-        bool is_auto_generated,
-        UtcOffset utc_offset_old,
-        UtcOffset utc_offset_new,
-        SchemaTree::NodeLocator schema_tree_node_locator,
-        std::shared_ptr<SchemaTree const> schema_tree
-) {
+concept IrUnitHandlerInterfaceReq = requires(IrUnitHandlerType handler,
+                                             KeyValuePairLogEvent&& log_event,
+                                             size_t log_event_idx,
+                                             bool is_auto_generated,
+                                             UtcOffset utc_offset_old,
+                                             UtcOffset utc_offset_new,
+                                             SchemaTree::NodeLocator schema_tree_node_locator,
+                                             std::shared_ptr<SchemaTree const> schema_tree) {
     /**
      * Handles a log event IR unit.
      * @param log_event The deserialized result from IR deserializer.
@@ -59,11 +57,9 @@ concept IrUnitHandlerInterfaceReq = requires(
      * @return IRErrorCode::Success on success, user-defined error code on failures.
      */
     {
-        handler.handle_schema_tree_node_insertion(
-                is_auto_generated,
-                schema_tree_node_locator,
-                schema_tree
-        )
+        handler.handle_schema_tree_node_insertion(is_auto_generated,
+                                                  schema_tree_node_locator,
+                                                  schema_tree)
     } -> std::same_as<IRErrorCode>;
 
     /**

@@ -29,12 +29,10 @@ public:
      * @param archive_id The archive containing the log event.
      * @param log_event_idx The index of the log event within an archive.
      */
-    virtual void write(
-            std::string_view message,
-            epochtime_t timestamp,
-            std::string_view archive_id,
-            int64_t log_event_idx
-    ) = 0;
+    virtual void write(std::string_view message,
+                       epochtime_t timestamp,
+                       std::string_view archive_id,
+                       int64_t log_event_idx) = 0;
 
     /**
      * Writes a message to the output handler.

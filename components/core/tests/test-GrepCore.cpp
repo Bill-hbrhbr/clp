@@ -171,31 +171,27 @@ TEST_CASE("process_raw_query", "[dfa_search]") {
     constexpr bool cUseHeuristic{false};
 
     auto lexer{make_test_lexer(
-            {{R"(int:(\d+))"}, {R"(float:(\d+\.\d+))"}, {R"(hasNumber:[^ $]*\d+[^ $]*)"}}
-    )};
+            {{R"(int:(\d+))"}, {R"(float:(\d+\.\d+))"}, {R"(hasNumber:[^ $]*\d+[^ $]*)"}})};
 
     MockVariableDictionary const var_dict{make_var_dict({pair{0, "1a3"}, pair{1, "10a"}})};
-    MockLogTypeDictionary const logtype_dict{make_logtype_dict(
-            {{"text ", 'i', " ", 'i', " ", 'f'},
-             {"text ", 'i', " ", 'd', " ", 'f'},
-             {"text ", 'i', " ", 'd', " 3.14ab$"},
-             {"text ", 'i', " ", 'd', " 3.14abc$"},
-             {"text ", 'i', " ", 'd', " 3.15ab$"},
-             {"text ", 'i', " 10$ ", 'f'}}
-    )};
+    MockLogTypeDictionary const logtype_dict{
+            make_logtype_dict({{"text ", 'i', " ", 'i', " ", 'f'},
+                               {"text ", 'i', " ", 'd', " ", 'f'},
+                               {"text ", 'i', " ", 'd', " 3.14ab$"},
+                               {"text ", 'i', " ", 'd', " 3.14abc$"},
+                               {"text ", 'i', " ", 'd', " 3.15ab$"},
+                               {"text ", 'i', " 10$ ", 'f'}})};
 
     string const raw_query{"text 100 10? 3.14*"};
 
-    auto const query{GrepCore::process_raw_query(
-            logtype_dict,
-            var_dict,
-            raw_query,
-            cNoBeginTimestamp,
-            cNoEndTimestamp,
-            cIgnoreCase,
-            lexer,
-            cUseHeuristic
-    )};
+    auto const query{GrepCore::process_raw_query(logtype_dict,
+                                                 var_dict,
+                                                 raw_query,
+                                                 cNoBeginTimestamp,
+                                                 cNoEndTimestamp,
+                                                 cIgnoreCase,
+                                                 lexer,
+                                                 cUseHeuristic)};
 
     REQUIRE(query.has_value());
     auto const& sub_queries{query.value().get_sub_queries()};

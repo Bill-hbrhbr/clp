@@ -9,11 +9,9 @@ namespace glt {
 void SQLiteDB::open(string const& path) {
     auto return_value = sqlite3_open(path.c_str(), &m_db_handle);
     if (SQLITE_OK != return_value) {
-        SPDLOG_ERROR(
-                "Failed to open sqlite database {} - {}",
-                path.c_str(),
-                sqlite3_errmsg(m_db_handle)
-        );
+        SPDLOG_ERROR("Failed to open sqlite database {} - {}",
+                     path.c_str(),
+                     sqlite3_errmsg(m_db_handle));
         close();
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
@@ -29,8 +27,8 @@ bool SQLiteDB::close() {
     return true;
 }
 
-SQLitePreparedStatement
-SQLiteDB::prepare_statement(char const* statement, size_t statement_length) {
+SQLitePreparedStatement SQLiteDB::prepare_statement(char const* statement,
+                                                    size_t statement_length) {
     if (nullptr == m_db_handle) {
         throw OperationFailed(ErrorCode_NotInit, __FILENAME__, __LINE__);
     }

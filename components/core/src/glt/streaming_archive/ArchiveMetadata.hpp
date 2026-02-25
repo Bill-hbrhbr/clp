@@ -34,11 +34,9 @@ public:
      * @param creator_id
      * @param creation_idx
      */
-    ArchiveMetadata(
-            archive_format_version_t archive_format_version,
-            std::string creator_id,
-            uint64_t creation_idx
-    );
+    ArchiveMetadata(archive_format_version_t archive_format_version,
+                    std::string creator_id,
+                    uint64_t creation_idx);
 
     /**
      * Constructs a metadata object and initializes it from the given file reader

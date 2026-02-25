@@ -34,13 +34,11 @@ public:
      * @param archive_writer
      * @return true if the file was compressed successfully, false otherwise
      */
-    bool compress_file(
-            size_t target_data_size_of_dicts,
-            streaming_archive::writer::Archive::UserConfig& archive_user_config,
-            size_t target_encoded_file_size,
-            FileToCompress const& file_to_compress,
-            streaming_archive::writer::Archive& archive_writer
-    );
+    bool compress_file(size_t target_data_size_of_dicts,
+                       streaming_archive::writer::Archive::UserConfig& archive_user_config,
+                       size_t target_encoded_file_size,
+                       FileToCompress const& file_to_compress,
+                       streaming_archive::writer::Archive& archive_writer);
 
 private:
     // Methods
@@ -61,8 +59,7 @@ private:
             std::string const& path_for_compression,
             group_id_t group_id,
             streaming_archive::writer::Archive& archive_writer,
-            ReaderInterface& reader
-    );
+            ReaderInterface& reader);
 
     /**
      * Tries to compress the given file as if it were a generic archive_writer
@@ -78,8 +75,7 @@ private:
             streaming_archive::writer::Archive::UserConfig& archive_user_config,
             size_t target_encoded_file_size,
             FileToCompress const& file_to_compress,
-            streaming_archive::writer::Archive& archive_writer
-    );
+            streaming_archive::writer::Archive& archive_writer);
 
     // Variables
     boost::uuids::random_generator& m_uuid_generator;

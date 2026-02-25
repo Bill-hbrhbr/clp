@@ -112,13 +112,11 @@ EvaluatedValue EvaluateTimestampIndex::run(std::shared_ptr<Expression> const& ex
                     break;
                 case TimestampEntry::TimestampEncoding::Epoch:
                     if (auto const timestamp_literal{
-                                std::dynamic_pointer_cast<TimestampLiteral>(literal)
-                        };
+                                std::dynamic_pointer_cast<TimestampLiteral>(literal)};
                         nullptr != timestamp_literal)
                     {
                         int_literal = timestamp_literal->as_precision(
-                                TimestampLiteral::Precision::Milliseconds
-                        );
+                                TimestampLiteral::Precision::Milliseconds);
                     } else if (false == literal->as_int(int_literal, filter_op)) {
                         return EvaluatedValue::Unknown;
                     }

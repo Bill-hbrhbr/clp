@@ -19,8 +19,7 @@ using std::string;
 namespace {
 // Constants
 constexpr clp::GlobalMetadataDBConfig::MetadataDBType cDefaultMetadataDbType{
-        clp::GlobalMetadataDBConfig::MetadataDBType::SQLite
-};
+        clp::GlobalMetadataDBConfig::MetadataDBType::SQLite};
 constexpr std::string_view cDefaultMetadataDbHost{"127.0.0.1"};
 constexpr int cDefaultMetadataDbPort{3306};
 constexpr std::string_view cDefaultMetadataDbName{"clp-db"};
@@ -46,12 +45,10 @@ auto operator>>(std::istream& in, GlobalMetadataDBConfig::MetadataDBType& metada
 }
 
 GlobalMetadataDBConfig::GlobalMetadataDBConfig(
-        boost::program_options::options_description& options_description
-) {
-    std::string_view const cMetadataDbTypeMysqlOptDescPrefix{fmt::format(
-            "(--db-type={} only)",
-            cMetadataDBTypeNames[enum_to_underlying_type(MetadataDBType::MySQL)]
-    )};
+        boost::program_options::options_description& options_description) {
+    std::string_view const cMetadataDbTypeMysqlOptDescPrefix{
+            fmt::format("(--db-type={} only)",
+                        cMetadataDBTypeNames[enum_to_underlying_type(MetadataDBType::MySQL)])};
 
     // clang-format off
     options_description.add_options()
@@ -139,14 +136,11 @@ auto GlobalMetadataDBConfig::validate() const -> void {
             || cDefaultMetadataTablePrefix != m_metadata_table_prefix
             || m_metadata_db_username.has_value() || m_metadata_db_password.has_value())
         {
-            throw invalid_argument(
-                    fmt::format(
-                            "MySQL-specific parameters cannot be used with --db-type={}."
-                            " Please remove them or set '--db-type={}'.",
-                            cMetadataDBTypeNames[enum_to_underlying_type(m_metadata_db_type)],
-                            cMetadataDBTypeNames[enum_to_underlying_type(MetadataDBType::MySQL)]
-                    )
-            );
+            throw invalid_argument(fmt::format(
+                    "MySQL-specific parameters cannot be used with --db-type={}."
+                    " Please remove them or set '--db-type={}'.",
+                    cMetadataDBTypeNames[enum_to_underlying_type(m_metadata_db_type)],
+                    cMetadataDBTypeNames[enum_to_underlying_type(MetadataDBType::MySQL)]));
         }
         return;
     }
@@ -156,14 +150,10 @@ auto GlobalMetadataDBConfig::validate() const -> void {
     }
 
     if (cMinPort > m_metadata_db_port || cMaxPort < m_metadata_db_port) {
-        throw invalid_argument(
-                fmt::format(
-                        "Database '--db-port' is out of range [{}, {}]: {}",
-                        cMinPort,
-                        cMaxPort,
-                        m_metadata_db_port
-                )
-        );
+        throw invalid_argument(fmt::format("Database '--db-port' is out of range [{}, {}]: {}",
+                                           cMinPort,
+                                           cMaxPort,
+                                           m_metadata_db_port));
     }
 
     if (m_metadata_db_name.empty()) {

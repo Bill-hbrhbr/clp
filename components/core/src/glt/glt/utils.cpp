@@ -12,20 +12,16 @@ using std::string;
 using std::vector;
 
 namespace glt::glt {
-bool find_all_files_and_empty_directories(
-        boost::filesystem::path& path_prefix_to_remove,
-        string const& path,
-        vector<FileToCompress>& file_paths,
-        vector<string>& empty_directory_paths
-) {
+bool find_all_files_and_empty_directories(boost::filesystem::path& path_prefix_to_remove,
+                                          string const& path,
+                                          vector<FileToCompress>& file_paths,
+                                          vector<string>& empty_directory_paths) {
     string path_without_prefix;
     if (false == remove_prefix_and_clean_up_path(path_prefix_to_remove, path, path_without_prefix))
     {
-        SPDLOG_ERROR(
-                "'{}' does not contain prefix '{}'.",
-                path.c_str(),
-                path_prefix_to_remove.c_str()
-        );
+        SPDLOG_ERROR("'{}' does not contain prefix '{}'.",
+                     path.c_str(),
+                     path_prefix_to_remove.c_str());
         return false;
     }
 
@@ -45,36 +41,29 @@ bool find_all_files_and_empty_directories(
         // Iterate directory
         boost::filesystem::recursive_directory_iterator iter(
                 path,
-                boost::filesystem::directory_options::follow_directory_symlink
-        );
+                boost::filesystem::directory_options::follow_directory_symlink);
         boost::filesystem::recursive_directory_iterator end;
         for (; iter != end; ++iter) {
             // Check if current entry is an empty directory or a file
             if (boost::filesystem::is_directory(iter->path())) {
                 if (boost::filesystem::is_empty(iter->path())) {
-                    remove_prefix_and_clean_up_path(
-                            path_prefix_to_remove,
-                            iter->path(),
-                            path_without_prefix
-                    );
+                    remove_prefix_and_clean_up_path(path_prefix_to_remove,
+                                                    iter->path(),
+                                                    path_without_prefix);
                     empty_directory_paths.push_back(path_without_prefix);
                     iter.disable_recursion_pending();
                 }
             } else {
-                remove_prefix_and_clean_up_path(
-                        path_prefix_to_remove,
-                        iter->path(),
-                        path_without_prefix
-                );
+                remove_prefix_and_clean_up_path(path_prefix_to_remove,
+                                                iter->path(),
+                                                path_without_prefix);
                 file_paths.emplace_back(iter->path().string(), path_without_prefix, 0);
             }
         }
     } catch (boost::filesystem::filesystem_error& exception) {
-        SPDLOG_ERROR(
-                "Failed to find files/directories at '{}' - {}.",
-                path.c_str(),
-                exception.what()
-        );
+        SPDLOG_ERROR("Failed to find files/directories at '{}' - {}.",
+                     path.c_str(),
+                     exception.what());
         return false;
     }
 
@@ -137,11 +126,9 @@ bool read_input_paths(string const& list_path, vector<string>& paths) {
     return true;
 }
 
-bool remove_prefix_and_clean_up_path(
-        boost::filesystem::path const& prefix_to_remove,
-        boost::filesystem::path const& path,
-        string& path_without_prefix_string
-) {
+bool remove_prefix_and_clean_up_path(boost::filesystem::path const& prefix_to_remove,
+                                     boost::filesystem::path const& path,
+                                     string& path_without_prefix_string) {
     auto prefix_to_remove_ix = prefix_to_remove.begin();
     auto prefix_to_remove_end_ix = prefix_to_remove.end();
     // Remove trailing '.' if necessary

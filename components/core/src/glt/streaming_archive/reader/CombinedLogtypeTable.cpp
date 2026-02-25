@@ -18,8 +18,7 @@ void CombinedLogtypeTable::open_and_read_once_only(
         logtype_dictionary_id_t logtype_id,
         combined_table_id_t combined_table_id,
         streaming_compression::Decompressor& decompressor,
-        std::unordered_map<logtype_dictionary_id_t, CombinedMetadata> const& metadata
-) {
+        std::unordered_map<logtype_dictionary_id_t, CombinedMetadata> const& metadata) {
     assert(m_is_open == false);
     assert(m_is_logtype_open == false);
 
@@ -48,8 +47,7 @@ void CombinedLogtypeTable::open_and_read_once_only(
 void CombinedLogtypeTable::load_logtype_table(
         logtype_dictionary_id_t logtype_id,
         streaming_compression::Decompressor& decompressor,
-        std::unordered_map<logtype_dictionary_id_t, CombinedMetadata> const& metadata
-) {
+        std::unordered_map<logtype_dictionary_id_t, CombinedMetadata> const& metadata) {
     assert(m_is_open);
     assert(m_is_logtype_open == false);
 
@@ -158,8 +156,7 @@ void CombinedLogtypeTable::get_message_at_offset(size_t offset, Message& msg) {
 
 void CombinedLogtypeTable::load_logtype_table_data(
         streaming_compression::Decompressor& decompressor,
-        char* read_buffer
-) {
+        char* read_buffer) {
     // now we can start to read the variables. first figure out how many rows are there
     size_t num_bytes_read = 0;
     // read out the time stamp
@@ -179,11 +176,9 @@ void CombinedLogtypeTable::load_logtype_table_data(
     size_t file_id_size = sizeof(file_id_t) * m_num_row;
     decompressor.try_read(read_buffer, file_id_size, num_bytes_read);
     if (num_bytes_read != file_id_size) {
-        SPDLOG_ERROR(
-                "Wrong number of Bytes read: Expect: {}, Got: {}",
-                m_buffer_size,
-                num_bytes_read
-        );
+        SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                     m_buffer_size,
+                     num_bytes_read);
         throw ErrorCode_Failure;
     }
     file_id_t* converted_file_id_ptr = reinterpret_cast<file_id_t*>(read_buffer);
@@ -196,11 +191,9 @@ void CombinedLogtypeTable::load_logtype_table_data(
         size_t column_size = sizeof(encoded_variable_t) * m_num_row;
         decompressor.try_read(read_buffer, column_size, num_bytes_read);
         if (num_bytes_read != column_size) {
-            SPDLOG_ERROR(
-                    "Wrong number of Bytes read: Expect: {}, Got: {}",
-                    column_size,
-                    num_bytes_read
-            );
+            SPDLOG_ERROR("Wrong number of Bytes read: Expect: {}, Got: {}",
+                         column_size,
+                         num_bytes_read);
             throw ErrorCode_Failure;
         }
         encoded_variable_t* converted_variable_ptr

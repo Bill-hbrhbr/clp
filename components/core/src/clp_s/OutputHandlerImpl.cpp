@@ -23,23 +23,19 @@ using std::string;
 using std::string_view;
 
 namespace clp_s {
-void FileOutputHandler::write(
-        string_view message,
-        epochtime_t timestamp,
-        string_view archive_id,
-        int64_t log_event_idx
-) {
+void FileOutputHandler::write(string_view message,
+                              epochtime_t timestamp,
+                              string_view archive_id,
+                              int64_t log_event_idx) {
     static constexpr string_view cOrigFilePathPlaceholder{""};
     msgpack::type::tuple<epochtime_t, string, string, string, int64_t> const
             src(timestamp, message, cOrigFilePathPlaceholder, archive_id, log_event_idx);
     msgpack::pack(m_file_writer, src);
 }
 
-NetworkOutputHandler::NetworkOutputHandler(
-        string const& host,
-        int port,
-        bool should_output_timestamp
-)
+NetworkOutputHandler::NetworkOutputHandler(string const& host,
+                                           int port,
+                                           bool should_output_timestamp)
         : ::clp_s::search::OutputHandler(should_output_timestamp, true) {
     m_socket_fd = clp::networking::connect_to_server(host, std::to_string(port));
     if (-1 == m_socket_fd) {
@@ -48,12 +44,10 @@ NetworkOutputHandler::NetworkOutputHandler(
     }
 }
 
-void NetworkOutputHandler::write(
-        string_view message,
-        epochtime_t timestamp,
-        string_view archive_id,
-        int64_t log_event_idx
-) {
+void NetworkOutputHandler::write(string_view message,
+                                 epochtime_t timestamp,
+                                 string_view archive_id,
+                                 int64_t log_event_idx) {
     static constexpr string_view cOrigFilePathPlaceholder{""};
     msgpack::type::tuple<epochtime_t, string, string, string, int64_t> const
             src(timestamp, message, cOrigFilePathPlaceholder, archive_id, log_event_idx);
@@ -65,13 +59,11 @@ void NetworkOutputHandler::write(
     }
 }
 
-ResultsCacheOutputHandler::ResultsCacheOutputHandler(
-        string const& uri,
-        string const& collection,
-        uint64_t batch_size,
-        uint64_t max_num_results,
-        bool should_output_timestamp
-)
+ResultsCacheOutputHandler::ResultsCacheOutputHandler(string const& uri,
+                                                     string const& collection,
+                                                     uint64_t batch_size,
+                                                     uint64_t max_num_results,
+                                                     bool should_output_timestamp)
         : ::clp_s::search::OutputHandler(should_output_timestamp, true),
           m_batch_size(batch_size),
           m_max_num_results(max_num_results) {
@@ -92,32 +84,17 @@ ErrorCode ResultsCacheOutputHandler::flush() {
         m_latest_results.pop();
 
         try {
-            m_results.emplace_back(
-                    std::move(
-                            bsoncxx::builder::basic::make_document(
-                                    bsoncxx::builder::basic::kvp(
-                                            constants::results_cache::search::cOrigFilePath,
-                                            std::move(result.original_path)
-                                    ),
-                                    bsoncxx::builder::basic::kvp(
-                                            constants::results_cache::search::cMessage,
-                                            std::move(result.message)
-                                    ),
-                                    bsoncxx::builder::basic::kvp(
-                                            constants::results_cache::search::cTimestamp,
-                                            result.timestamp
-                                    ),
-                                    bsoncxx::builder::basic::kvp(
-                                            constants::results_cache::search::cArchiveId,
-                                            std::move(result.archive_id)
-                                    ),
-                                    bsoncxx::builder::basic::kvp(
-                                            constants::results_cache::search::cLogEventIx,
-                                            result.log_event_idx
-                                    )
-                            )
-                    )
-            );
+            m_results.emplace_back(std::move(bsoncxx::builder::basic::make_document(
+                    bsoncxx::builder::basic::kvp(constants::results_cache::search::cOrigFilePath,
+                                                 std::move(result.original_path)),
+                    bsoncxx::builder::basic::kvp(constants::results_cache::search::cMessage,
+                                                 std::move(result.message)),
+                    bsoncxx::builder::basic::kvp(constants::results_cache::search::cTimestamp,
+                                                 result.timestamp),
+                    bsoncxx::builder::basic::kvp(constants::results_cache::search::cArchiveId,
+                                                 std::move(result.archive_id)),
+                    bsoncxx::builder::basic::kvp(constants::results_cache::search::cLogEventIx,
+                                                 result.log_event_idx))));
             count++;
 
             if (count == m_batch_size) {
@@ -141,33 +118,23 @@ ErrorCode ResultsCacheOutputHandler::flush() {
     return ErrorCode::ErrorCodeSuccess;
 }
 
-void ResultsCacheOutputHandler::write(
-        string_view message,
-        epochtime_t timestamp,
-        string_view archive_id,
-        int64_t log_event_idx
-) {
+void ResultsCacheOutputHandler::write(string_view message,
+                                      epochtime_t timestamp,
+                                      string_view archive_id,
+                                      int64_t log_event_idx) {
     if (m_latest_results.size() < m_max_num_results) {
-        m_latest_results.emplace(
-                std::make_unique<QueryResult>(
-                        string_view{},
-                        message,
-                        timestamp,
-                        archive_id,
-                        log_event_idx
-                )
-        );
+        m_latest_results.emplace(std::make_unique<QueryResult>(string_view{},
+                                                               message,
+                                                               timestamp,
+                                                               archive_id,
+                                                               log_event_idx));
     } else if (m_latest_results.top()->timestamp < timestamp) {
         m_latest_results.pop();
-        m_latest_results.emplace(
-                std::make_unique<QueryResult>(
-                        string_view{},
-                        message,
-                        timestamp,
-                        archive_id,
-                        log_event_idx
-                )
-        );
+        m_latest_results.emplace(std::make_unique<QueryResult>(string_view{},
+                                                               message,
+                                                               timestamp,
+                                                               archive_id,
+                                                               log_event_idx));
     }
 }
 
@@ -197,9 +164,7 @@ ErrorCode CountByTimeOutputHandler::finish() {
                 m_reducer_socket_fd,
                 std::make_unique<reducer::Int64Int64MapRecordGroupIterator>(
                         m_bucket_counts,
-                        reducer::CountOperator::cRecordElementKey
-                )
-        ))
+                        reducer::CountOperator::cRecordElementKey)))
     {
         return ErrorCode::ErrorCodeFailureNetwork;
     }

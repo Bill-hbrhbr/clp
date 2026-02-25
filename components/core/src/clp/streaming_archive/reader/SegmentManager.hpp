@@ -39,12 +39,10 @@ public:
      * @return Same as streaming_archive::reader::Segment::try_read
      * @throw std::out_of_range if a segment ID cannot be found unexpectedly
      */
-    ErrorCode try_read(
-            segment_id_t segment_id,
-            uint64_t const decompressed_stream_pos,
-            char* extraction_buf,
-            uint64_t const extraction_len
-    );
+    ErrorCode try_read(segment_id_t segment_id,
+                       uint64_t const decompressed_stream_pos,
+                       char* extraction_buf,
+                       uint64_t const extraction_len);
 
 private:
     std::string m_segment_dir_path;

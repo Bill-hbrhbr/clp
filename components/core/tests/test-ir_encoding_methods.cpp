@@ -103,18 +103,16 @@ private:
 class IrUnitHandler {
 public:
     // Implements `clp::ffi::ir_stream::IrUnitHandlerReq`
-    [[nodiscard]] auto
-    handle_log_event(KeyValuePairLogEvent&& log_event, [[maybe_unused]] size_t log_event_idx)
-            -> IRErrorCode {
+    [[nodiscard]] auto handle_log_event(KeyValuePairLogEvent&& log_event,
+                                        [[maybe_unused]] size_t log_event_idx) -> IRErrorCode {
         m_deserialized_log_events.emplace_back(std::move(log_event));
         m_deserialized_log_event_indices.emplace_back(log_event_idx);
         return IRErrorCode::IRErrorCode_Success;
     }
 
-    [[nodiscard]] static auto handle_utc_offset_change(
-            [[maybe_unused]] UtcOffset utc_offset_old,
-            [[maybe_unused]] UtcOffset utc_offset_new
-    ) -> IRErrorCode {
+    [[nodiscard]] static auto handle_utc_offset_change([[maybe_unused]] UtcOffset utc_offset_old,
+                                                       [[maybe_unused]] UtcOffset utc_offset_new)
+            -> IRErrorCode {
         return IRErrorCode::IRErrorCode_Success;
     }
 
@@ -131,8 +129,8 @@ public:
     [[nodiscard]] static auto handle_schema_tree_node_insertion(
             [[maybe_unused]] bool is_auto_generated,
             [[maybe_unused]] clp::ffi::SchemaTree::NodeLocator schema_tree_node_locator,
-            [[maybe_unused]] std::shared_ptr<clp::ffi::SchemaTree const> const& schema_tree
-    ) -> IRErrorCode {
+            [[maybe_unused]] std::shared_ptr<clp::ffi::SchemaTree const> const& schema_tree)
+            -> IRErrorCode {
         auto const optional_node_id{schema_tree->try_get_node_id(schema_tree_node_locator)};
         if (false == optional_node_id.has_value()) {
             return IRErrorCode::IRErrorCode_Decode_Error;
@@ -175,12 +173,10 @@ private:
  * @return Whether serialization was successful.
  */
 template <typename encoded_variable_t>
-[[nodiscard]] auto serialize_log_events(
-        vector<UnstructuredLogEvent> const& log_events,
-        epoch_time_ms_t preamble_ts,
-        vector<int8_t>& ir_buf,
-        vector<string>& encoded_logtypes
-) -> bool;
+[[nodiscard]] auto serialize_log_events(vector<UnstructuredLogEvent> const& log_events,
+                                        epoch_time_ms_t preamble_ts,
+                                        vector<int8_t>& ir_buf,
+                                        vector<string>& encoded_logtypes) -> bool;
 
 /**
  * Serializes a log event into an IR buffer.
@@ -192,12 +188,10 @@ template <typename encoded_variable_t>
  * @return Whether serialization was successful.
  */
 template <typename encoded_variable_t>
-[[nodiscard]] auto serialize_log_event(
-        epoch_time_ms_t timestamp,
-        string_view message,
-        string& logtype,
-        vector<int8_t>& ir_buf
-) -> bool;
+[[nodiscard]] auto serialize_log_event(epoch_time_ms_t timestamp,
+                                       string_view message,
+                                       string& logtype,
+                                       vector<int8_t>& ir_buf) -> bool;
 
 /**
  * @return Log events for testing purposes.
@@ -217,10 +211,8 @@ template <typename encoded_variable_t>
  * @param byte_buf
  */
 template <typename encoded_variable_t>
-auto flush_and_clear_serializer_buffer(
-        Serializer<encoded_variable_t>& serializer,
-        std::vector<int8_t>& byte_buf
-) -> void;
+auto flush_and_clear_serializer_buffer(Serializer<encoded_variable_t>& serializer,
+                                       std::vector<int8_t>& byte_buf) -> void;
 
 /**
  * @return A msgpack object handle that holds an empty msgpack map.
@@ -247,20 +239,15 @@ auto flush_and_clear_serializer_buffer(
 template <typename encoded_variable_t>
 [[nodiscard]] auto unpack_and_assert_serialization_failure(
         std::stringstream& buffer,
-        Serializer<encoded_variable_t>& serializer
-) -> bool;
+        Serializer<encoded_variable_t>& serializer) -> bool;
 
 template <typename encoded_variable_t>
-[[nodiscard]] auto serialize_log_events(
-        vector<UnstructuredLogEvent> const& log_events,
-        epoch_time_ms_t preamble_ts,
-        vector<int8_t>& ir_buf,
-        vector<string>& encoded_logtypes
-) -> bool {
-    static_assert(
-            is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
-            || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>
-    );
+[[nodiscard]] auto serialize_log_events(vector<UnstructuredLogEvent> const& log_events,
+                                        epoch_time_ms_t preamble_ts,
+                                        vector<int8_t>& ir_buf,
+                                        vector<string>& encoded_logtypes) -> bool {
+    static_assert(is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
+                  || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>);
 
     string logtype;
     UtcOffset prev_utc_offset{0};
@@ -290,31 +277,23 @@ template <typename encoded_variable_t>
 }
 
 template <typename encoded_variable_t>
-auto serialize_log_event(
-        epoch_time_ms_t timestamp,
-        string_view message,
-        string& logtype,
-        vector<int8_t>& ir_buf
-) -> bool {
-    static_assert(
-            is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
-            || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>
-    );
+auto serialize_log_event(epoch_time_ms_t timestamp,
+                         string_view message,
+                         string& logtype,
+                         vector<int8_t>& ir_buf) -> bool {
+    static_assert(is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
+                  || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>);
 
     if constexpr (is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        return clp::ffi::ir_stream::eight_byte_encoding::serialize_log_event(
-                timestamp,
-                message,
-                logtype,
-                ir_buf
-        );
+        return clp::ffi::ir_stream::eight_byte_encoding::serialize_log_event(timestamp,
+                                                                             message,
+                                                                             logtype,
+                                                                             ir_buf);
     } else {
-        return clp::ffi::ir_stream::four_byte_encoding::serialize_log_event(
-                timestamp,
-                message,
-                logtype,
-                ir_buf
-        );
+        return clp::ffi::ir_stream::four_byte_encoding::serialize_log_event(timestamp,
+                                                                            message,
+                                                                            logtype,
+                                                                            ir_buf);
     }
 }
 
@@ -324,24 +303,19 @@ auto create_test_log_events() -> vector<UnstructuredLogEvent> {
     log_events.emplace_back(
             "Static <\text>, dictVar1, 123, 456.7, dictVar2, 987, 654.3, end of static text",
             get_current_ts(),
-            UtcOffset{0}
-    );
+            UtcOffset{0});
 
-    log_events.emplace_back(
-            "Static <\text>, dictVar3, 355.2352512, 23953324532112, "
-            "python3.4.6, end of static text",
-            get_current_ts(),
-            UtcOffset{5 * 60 * 60}
-    );
+    log_events.emplace_back("Static <\text>, dictVar3, 355.2352512, 23953324532112, "
+                            "python3.4.6, end of static text",
+                            get_current_ts(),
+                            UtcOffset{5 * 60 * 60});
 
     UtcOffset const utc_offset{-5 * 60 * 60};
     log_events.emplace_back("Static text without variables", get_current_ts(), utc_offset);
 
-    log_events.emplace_back(
-            "Static text without variable and without utc offset change",
-            get_current_ts(),
-            utc_offset
-    );
+    log_events.emplace_back("Static text without variable and without utc offset change",
+                            get_current_ts(),
+                            utc_offset);
 
     return log_events;
 }
@@ -351,10 +325,8 @@ auto get_current_ts() -> epoch_time_ms_t {
 }
 
 template <typename encoded_variable_t>
-auto flush_and_clear_serializer_buffer(
-        Serializer<encoded_variable_t>& serializer,
-        vector<int8_t>& byte_buf
-) -> void {
+auto flush_and_clear_serializer_buffer(Serializer<encoded_variable_t>& serializer,
+                                       vector<int8_t>& byte_buf) -> void {
     auto const view{serializer.get_ir_buf_view()};
     byte_buf.insert(byte_buf.cend(), view.begin(), view.end());
     serializer.clear_ir_buf();
@@ -362,10 +334,8 @@ auto flush_and_clear_serializer_buffer(
 
 auto create_msgpack_empty_map_obj_handle() -> msgpack::object_handle {
     auto const msgpack_empty_map_buf{nlohmann::json::to_msgpack(nlohmann::json::parse("{}"))};
-    return msgpack::unpack(
-            size_checked_pointer_cast<char const>(msgpack_empty_map_buf.data()),
-            msgpack_empty_map_buf.size()
-    );
+    return msgpack::unpack(size_checked_pointer_cast<char const>(msgpack_empty_map_buf.data()),
+                           msgpack_empty_map_buf.size());
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
@@ -393,10 +363,8 @@ auto count_num_leaves(nlohmann::json const& root) -> size_t {
 }
 
 template <typename encoded_variable_t>
-auto unpack_and_assert_serialization_failure(
-        std::stringstream& buffer,
-        Serializer<encoded_variable_t>& serializer
-) -> bool {
+auto unpack_and_assert_serialization_failure(std::stringstream& buffer,
+                                             Serializer<encoded_variable_t>& serializer) -> bool {
     REQUIRE(serializer.get_ir_buf_view().empty());
     string msgpack_bytes{buffer.str()};
     buffer.str({});
@@ -447,13 +415,11 @@ epoch_time_ms_t get_next_timestamp_for_test();
  * @return True if the preamble is serialized without error, otherwise false
  */
 template <typename encoded_variable_t>
-bool serialize_preamble(
-        string_view timestamp_pattern,
-        string_view timestamp_pattern_syntax,
-        string_view time_zone_id,
-        epoch_time_ms_t reference_timestamp,
-        vector<int8_t>& ir_buf
-);
+bool serialize_preamble(string_view timestamp_pattern,
+                        string_view timestamp_pattern_syntax,
+                        string_view time_zone_id,
+                        epoch_time_ms_t reference_timestamp,
+                        vector<int8_t>& ir_buf);
 
 /**
  * Helper function that deserializes a log event of encoding type = encoded_variable_t from the
@@ -470,12 +436,10 @@ bool serialize_preamble(
  * encoded_variable_t == four_byte_encoded_variable_t
  */
 template <typename encoded_variable_t>
-IRErrorCode deserialize_log_event(
-        BufferReader& reader,
-        encoded_tag_t tag,
-        string& message,
-        epoch_time_ms_t& decoded_ts
-);
+IRErrorCode deserialize_log_event(BufferReader& reader,
+                                  encoded_tag_t tag,
+                                  string& message,
+                                  epoch_time_ms_t& decoded_ts);
 
 /**
  * Struct to hold the timestamp info from the IR stream's metadata
@@ -495,10 +459,8 @@ static void set_timestamp_info(nlohmann::json const& metadata_json, TimestampInf
 
 template <typename encoded_variable_t>
 bool match_encoding_type(bool is_four_bytes_encoding) {
-    static_assert(
-            is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
-            || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>
-    );
+    static_assert(is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
+                  || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>);
 
     if constexpr (is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
         return false == is_four_bytes_encoding;
@@ -509,10 +471,8 @@ bool match_encoding_type(bool is_four_bytes_encoding) {
 
 template <typename encoded_variable_t>
 epoch_time_ms_t get_next_timestamp_for_test() {
-    static_assert(
-            is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
-            || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>
-    );
+    static_assert(is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
+                  || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>);
 
     // We return an absolute timestamp for the eight-byte encoding and a mocked timestamp delta for
     // the four-byte encoding
@@ -528,62 +488,47 @@ epoch_time_ms_t get_next_timestamp_for_test() {
 // A helper function to generalize the testing caller interface.
 // The reference_timestamp is only used by four bytes encoding
 template <typename encoded_variable_t>
-bool serialize_preamble(
-        string_view timestamp_pattern,
-        string_view timestamp_pattern_syntax,
-        string_view time_zone_id,
-        epoch_time_ms_t reference_timestamp,
-        vector<int8_t>& ir_buf
-) {
-    static_assert(
-            is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
-            || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>
-    );
+bool serialize_preamble(string_view timestamp_pattern,
+                        string_view timestamp_pattern_syntax,
+                        string_view time_zone_id,
+                        epoch_time_ms_t reference_timestamp,
+                        vector<int8_t>& ir_buf) {
+    static_assert(is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
+                  || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>);
 
     if constexpr (is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
         return clp::ffi::ir_stream::eight_byte_encoding::serialize_preamble(
                 timestamp_pattern,
                 timestamp_pattern_syntax,
                 time_zone_id,
-                ir_buf
-        );
+                ir_buf);
     } else {
-        return clp::ffi::ir_stream::four_byte_encoding::serialize_preamble(
-                timestamp_pattern,
-                timestamp_pattern_syntax,
-                time_zone_id,
-                reference_timestamp,
-                ir_buf
-        );
+        return clp::ffi::ir_stream::four_byte_encoding::serialize_preamble(timestamp_pattern,
+                                                                           timestamp_pattern_syntax,
+                                                                           time_zone_id,
+                                                                           reference_timestamp,
+                                                                           ir_buf);
     }
 }
 
 template <typename encoded_variable_t>
-IRErrorCode deserialize_log_event(
-        BufferReader& reader,
-        encoded_tag_t tag,
-        string& message,
-        epoch_time_ms_t& decoded_ts
-) {
-    static_assert(
-            is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
-            || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>
-    );
+IRErrorCode deserialize_log_event(BufferReader& reader,
+                                  encoded_tag_t tag,
+                                  string& message,
+                                  epoch_time_ms_t& decoded_ts) {
+    static_assert(is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
+                  || is_same_v<encoded_variable_t, four_byte_encoded_variable_t>);
 
     if constexpr (is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        return clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
-                reader,
-                tag,
-                message,
-                decoded_ts
-        );
+        return clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(reader,
+                                                                               tag,
+                                                                               message,
+                                                                               decoded_ts);
     } else {
-        return clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
-                reader,
-                tag,
-                message,
-                decoded_ts
-        );
+        return clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(reader,
+                                                                              tag,
+                                                                              message,
+                                                                              decoded_ts);
     }
 }
 
@@ -600,29 +545,23 @@ TEST_CASE("get_encoding_type", "[ffi][get_encoding_type]") {
     bool is_four_bytes_encoding;
 
     // Test eight-byte encoding
-    vector<int8_t> eight_byte_encoding_vec{
-            EightByteEncodingMagicNumber,
-            EightByteEncodingMagicNumber + MagicNumberLength
-    };
+    vector<int8_t> eight_byte_encoding_vec{EightByteEncodingMagicNumber,
+                                           EightByteEncodingMagicNumber + MagicNumberLength};
 
     BufferReader eight_byte_ir_buffer{
             size_checked_pointer_cast<char const>(eight_byte_encoding_vec.data()),
-            eight_byte_encoding_vec.size()
-    };
+            eight_byte_encoding_vec.size()};
     REQUIRE(get_encoding_type(eight_byte_ir_buffer, is_four_bytes_encoding)
             == IRErrorCode::IRErrorCode_Success);
     REQUIRE(match_encoding_type<eight_byte_encoded_variable_t>(is_four_bytes_encoding));
 
     // Test four-byte encoding
-    vector<int8_t> four_byte_encoding_vec{
-            FourByteEncodingMagicNumber,
-            FourByteEncodingMagicNumber + MagicNumberLength
-    };
+    vector<int8_t> four_byte_encoding_vec{FourByteEncodingMagicNumber,
+                                          FourByteEncodingMagicNumber + MagicNumberLength};
 
     BufferReader four_byte_ir_buffer{
             size_checked_pointer_cast<char const>(four_byte_encoding_vec.data()),
-            four_byte_encoding_vec.size()
-    };
+            four_byte_encoding_vec.size()};
     REQUIRE(get_encoding_type(four_byte_ir_buffer, is_four_bytes_encoding)
             == IRErrorCode::IRErrorCode_Success);
     REQUIRE(match_encoding_type<four_byte_encoded_variable_t>(is_four_bytes_encoding));
@@ -630,46 +569,38 @@ TEST_CASE("get_encoding_type", "[ffi][get_encoding_type]") {
     // Test error on empty and incomplete ir_buffer
     BufferReader empty_ir_buffer(
             size_checked_pointer_cast<char const>(four_byte_encoding_vec.data()),
-            0
-    );
+            0);
     REQUIRE(get_encoding_type(empty_ir_buffer, is_four_bytes_encoding)
             == IRErrorCode::IRErrorCode_Incomplete_IR);
 
     BufferReader incomplete_buffer{
             size_checked_pointer_cast<char const>(four_byte_encoding_vec.data()),
-            four_byte_encoding_vec.size() - 1
-    };
+            four_byte_encoding_vec.size() - 1};
     REQUIRE(get_encoding_type(incomplete_buffer, is_four_bytes_encoding)
             == IRErrorCode::IRErrorCode_Incomplete_IR);
 
     // Test error on invalid encoding
     vector<int8_t> const invalid_ir_vec{0x02, 0x43, 0x24, 0x34};
-    BufferReader invalid_ir_buffer{
-            size_checked_pointer_cast<char const>(invalid_ir_vec.data()),
-            invalid_ir_vec.size()
-    };
+    BufferReader invalid_ir_buffer{size_checked_pointer_cast<char const>(invalid_ir_vec.data()),
+                                   invalid_ir_vec.size()};
     REQUIRE(get_encoding_type(invalid_ir_buffer, is_four_bytes_encoding)
             == IRErrorCode::IRErrorCode_Corrupted_IR);
 }
 
-TEMPLATE_TEST_CASE(
-        "deserialize_preamble",
-        "[ffi][deserialize_preamble]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("deserialize_preamble",
+                   "[ffi][deserialize_preamble]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
     vector<int8_t> ir_buf;
     constexpr char timestamp_pattern[] = "%Y-%m-%d %H:%M:%S,%3";
     constexpr char timestamp_pattern_syntax[] = "yyyy-MM-dd HH:mm:ss";
     constexpr char time_zone_id[] = "Asia/Tokyo";
     epoch_time_ms_t const reference_ts = get_current_ts();
-    REQUIRE(serialize_preamble<TestType>(
-            timestamp_pattern,
-            timestamp_pattern_syntax,
-            time_zone_id,
-            reference_ts,
-            ir_buf
-    ));
+    REQUIRE(serialize_preamble<TestType>(timestamp_pattern,
+                                         timestamp_pattern_syntax,
+                                         time_zone_id,
+                                         reference_ts,
+                                         ir_buf));
     size_t const encoded_preamble_end_pos = ir_buf.size();
 
     // Check if encoding type is properly read
@@ -709,8 +640,7 @@ TEMPLATE_TEST_CASE(
                 == std::stoll(
                         metadata_json
                                 .at(clp::ffi::ir_stream::cProtocol::Metadata::ReferenceTimestampKey)
-                                .get<string>()
-                ));
+                                .get<string>()));
     }
 
     // Test if preamble can be decoded by the string copy method
@@ -720,47 +650,36 @@ TEMPLATE_TEST_CASE(
             == IRErrorCode::IRErrorCode_Success);
     string_view json_metadata_copied{
             size_checked_pointer_cast<char const>(json_metadata_vec.data()),
-            json_metadata_vec.size()
-    };
+            json_metadata_vec.size()};
     // Crosscheck with the json_metadata decoded previously
     REQUIRE(json_metadata_copied == json_metadata);
 
     // Test if incomplete IR can be detected
     ir_buf.resize(encoded_preamble_end_pos - 1);
-    BufferReader incomplete_preamble_buffer{
-            size_checked_pointer_cast<char const>(ir_buf.data()),
-            ir_buf.size()
-    };
+    BufferReader incomplete_preamble_buffer{size_checked_pointer_cast<char const>(ir_buf.data()),
+                                            ir_buf.size()};
     incomplete_preamble_buffer.seek_from_begin(MagicNumberLength);
-    REQUIRE(deserialize_preamble(
-                    incomplete_preamble_buffer,
-                    metadata_type,
-                    metadata_pos,
-                    metadata_size
-            )
+    REQUIRE(deserialize_preamble(incomplete_preamble_buffer,
+                                 metadata_type,
+                                 metadata_pos,
+                                 metadata_size)
             == IRErrorCode::IRErrorCode_Incomplete_IR);
 
     // Test if corrupted IR can be detected
     ir_buf[MagicNumberLength] = 0x23;
-    BufferReader corrupted_preamble_buffer{
-            size_checked_pointer_cast<char const>(ir_buf.data()),
-            ir_buf.size()
-    };
-    REQUIRE(deserialize_preamble(
-                    corrupted_preamble_buffer,
-                    metadata_type,
-                    metadata_pos,
-                    metadata_size
-            )
+    BufferReader corrupted_preamble_buffer{size_checked_pointer_cast<char const>(ir_buf.data()),
+                                           ir_buf.size()};
+    REQUIRE(deserialize_preamble(corrupted_preamble_buffer,
+                                 metadata_type,
+                                 metadata_pos,
+                                 metadata_size)
             == IRErrorCode::IRErrorCode_Corrupted_IR);
 }
 
-TEMPLATE_TEST_CASE(
-        "decode_next_message_general",
-        "[ffi][deserialize_log_event]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("decode_next_message_general",
+                   "[ffi][deserialize_log_event]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
     vector<int8_t> ir_buf;
     string logtype;
 
@@ -793,15 +712,14 @@ TEMPLATE_TEST_CASE(
 
     // Test incomplete IR
     ir_buf.resize(encoded_message_end_pos - 4);
-    BufferReader incomplete_preamble_buffer{
-            size_checked_pointer_cast<char const>(ir_buf.data()),
-            ir_buf.size()
-    };
+    BufferReader incomplete_preamble_buffer{size_checked_pointer_cast<char const>(ir_buf.data()),
+                                            ir_buf.size()};
     REQUIRE(IRErrorCode::IRErrorCode_Success == deserialize_tag(incomplete_preamble_buffer, tag));
-    REQUIRE(
-            IRErrorCode::IRErrorCode_Incomplete_IR
-            == deserialize_log_event<TestType>(incomplete_preamble_buffer, tag, message, timestamp)
-    );
+    REQUIRE(IRErrorCode::IRErrorCode_Incomplete_IR
+            == deserialize_log_event<TestType>(incomplete_preamble_buffer,
+                                               tag,
+                                               message,
+                                               timestamp));
 }
 
 // NOTE: This test only tests eight_byte_encoded_variable_t because we trigger
@@ -816,12 +734,10 @@ TEST_CASE("message_decode_error", "[ffi][deserialize_log_event]") {
                      + placeholder_as_string + " end of static text";
     epoch_time_ms_t reference_ts = get_next_timestamp_for_test<eight_byte_encoded_variable_t>();
     REQUIRE(true
-            == serialize_log_event<eight_byte_encoded_variable_t>(
-                    reference_ts,
-                    message,
-                    logtype,
-                    ir_buf
-            ));
+            == serialize_log_event<eight_byte_encoded_variable_t>(reference_ts,
+                                                                  message,
+                                                                  logtype,
+                                                                  ir_buf));
 
     // Find the end of the encoded logtype which is before the encoded timestamp
     // The timestamp is encoded as tagbyte + eight_byte_encoded_variable_t
@@ -839,16 +755,13 @@ TEST_CASE("message_decode_error", "[ffi][deserialize_log_event]") {
             = enum_to_underlying_type(VariablePlaceholder::Escape);
     BufferReader ir_with_extra_escape_buffer{
             size_checked_pointer_cast<char const>(ir_with_extra_escape.data()),
-            ir_with_extra_escape.size()
-    };
+            ir_with_extra_escape.size()};
     REQUIRE(IRErrorCode::IRErrorCode_Success == deserialize_tag(ir_with_extra_escape_buffer, tag));
     REQUIRE(IRErrorCode::IRErrorCode_Decode_Error
-            == deserialize_log_event<eight_byte_encoded_variable_t>(
-                    ir_with_extra_escape_buffer,
-                    tag,
-                    decoded_message,
-                    timestamp
-            ));
+            == deserialize_log_event<eight_byte_encoded_variable_t>(ir_with_extra_escape_buffer,
+                                                                    tag,
+                                                                    decoded_message,
+                                                                    timestamp));
 
     // Test if an extra placeholder triggers a decoder error
     auto ir_with_extra_placeholder{ir_buf};
@@ -856,8 +769,7 @@ TEST_CASE("message_decode_error", "[ffi][deserialize_log_event]") {
             = enum_to_underlying_type(VariablePlaceholder::Dictionary);
     BufferReader ir_with_extra_placeholder_buffer{
             size_checked_pointer_cast<char const>(ir_with_extra_placeholder.data()),
-            ir_with_extra_placeholder.size()
-    };
+            ir_with_extra_placeholder.size()};
     REQUIRE(IRErrorCode::IRErrorCode_Success
             == deserialize_tag(ir_with_extra_placeholder_buffer, tag));
     REQUIRE(IRErrorCode::IRErrorCode_Decode_Error
@@ -865,30 +777,27 @@ TEST_CASE("message_decode_error", "[ffi][deserialize_log_event]") {
                     ir_with_extra_placeholder_buffer,
                     tag,
                     decoded_message,
-                    timestamp
-            ));
+                    timestamp));
 }
 
 TEST_CASE("decode_next_message_four_byte_timestamp_delta", "[ffi][deserialize_log_event]") {
     string const message = "Static <\text>, dictVar1, 123, 456345232.7234223, "
                            "dictVar2, 987, 654.3, end of static text";
-    auto ts_delta = GENERATE(
-            static_cast<epoch_time_ms_t>(0),
-            static_cast<epoch_time_ms_t>(INT8_MIN),
-            static_cast<epoch_time_ms_t>(INT8_MIN + 1),
-            static_cast<epoch_time_ms_t>(INT8_MAX - 1),
-            static_cast<epoch_time_ms_t>(INT8_MAX),
-            static_cast<epoch_time_ms_t>(INT16_MIN),
-            static_cast<epoch_time_ms_t>(INT16_MIN + 1),
-            static_cast<epoch_time_ms_t>(INT16_MAX - 1),
-            static_cast<epoch_time_ms_t>(INT16_MAX),
-            static_cast<epoch_time_ms_t>(INT32_MIN),
-            static_cast<epoch_time_ms_t>(INT32_MIN + 1),
-            static_cast<epoch_time_ms_t>(INT32_MAX - 1),
-            static_cast<epoch_time_ms_t>(INT32_MAX),
-            static_cast<epoch_time_ms_t>(INT64_MIN),
-            static_cast<epoch_time_ms_t>(INT64_MAX)
-    );
+    auto ts_delta = GENERATE(static_cast<epoch_time_ms_t>(0),
+                             static_cast<epoch_time_ms_t>(INT8_MIN),
+                             static_cast<epoch_time_ms_t>(INT8_MIN + 1),
+                             static_cast<epoch_time_ms_t>(INT8_MAX - 1),
+                             static_cast<epoch_time_ms_t>(INT8_MAX),
+                             static_cast<epoch_time_ms_t>(INT16_MIN),
+                             static_cast<epoch_time_ms_t>(INT16_MIN + 1),
+                             static_cast<epoch_time_ms_t>(INT16_MAX - 1),
+                             static_cast<epoch_time_ms_t>(INT16_MAX),
+                             static_cast<epoch_time_ms_t>(INT32_MIN),
+                             static_cast<epoch_time_ms_t>(INT32_MIN + 1),
+                             static_cast<epoch_time_ms_t>(INT32_MAX - 1),
+                             static_cast<epoch_time_ms_t>(INT32_MAX),
+                             static_cast<epoch_time_ms_t>(INT64_MIN),
+                             static_cast<epoch_time_ms_t>(INT64_MAX));
     vector<int8_t> ir_buf;
     string logtype;
     REQUIRE(serialize_log_event<four_byte_encoded_variable_t>(ts_delta, message, logtype, ir_buf));
@@ -899,105 +808,77 @@ TEST_CASE("decode_next_message_four_byte_timestamp_delta", "[ffi][deserialize_lo
     epoch_time_ms_t decoded_delta_ts{};
     REQUIRE(IRErrorCode::IRErrorCode_Success == deserialize_tag(ir_buffer, tag));
     REQUIRE(IRErrorCode::IRErrorCode_Success
-            == deserialize_log_event<four_byte_encoded_variable_t>(
-                    ir_buffer,
-                    tag,
-                    decoded_message,
-                    decoded_delta_ts
-            ));
+            == deserialize_log_event<four_byte_encoded_variable_t>(ir_buffer,
+                                                                   tag,
+                                                                   decoded_message,
+                                                                   decoded_delta_ts));
     REQUIRE(message == decoded_message);
     REQUIRE(decoded_delta_ts == ts_delta);
 }
 
 TEST_CASE("validate_protocol_version", "[ffi][validate_version_protocol]") {
-    REQUIRE(
-            (clp::ffi::ir_stream::IRProtocolErrorCode::Supported
-             == validate_protocol_version(clp::ffi::ir_stream::cProtocol::Metadata::VersionValue))
-    );
-    REQUIRE(
-            (clp::ffi::ir_stream::IRProtocolErrorCode::BackwardCompatible
+    REQUIRE((clp::ffi::ir_stream::IRProtocolErrorCode::Supported
+             == validate_protocol_version(clp::ffi::ir_stream::cProtocol::Metadata::VersionValue)));
+    REQUIRE((clp::ffi::ir_stream::IRProtocolErrorCode::BackwardCompatible
              == validate_protocol_version(
-                     clp::ffi::ir_stream::cProtocol::Metadata::LatestBackwardCompatibleVersion
-             ))
-    );
+                     clp::ffi::ir_stream::cProtocol::Metadata::LatestBackwardCompatibleVersion)));
 
     SECTION("Test invalid versions") {
-        auto const invalid_versions{GENERATE(
-                std::string_view{"v0.0.1"},
-                std::string_view{"0.1"},
-                std::string_view{"0.1.a"},
-                std::string_view{"0.a.1"}
-        )};
-        REQUIRE(
-                (clp::ffi::ir_stream::IRProtocolErrorCode::Invalid
-                 == validate_protocol_version(invalid_versions))
-        );
+        auto const invalid_versions{GENERATE(std::string_view{"v0.0.1"},
+                                             std::string_view{"0.1"},
+                                             std::string_view{"0.1.a"},
+                                             std::string_view{"0.a.1"})};
+        REQUIRE((clp::ffi::ir_stream::IRProtocolErrorCode::Invalid
+                 == validate_protocol_version(invalid_versions)));
     }
 
     SECTION("Test backward compatible versions") {
-        auto const backward_compatible_versions{GENERATE(
-                std::string_view{"v0.0.0"},
-                std::string_view{"0.0.1"},
-                std::string_view{"0.0.2"}
-        )};
-        REQUIRE(
-                (clp::ffi::ir_stream::IRProtocolErrorCode::BackwardCompatible
-                 == validate_protocol_version(backward_compatible_versions))
-        );
+        auto const backward_compatible_versions{GENERATE(std::string_view{"v0.0.0"},
+                                                         std::string_view{"0.0.1"},
+                                                         std::string_view{"0.0.2"})};
+        REQUIRE((clp::ffi::ir_stream::IRProtocolErrorCode::BackwardCompatible
+                 == validate_protocol_version(backward_compatible_versions)));
     }
 
     SECTION("Test versions that're too old") {
-        auto const old_versions{GENERATE(
-                std::string_view{"0.0.3"},
-                std::string_view{"0.0.3-beta.1"},
-                std::string_view{"0.1.0-beta"}
-        )};
-        REQUIRE(
-                (clp::ffi::ir_stream::IRProtocolErrorCode::Unsupported
-                 == validate_protocol_version(old_versions))
-        );
+        auto const old_versions{GENERATE(std::string_view{"0.0.3"},
+                                         std::string_view{"0.0.3-beta.1"},
+                                         std::string_view{"0.1.0-beta"})};
+        REQUIRE((clp::ffi::ir_stream::IRProtocolErrorCode::Unsupported
+                 == validate_protocol_version(old_versions)));
     }
 
     SECTION("Test versions that're too new") {
         auto const new_versions{
-                GENERATE(std::string_view{"10000.0.0"}, std::string_view{"0.10000.0"})
-        };
-        REQUIRE(
-                (clp::ffi::ir_stream::IRProtocolErrorCode::Unsupported
-                 == validate_protocol_version(new_versions))
-        );
+                GENERATE(std::string_view{"10000.0.0"}, std::string_view{"0.10000.0"})};
+        REQUIRE((clp::ffi::ir_stream::IRProtocolErrorCode::Unsupported
+                 == validate_protocol_version(new_versions)));
     }
 }
 
-TEMPLATE_TEST_CASE(
-        "decode_ir_complete",
-        "[ffi][deserialize_log_event]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("decode_ir_complete",
+                   "[ffi][deserialize_log_event]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
     vector<int8_t> ir_buf;
 
     epoch_time_ms_t const preamble_ts = get_current_ts();
     constexpr char timestamp_pattern[] = "%Y-%m-%d %H:%M:%S,%3";
     constexpr char timestamp_pattern_syntax[] = "yyyy-MM-dd HH:mm:ss";
     constexpr char time_zone_id[] = "Asia/Tokyo";
-    REQUIRE(serialize_preamble<TestType>(
-            timestamp_pattern,
-            timestamp_pattern_syntax,
-            time_zone_id,
-            preamble_ts,
-            ir_buf
-    ));
+    REQUIRE(serialize_preamble<TestType>(timestamp_pattern,
+                                         timestamp_pattern_syntax,
+                                         time_zone_id,
+                                         preamble_ts,
+                                         ir_buf));
     auto const encoded_preamble_end_pos = ir_buf.size();
 
     auto const test_log_events{create_test_log_events()};
     vector<string> encoded_logtypes;
     REQUIRE(serialize_log_events<TestType>(test_log_events, preamble_ts, ir_buf, encoded_logtypes));
 
-    BufferReader complete_ir_buffer{
-            size_checked_pointer_cast<char const>(ir_buf.data()),
-            ir_buf.size()
-    };
+    BufferReader complete_ir_buffer{size_checked_pointer_cast<char const>(ir_buf.data()),
+                                    ir_buf.size()};
 
     bool is_four_bytes_encoding;
     REQUIRE(get_encoding_type(complete_ir_buffer, is_four_bytes_encoding)
@@ -1039,12 +920,10 @@ TEMPLATE_TEST_CASE(
         }
 
         REQUIRE(IRErrorCode::IRErrorCode_Success
-                == deserialize_log_event<TestType>(
-                        complete_ir_buffer,
-                        tag,
-                        decoded_message,
-                        ts_or_ts_delta
-                ));
+                == deserialize_log_event<TestType>(complete_ir_buffer,
+                                                   tag,
+                                                   decoded_message,
+                                                   ts_or_ts_delta));
         auto timestamp{ts_or_ts_delta};
         if constexpr (is_same_v<TestType, four_byte_encoded_variable_t>) {
             timestamp += prev_ts;
@@ -1059,34 +938,28 @@ TEMPLATE_TEST_CASE(
     REQUIRE(complete_ir_buffer.get_pos() == ir_buf.size());
 }
 
-TEMPLATE_TEST_CASE(
-        "clp::ir::LogEventDeserializer",
-        "[clp][ir][LogEventDeserializer]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("clp::ir::LogEventDeserializer",
+                   "[clp][ir][LogEventDeserializer]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
     vector<int8_t> ir_buf;
 
     epoch_time_ms_t preamble_ts = get_current_ts();
     constexpr char timestamp_pattern[] = "%Y-%m-%d %H:%M:%S,%3";
     constexpr char timestamp_pattern_syntax[] = "yyyy-MM-dd HH:mm:ss";
     constexpr char time_zone_id[] = "Asia/Tokyo";
-    REQUIRE(serialize_preamble<TestType>(
-            timestamp_pattern,
-            timestamp_pattern_syntax,
-            time_zone_id,
-            preamble_ts,
-            ir_buf
-    ));
+    REQUIRE(serialize_preamble<TestType>(timestamp_pattern,
+                                         timestamp_pattern_syntax,
+                                         time_zone_id,
+                                         preamble_ts,
+                                         ir_buf));
 
     auto const test_log_events{create_test_log_events()};
     vector<string> encoded_logtypes;
     REQUIRE(serialize_log_events<TestType>(test_log_events, preamble_ts, ir_buf, encoded_logtypes));
 
-    BufferReader complete_ir_buffer{
-            size_checked_pointer_cast<char const>(ir_buf.data()),
-            ir_buf.size()
-    };
+    BufferReader complete_ir_buffer{size_checked_pointer_cast<char const>(ir_buf.data()),
+                                    ir_buf.size()};
 
     bool is_four_bytes_encoding;
     REQUIRE(get_encoding_type(complete_ir_buffer, is_four_bytes_encoding)
@@ -1114,12 +987,10 @@ TEMPLATE_TEST_CASE(
     REQUIRE(std::errc::no_message == result.error());
 }
 
-TEMPLATE_TEST_CASE(
-        "ffi_ir_stream_Serializer_creation",
-        "[clp][ffi][ir_stream][Serializer]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("ffi_ir_stream_Serializer_creation",
+                   "[clp][ffi][ir_stream][Serializer]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
     // This is a unit test for the kv-pair IR serializer. Currently, we haven't yet implemented a
     // deserializer, so we can only test whether the preamble packet is serialized correctly.
     vector<int8_t> ir_buf;
@@ -1141,10 +1012,8 @@ TEMPLATE_TEST_CASE(
     BufferReader buffer_reader{size_checked_pointer_cast<char const>(ir_buf.data()), ir_buf.size()};
 
     bool is_four_byte_encoding{};
-    REQUIRE(
-            (IRErrorCode::IRErrorCode_Success
-             == get_encoding_type(buffer_reader, is_four_byte_encoding))
-    );
+    REQUIRE((IRErrorCode::IRErrorCode_Success
+             == get_encoding_type(buffer_reader, is_four_byte_encoding)));
     if constexpr (std::is_same_v<TestType, four_byte_encoded_variable_t>) {
         REQUIRE(is_four_byte_encoding);
     } else {
@@ -1153,40 +1022,29 @@ TEMPLATE_TEST_CASE(
 
     encoded_tag_t metadata_type{};
     vector<int8_t> metadata_bytes;
-    REQUIRE(
-            (IRErrorCode::IRErrorCode_Success
-             == deserialize_preamble(buffer_reader, metadata_type, metadata_bytes))
-    );
+    REQUIRE((IRErrorCode::IRErrorCode_Success
+             == deserialize_preamble(buffer_reader, metadata_type, metadata_bytes)));
     REQUIRE((clp::ffi::ir_stream::cProtocol::Metadata::EncodingJson == metadata_type));
-    string_view const metadata_view{
-            size_checked_pointer_cast<char const>(metadata_bytes.data()),
-            metadata_bytes.size()
-    };
+    string_view const metadata_view{size_checked_pointer_cast<char const>(metadata_bytes.data()),
+                                    metadata_bytes.size()};
     nlohmann::json const metadata = nlohmann::json::parse(metadata_view);
 
     nlohmann::json expected_metadata;
-    expected_metadata.emplace(
-            clp::ffi::ir_stream::cProtocol::Metadata::VersionKey,
-            clp::ffi::ir_stream::cProtocol::Metadata::VersionValue
-    );
-    expected_metadata.emplace(
-            clp::ffi::ir_stream::cProtocol::Metadata::VariablesSchemaIdKey,
-            clp::ffi::cVariablesSchemaVersion
-    );
+    expected_metadata.emplace(clp::ffi::ir_stream::cProtocol::Metadata::VersionKey,
+                              clp::ffi::ir_stream::cProtocol::Metadata::VersionValue);
+    expected_metadata.emplace(clp::ffi::ir_stream::cProtocol::Metadata::VariablesSchemaIdKey,
+                              clp::ffi::cVariablesSchemaVersion);
     expected_metadata.emplace(
             clp::ffi::ir_stream::cProtocol::Metadata::VariableEncodingMethodsIdKey,
-            clp::ffi::cVariableEncodingMethodsVersion
-    );
+            clp::ffi::cVariableEncodingMethodsVersion);
     REQUIRE((expected_metadata == metadata));
 
     encoded_tag_t encoded_tag{};
     REQUIRE((IRErrorCode::IRErrorCode_Success == deserialize_tag(buffer_reader, encoded_tag)));
     REQUIRE((clp::ffi::ir_stream::cProtocol::Payload::UtcOffsetChange == encoded_tag));
     UtcOffset utc_offset_change{0};
-    REQUIRE(
-            (IRErrorCode::IRErrorCode_Success
-             == deserialize_utc_offset_change(buffer_reader, utc_offset_change))
-    );
+    REQUIRE((IRErrorCode::IRErrorCode_Success
+             == deserialize_utc_offset_change(buffer_reader, utc_offset_change)));
     REQUIRE((cBeijingUtcOffset == utc_offset_change));
 
     REQUIRE((IRErrorCode::IRErrorCode_Success == deserialize_tag(buffer_reader, encoded_tag)));
@@ -1194,19 +1052,15 @@ TEMPLATE_TEST_CASE(
 
     char eof{};
     size_t num_bytes_read{};
-    REQUIRE(
-            (clp::ErrorCode_EndOfFile == buffer_reader.try_read(&eof, 1, num_bytes_read)
-             && 0 == num_bytes_read)
-    );
+    REQUIRE((clp::ErrorCode_EndOfFile == buffer_reader.try_read(&eof, 1, num_bytes_read)
+             && 0 == num_bytes_read));
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-TEMPLATE_TEST_CASE(
-        "ffi_ir_stream_kv_pair_log_events_serde",
-        "[clp][ffi][ir_stream]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("ffi_ir_stream_kv_pair_log_events_serde",
+                   "[clp][ffi][ir_stream]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
     vector<int8_t> ir_buf;
     vector<std::pair<nlohmann::json, nlohmann::json>> expected_auto_gen_and_user_gen_object_pairs;
 
@@ -1225,25 +1079,24 @@ TEMPLATE_TEST_CASE(
     constexpr string_view cShortString{"short_string"};
     constexpr string_view cClpString{"uid=0, CPU usage: 99.99%, \"user_name\"=YScope"};
     auto const empty_array = nlohmann::json::parse("[]");
-    nlohmann::json const basic_obj
-            = {{"int8_max", INT8_MAX},
-               {"int8_min", INT8_MIN},
-               {"int16_max", INT16_MAX},
-               {"int16_min", INT16_MIN},
-               {"int32_max", INT32_MAX},
-               {"int32_min", INT32_MIN},
-               {"int64_max", INT64_MAX},
-               {"int64_min", INT64_MIN},
-               {"float_zero", 0.0},
-               {"float_pos", 1.01},
-               {"float_neg", -1.01},
-               {"true", true},
-               {"false", false},
-               {"string", cShortString},
-               {"clp_string", cClpString},
-               {"null", nullptr},
-               {"empty_object", empty_obj},
-               {"empty_array", empty_array}};
+    nlohmann::json const basic_obj = {{"int8_max", INT8_MAX},
+                                      {"int8_min", INT8_MIN},
+                                      {"int16_max", INT16_MAX},
+                                      {"int16_min", INT16_MIN},
+                                      {"int32_max", INT32_MAX},
+                                      {"int32_min", INT32_MIN},
+                                      {"int64_max", INT64_MAX},
+                                      {"int64_min", INT64_MIN},
+                                      {"float_zero", 0.0},
+                                      {"float_pos", 1.01},
+                                      {"float_neg", -1.01},
+                                      {"true", true},
+                                      {"false", false},
+                                      {"string", cShortString},
+                                      {"clp_string", cClpString},
+                                      {"null", nullptr},
+                                      {"empty_object", empty_obj},
+                                      {"empty_array", empty_array}};
     expected_auto_gen_and_user_gen_object_pairs.emplace_back(basic_obj, basic_obj);
 
     auto basic_array = empty_array;
@@ -1256,14 +1109,10 @@ TEMPLATE_TEST_CASE(
     basic_array.emplace_back(empty_array);
     for (auto const& element : basic_array) {
         // Non-map objects should not be serializable
-        REQUIRE(
-                (false
-                 == unpack_and_serialize_msgpack_bytes(
-                         nlohmann::json::to_msgpack(empty_obj),
-                         nlohmann::json::to_msgpack(element),
-                         serializer
-                 ))
-        );
+        REQUIRE((false
+                 == unpack_and_serialize_msgpack_bytes(nlohmann::json::to_msgpack(empty_obj),
+                                                       nlohmann::json::to_msgpack(element),
+                                                       serializer)));
     }
     basic_array.emplace_back(empty_obj);
 
@@ -1283,11 +1132,9 @@ TEMPLATE_TEST_CASE(
     for (auto const& [auto_gen_json_obj, user_gen_json_obj] :
          expected_auto_gen_and_user_gen_object_pairs)
     {
-        REQUIRE(unpack_and_serialize_msgpack_bytes(
-                nlohmann::json::to_msgpack(auto_gen_json_obj),
-                nlohmann::json::to_msgpack(user_gen_json_obj),
-                serializer
-        ));
+        REQUIRE(unpack_and_serialize_msgpack_bytes(nlohmann::json::to_msgpack(auto_gen_json_obj),
+                                                   nlohmann::json::to_msgpack(user_gen_json_obj),
+                                                   serializer));
     }
     flush_and_clear_serializer_buffer(serializer, ir_buf);
     ir_buf.push_back(clp::ffi::ir_stream::cProtocol::Eof);
@@ -1300,8 +1147,7 @@ TEMPLATE_TEST_CASE(
 
     auto const& deserialized_metadata = deserializer.get_metadata();
     string const user_defined_metadata_key{
-            clp::ffi::ir_stream::cProtocol::Metadata::UserDefinedMetadataKey
-    };
+            clp::ffi::ir_stream::cProtocol::Metadata::UserDefinedMetadataKey};
     REQUIRE(deserialized_metadata.contains(user_defined_metadata_key));
     REQUIRE((deserialized_metadata.at(user_defined_metadata_key) == user_defined_metadata));
 
@@ -1322,33 +1168,28 @@ TEMPLATE_TEST_CASE(
     REQUIRE((expected_auto_gen_and_user_gen_object_pairs.size() == deserialized_log_events.size()));
 
     auto const& deserialized_log_event_indices{
-            ir_unit_handler.get_deserialized_log_event_indices()
-    };
+            ir_unit_handler.get_deserialized_log_event_indices()};
 
     auto const num_log_events{expected_auto_gen_and_user_gen_object_pairs.size()};
     for (size_t idx{0}; idx < num_log_events; ++idx) {
         auto const& [expected_auto_gen_json_obj, expected_user_gen_json_obj]{
-                expected_auto_gen_and_user_gen_object_pairs.at(idx)
-        };
+                expected_auto_gen_and_user_gen_object_pairs.at(idx)};
         auto const& deserialized_log_event{deserialized_log_events.at(idx)};
 
         auto const num_leaves_in_auto_gen_json_obj{count_num_leaves(expected_auto_gen_json_obj)};
         auto const num_auto_gen_kv_pairs{
-                deserialized_log_event.get_auto_gen_node_id_value_pairs().size()
-        };
+                deserialized_log_event.get_auto_gen_node_id_value_pairs().size()};
         REQUIRE((num_leaves_in_auto_gen_json_obj == num_auto_gen_kv_pairs));
 
         auto const num_leaves_in_user_gen_json_obj{count_num_leaves(expected_user_gen_json_obj)};
         auto const num_user_gen_kv_pairs{
-                deserialized_log_event.get_user_gen_node_id_value_pairs().size()
-        };
+                deserialized_log_event.get_user_gen_node_id_value_pairs().size()};
         REQUIRE((num_leaves_in_user_gen_json_obj == num_user_gen_kv_pairs));
 
         auto const serialized_json_result{deserialized_log_event.serialize_to_json()};
         REQUIRE_FALSE(serialized_json_result.has_error());
-        auto const& [actual_auto_gen_json_obj, actual_user_gen_json_obj]{
-                serialized_json_result.value()
-        };
+        auto const& [actual_auto_gen_json_obj,
+                     actual_user_gen_json_obj]{serialized_json_result.value()};
         REQUIRE((expected_auto_gen_json_obj == actual_auto_gen_json_obj));
         REQUIRE((expected_user_gen_json_obj == actual_user_gen_json_obj));
 
@@ -1360,37 +1201,28 @@ TEMPLATE_TEST_CASE(
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-TEMPLATE_TEST_CASE(
-        "ffi_ir_stream_serialize_schema_tree_node_id",
-        "[clp][ffi][ir_stream]",
-        std::true_type,
-        std::false_type
-) {
+TEMPLATE_TEST_CASE("ffi_ir_stream_serialize_schema_tree_node_id",
+                   "[clp][ffi][ir_stream]",
+                   std::true_type,
+                   std::false_type) {
     constexpr bool cIsAutoGeneratedNode{TestType{}};
     constexpr int8_t cOneByteLengthIndicatorTag{
-            clp::ffi::ir_stream::cProtocol::Payload::EncodedSchemaTreeNodeIdByte
-    };
+            clp::ffi::ir_stream::cProtocol::Payload::EncodedSchemaTreeNodeIdByte};
     constexpr int8_t cTwoByteLengthIndicatorTag{
-            clp::ffi::ir_stream::cProtocol::Payload::EncodedSchemaTreeNodeIdShort
-    };
+            clp::ffi::ir_stream::cProtocol::Payload::EncodedSchemaTreeNodeIdShort};
     constexpr int8_t cFourByteLengthIndicatorTag{
-            clp::ffi::ir_stream::cProtocol::Payload::EncodedSchemaTreeNodeIdInt
-    };
+            clp::ffi::ir_stream::cProtocol::Payload::EncodedSchemaTreeNodeIdInt};
     constexpr auto cMaxNodeId{static_cast<clp::ffi::SchemaTree::Node::id_t>(INT32_MAX)};
 
-    constexpr auto cSerializationMethodToTest
-            = clp::ffi::ir_stream::encode_and_serialize_schema_tree_node_id<
-                    cIsAutoGeneratedNode,
-                    cOneByteLengthIndicatorTag,
-                    cTwoByteLengthIndicatorTag,
-                    cFourByteLengthIndicatorTag
-            >;
-    constexpr auto cDeserializationMethodToTest
-            = clp::ffi::ir_stream::deserialize_and_decode_schema_tree_node_id<
-                    cOneByteLengthIndicatorTag,
-                    cTwoByteLengthIndicatorTag,
-                    cFourByteLengthIndicatorTag
-            >;
+    constexpr auto cSerializationMethodToTest = clp::ffi::ir_stream::
+            encode_and_serialize_schema_tree_node_id<cIsAutoGeneratedNode,
+                                                     cOneByteLengthIndicatorTag,
+                                                     cTwoByteLengthIndicatorTag,
+                                                     cFourByteLengthIndicatorTag>;
+    constexpr auto cDeserializationMethodToTest = clp::ffi::ir_stream::
+            deserialize_and_decode_schema_tree_node_id<cOneByteLengthIndicatorTag,
+                                                       cTwoByteLengthIndicatorTag,
+                                                       cFourByteLengthIndicatorTag>;
 
     std::vector<int8_t> output_buf;
     std::unordered_set<clp::ffi::SchemaTree::Node::id_t> valid_node_ids_to_test;
@@ -1428,19 +1260,16 @@ TEMPLATE_TEST_CASE(
     }
 
     // Test against the first invalid node ID
-    REQUIRE_FALSE(cSerializationMethodToTest(
-            static_cast<clp::ffi::SchemaTree::Node::id_t>(INT32_MAX) + 1,
-            output_buf
-    ));
+    REQUIRE_FALSE(
+            cSerializationMethodToTest(static_cast<clp::ffi::SchemaTree::Node::id_t>(INT32_MAX) + 1,
+                                       output_buf));
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-TEMPLATE_TEST_CASE(
-        "ffi_ir_stream_Serializer_serialize_invalid_msgpack",
-        "[clp][ffi][ir_stream][Serializer]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("ffi_ir_stream_Serializer_serialize_invalid_msgpack",
+                   "[clp][ffi][ir_stream][Serializer]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
     auto result{Serializer<TestType>::create()};
     REQUIRE((false == result.has_error()));
 
@@ -1458,8 +1287,7 @@ TEMPLATE_TEST_CASE(
     REQUIRE(assert_invalid_serialization(map_with_integer_keys));
 
     std::map<string, decltype(map_with_integer_keys)> const map_with_invalid_submap{
-            {"valid_key", map_with_integer_keys}
-    };
+            {"valid_key", map_with_integer_keys}};
     REQUIRE(assert_invalid_serialization(map_with_invalid_submap));
 
     std::tuple<int, vector<uint8_t>> const array_with_invalid_type{0, {0x00, 0x00, 0x00}};
@@ -1467,44 +1295,36 @@ TEMPLATE_TEST_CASE(
 
     std::tuple<int, decltype(array_with_invalid_type)> const subarray_with_invalid_type{
             0,
-            array_with_invalid_type
-    };
+            array_with_invalid_type};
     REQUIRE(assert_invalid_serialization(subarray_with_invalid_type));
 
     std::tuple<int, decltype(map_with_integer_keys)> const array_with_invalid_map{
             0,
-            map_with_integer_keys
-    };
+            map_with_integer_keys};
     REQUIRE(assert_invalid_serialization(array_with_invalid_map));
 
     std::tuple<int, decltype(array_with_invalid_map)> const subarray_with_invalid_map{
             0,
-            array_with_invalid_map
-    };
+            array_with_invalid_map};
     REQUIRE(assert_invalid_serialization(subarray_with_invalid_map));
 
     std::tuple<int, decltype(map_with_invalid_submap)> const array_with_invalid_submap{
             0,
-            map_with_invalid_submap
-    };
+            map_with_invalid_submap};
     REQUIRE(assert_invalid_serialization(array_with_invalid_submap));
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-TEMPLATE_TEST_CASE(
-        "ffi_ir_stream_Serializer_serialize_invalid_user_defined_metadata",
-        "[clp][ffi][ir_stream][Serializer]",
-        four_byte_encoded_variable_t,
-        eight_byte_encoded_variable_t
-) {
-    auto invalid_user_defined_metadata = GENERATE(
-            nlohmann::json(std::string{"str"}),
-            nlohmann::json(int{0}),
-            nlohmann::json(double{0.0}),
-            nlohmann::json(true),
-            nlohmann::json(nullptr),
-            nlohmann::json(vector<int>{0, 1, 2})
-    );
+TEMPLATE_TEST_CASE("ffi_ir_stream_Serializer_serialize_invalid_user_defined_metadata",
+                   "[clp][ffi][ir_stream][Serializer]",
+                   four_byte_encoded_variable_t,
+                   eight_byte_encoded_variable_t) {
+    auto invalid_user_defined_metadata = GENERATE(nlohmann::json(std::string{"str"}),
+                                                  nlohmann::json(int{0}),
+                                                  nlohmann::json(double{0.0}),
+                                                  nlohmann::json(true),
+                                                  nlohmann::json(nullptr),
+                                                  nlohmann::json(vector<int>{0, 1, 2}));
     auto const serializer_result{Serializer<TestType>::create(invalid_user_defined_metadata)};
     REQUIRE(serializer_result.has_error());
     REQUIRE((std::errc::protocol_not_supported == serializer_result.error()));

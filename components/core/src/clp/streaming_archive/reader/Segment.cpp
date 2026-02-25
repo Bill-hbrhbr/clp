@@ -36,11 +36,9 @@ ErrorCode Segment::try_open(string const& segment_dir_path, segment_id_t segment
 
     // Sanity check: previously used memory mapped file should be closed before opening a new one
     if (m_memory_mapped_segment_file.has_value()) {
-        SPDLOG_WARN(
-                "streaming_archive::reader::Segment: Previous segment should be closed before "
-                "opening new one: {}",
-                segment_path.c_str()
-        );
+        SPDLOG_WARN("streaming_archive::reader::Segment: Previous segment should be closed before "
+                    "opening new one: {}",
+                    segment_path.c_str());
         m_memory_mapped_segment_file.reset();
     }
 
@@ -48,13 +46,11 @@ ErrorCode Segment::try_open(string const& segment_dir_path, segment_id_t segment
     auto result{ReadOnlyMemoryMappedFile::create(segment_path)};
     if (result.has_error()) {
         auto const error{result.error()};
-        SPDLOG_ERROR(
-                "streaming_archive::reader:Segment: Unable to memory map the compressed "
-                "segment with path: {}. Error: {} - {}",
-                segment_path.c_str(),
-                error.category().name(),
-                error.message()
-        );
+        SPDLOG_ERROR("streaming_archive::reader:Segment: Unable to memory map the compressed "
+                     "segment with path: {}. Error: {} - {}",
+                     segment_path.c_str(),
+                     error.category().name(),
+                     error.message());
         return ErrorCode_Failure;
     }
     m_memory_mapped_segment_file.emplace(std::move(result.value()));
@@ -74,21 +70,18 @@ void Segment::close() {
     }
 }
 
-ErrorCode
-Segment::try_read(uint64_t decompressed_stream_pos, char* extraction_buf, uint64_t extraction_len) {
+ErrorCode Segment::try_read(uint64_t decompressed_stream_pos,
+                            char* extraction_buf,
+                            uint64_t extraction_len) {
     // We always assume the passed in buffer is already pre-allocated, but we check anyway as a
     // precaution
     if (nullptr == extraction_buf) {
-        SPDLOG_ERROR(
-                "streaming_archive::reader::Segment: Extraction buffer not allocated during"
-                " decompression"
-        );
+        SPDLOG_ERROR("streaming_archive::reader::Segment: Extraction buffer not allocated during"
+                     " decompression");
         return ErrorCode_BadParam;
     }
-    return m_decompressor.get_decompressed_stream_region(
-            decompressed_stream_pos,
-            extraction_buf,
-            extraction_len
-    );
+    return m_decompressor.get_decompressed_stream_region(decompressed_stream_pos,
+                                                         extraction_buf,
+                                                         extraction_len);
 }
 }  // namespace clp::streaming_archive::reader

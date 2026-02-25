@@ -11,11 +11,10 @@ static exception get_yaml_missing_key_exception(string const& key_name) {
     throw invalid_argument(fmt::format("Missing key '{}'", key_name));
 }
 
-static exception
-get_yaml_unconvertable_value_exception(string const& key_name, string const& destination_type) {
+static exception get_yaml_unconvertable_value_exception(string const& key_name,
+                                                        string const& destination_type) {
     throw invalid_argument(
-            fmt::format("'{}' could not be converted to type '{}'", key_name, destination_type)
-    );
+            fmt::format("'{}' could not be converted to type '{}'", key_name, destination_type));
 }
 
 namespace glt {

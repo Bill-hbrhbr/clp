@@ -21,11 +21,9 @@ int connect_to_reducer(std::string const& host, int port, job_id_t job_id) {
         return -1;
     }
 
-    auto ecode = clp::networking::try_send(
-            reducer_socket_fd,
-            reinterpret_cast<char const*>(&job_id),
-            sizeof(job_id)
-    );
+    auto ecode = clp::networking::try_send(reducer_socket_fd,
+                                           reinterpret_cast<char const*>(&job_id),
+                                           sizeof(job_id));
     if (clp::ErrorCode::ErrorCode_Success != ecode) {
         close(reducer_socket_fd);
         return -1;
@@ -55,10 +53,8 @@ bool send_pipeline_results(int reducer_socket_fd, std::unique_ptr<RecordGroupIte
 
         // Send size
         if (false
-            == buffered_writer.write(
-                    reinterpret_cast<char const*>(&serialized_result_size),
-                    sizeof(serialized_result_size)
-            ))
+            == buffered_writer.write(reinterpret_cast<char const*>(&serialized_result_size),
+                                     sizeof(serialized_result_size)))
         {
             return false;
         }

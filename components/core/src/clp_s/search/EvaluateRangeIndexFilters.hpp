@@ -20,10 +20,8 @@ namespace clp_s::search {
  */
 class EvaluateRangeIndexFilters : public ast::Transformation {
 public:
-    explicit EvaluateRangeIndexFilters(
-            std::vector<clp_s::RangeIndexEntry> const& range_index,
-            bool case_sensitive_match
-    )
+    explicit EvaluateRangeIndexFilters(std::vector<clp_s::RangeIndexEntry> const& range_index,
+                                       bool case_sensitive_match)
             : m_range_index{range_index},
               m_case_sensitive_match{case_sensitive_match} {}
 
@@ -37,11 +35,9 @@ private:
      * @param parent_it Iterator in the parent expression containing `filter_expr`.
      * @param ast_root Reference to the root of the AST.
      */
-    void evaluate_and_rewrite_filter(
-            ast::FilterExpr* filter_expr,
-            std::optional<ast::OpList::iterator> parent_it,
-            std::shared_ptr<ast::Expression>& ast_root
-    ) const;
+    void evaluate_and_rewrite_filter(ast::FilterExpr* filter_expr,
+                                     std::optional<ast::OpList::iterator> parent_it,
+                                     std::shared_ptr<ast::Expression>& ast_root) const;
 
     /**
      * Evaluates a filter against a JSON object.

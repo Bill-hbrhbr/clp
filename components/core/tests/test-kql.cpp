@@ -32,20 +32,18 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
     LogSuppressor suppressor{};
 
     SECTION("Pure wildcard key queries") {
-        auto query = GENERATE(
-                "value",
-                "  value ",
-                "\"value\"",
-                " \"value\" ",
-                "*:value",
-                " * : value ",
-                "*:\"value\"",
-                " *:   \"value\" ",
-                "\"*\":value",
-                " \"*\" :value",
-                "\"*\":\"value\"",
-                "   \"*\":  \"value\" "
-        );
+        auto query = GENERATE("value",
+                              "  value ",
+                              "\"value\"",
+                              " \"value\" ",
+                              "*:value",
+                              " * : value ",
+                              "*:\"value\"",
+                              " *:   \"value\" ",
+                              "\"*\":value",
+                              " \"*\" :value",
+                              "\"*\":\"value\"",
+                              "   \"*\":  \"value\" ");
         stringstream wildcard_filter{query};
         auto filter = std::dynamic_pointer_cast<FilterExpr>(parse_kql_expression(wildcard_filter));
         REQUIRE(nullptr != filter);
@@ -98,8 +96,8 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
         auto const key_token = DescriptorToken::create_descriptor_from_escaped_token("key");
         REQUIRE(key_token == *not_filter->get_column()->descriptor_begin());
         std::string extracted_value;
-        REQUIRE(not_filter->get_operand()
-                        ->as_var_string(extracted_value, not_filter->get_operation()));
+        REQUIRE(not_filter->get_operand()->as_var_string(extracted_value,
+                                                         not_filter->get_operation()));
         REQUIRE("value" == extracted_value);
     }
 
@@ -111,14 +109,12 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
     }
 
     SECTION("Basic AND expression") {
-        auto query = GENERATE(
-                "key1:value1 and key2:value2",
-                "key1  : value1 and  key2  : value2",
-                "key1:value1 AND key2:value2",
-                "key1  : value1 AND  key2  : value2",
-                "key1:value1 aND key2:value2",
-                "key1  : value1 aND  key2  : value2"
-        );
+        auto query = GENERATE("key1:value1 and key2:value2",
+                              "key1  : value1 and  key2  : value2",
+                              "key1:value1 AND key2:value2",
+                              "key1  : value1 AND  key2  : value2",
+                              "key1:value1 aND key2:value2",
+                              "key1  : value1 aND  key2  : value2");
         stringstream basic_and{query};
         auto and_expr = std::dynamic_pointer_cast<AndExpr>(parse_kql_expression(basic_and));
         REQUIRE(nullptr != and_expr);
@@ -136,8 +132,8 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
             REQUIRE(FilterOperation::EQ == filter->get_operation());
             std::string extracted_value;
             REQUIRE(true
-                    == filter->get_operand()
-                               ->as_var_string(extracted_value, filter->get_operation()));
+                    == filter->get_operand()->as_var_string(extracted_value,
+                                                            filter->get_operation()));
             std::string key = "key" + std::to_string(suffix_number);
             std::string value = "value" + std::to_string(suffix_number);
             REQUIRE(value == extracted_value);
@@ -150,27 +146,23 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
     }
 
     SECTION("Incorrect AND filter") {
-        auto query = GENERATE(
-                "a : a AND b :",
-                " : a AND b :",
-                ": a AND b :b",
-                " AND b :b",
-                "a: a AND"
-        );
+        auto query = GENERATE("a : a AND b :",
+                              " : a AND b :",
+                              ": a AND b :b",
+                              " AND b :b",
+                              "a: a AND");
         stringstream incorrect_query{query};
         auto failure = parse_kql_expression(incorrect_query);
         REQUIRE(nullptr == failure);
     }
 
     SECTION("Basic OR expression") {
-        auto query = GENERATE(
-                "key1:value1 or key2:value2",
-                "key1  : value1 or  key2  : value2",
-                "key1:value1 OR key2:value2",
-                "key1  : value1 OR  key2  : value2",
-                "key1:value1 oR key2:value2",
-                "key1  : value1 oR  key2  : value2"
-        );
+        auto query = GENERATE("key1:value1 or key2:value2",
+                              "key1  : value1 or  key2  : value2",
+                              "key1:value1 OR key2:value2",
+                              "key1  : value1 OR  key2  : value2",
+                              "key1:value1 oR key2:value2",
+                              "key1  : value1 oR  key2  : value2");
         stringstream basic_or{query};
         auto or_expr = std::dynamic_pointer_cast<OrExpr>(parse_kql_expression(basic_or));
         REQUIRE(nullptr != or_expr);
@@ -188,8 +180,8 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
             REQUIRE(FilterOperation::EQ == filter->get_operation());
             std::string extracted_value;
             REQUIRE(true
-                    == filter->get_operand()
-                               ->as_var_string(extracted_value, filter->get_operation()));
+                    == filter->get_operand()->as_var_string(extracted_value,
+                                                            filter->get_operation()));
             std::string key = "key" + std::to_string(suffix_number);
             std::string value = "value" + std::to_string(suffix_number);
             REQUIRE(value == extracted_value);
@@ -209,12 +201,10 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
     }
 
     SECTION("Escape sequences in column name") {
-        auto query = GENERATE(
-                "a\\.b.c: *",
-                "\"a\\.b.c\": *",
-                "a\\.b: {c: *}",
-                "\"a\\.b\": {\"c\": *}"
-        );
+        auto query = GENERATE("a\\.b.c: *",
+                              "\"a\\.b.c\": *",
+                              "a\\.b: {c: *}",
+                              "\"a\\.b\": {\"c\": *}");
         stringstream escaped_column_query{query};
         auto filter
                 = std::dynamic_pointer_cast<FilterExpr>(parse_kql_expression(escaped_column_query));
@@ -243,8 +233,7 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
                 "a.:*",
                 "\"a.\":*",
                 "a. :*",
-                "\"a.\" :*"
-        );
+                "\"a.\" :*");
         stringstream illegal_escape{query};
         auto filter = parse_kql_expression(illegal_escape);
         REQUIRE(nullptr == filter);
@@ -258,18 +247,16 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
     }
 
     SECTION("Escape sequences in value") {
-        auto translated_pair = GENERATE(
-                std::pair{"\\\\", "\\\\"},
-                std::pair{"\\??", "\\??"},
-                std::pair{"\\**", "\\**"},
-                std::pair{"\\u9999", "香"},
-                std::pair{"\\r\\n\\t\\b\\f", "\r\n\t\b\f"},
-                std::pair{"\\\"", "\""},
-                std::pair{"\\{\\}\\(\\)\\<\\>", "{}()<>"},
-                std::pair{"\\u003F", "\\?"},
-                std::pair{"\\u002A", "\\*"},
-                std::pair{"\\u005C", "\\\\"}
-        );
+        auto translated_pair = GENERATE(std::pair{"\\\\", "\\\\"},
+                                        std::pair{"\\??", "\\??"},
+                                        std::pair{"\\**", "\\**"},
+                                        std::pair{"\\u9999", "香"},
+                                        std::pair{"\\r\\n\\t\\b\\f", "\r\n\t\b\f"},
+                                        std::pair{"\\\"", "\""},
+                                        std::pair{"\\{\\}\\(\\)\\<\\>", "{}()<>"},
+                                        std::pair{"\\u003F", "\\?"},
+                                        std::pair{"\\u002A", "\\*"},
+                                        std::pair{"\\u005C", "\\\\"});
 
         auto formatted_query = fmt::format("*: \"{}\"", translated_pair.first);
         stringstream query{formatted_query};
@@ -313,10 +300,8 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
         auto namespace_name = GENERATE("@", "$", "!", "#");
         auto escaped_namespace_query_fmt_string = GENERATE("\\{}column : *", "\"\\{}column\": *");
         auto column = fmt::vformat("{}column", fmt::make_format_args(namespace_name));
-        auto escaped_namespace_query = fmt::vformat(
-                escaped_namespace_query_fmt_string,
-                fmt::make_format_args(namespace_name)
-        );
+        auto escaped_namespace_query = fmt::vformat(escaped_namespace_query_fmt_string,
+                                                    fmt::make_format_args(namespace_name));
         stringstream query{escaped_namespace_query};
         auto filter = std::dynamic_pointer_cast<FilterExpr>(parse_kql_expression(query));
         REQUIRE(nullptr != filter);
@@ -334,18 +319,13 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
     }
 
     SECTION("Timestamp expressions are parsed correctly.") {
-        auto const [query, expected_operation] = GENERATE(
-                std::make_pair(
-                        R"(* : timestamp("1970-01-01 00:00:00.000000001"))",
-                        FilterOperation::EQ
-                ),
-                std::make_pair(R"(* : timestamp("1", "\N"))", FilterOperation::EQ),
-                std::make_pair(
-                        R"(* < timestamp("1970-01-01 00:00:00.000000001"))",
-                        FilterOperation::LT
-                ),
-                std::make_pair(R"(* < timestamp("1", "\N"))", FilterOperation::LT)
-        );
+        auto const [query, expected_operation]
+                = GENERATE(std::make_pair(R"(* : timestamp("1970-01-01 00:00:00.000000001"))",
+                                          FilterOperation::EQ),
+                           std::make_pair(R"(* : timestamp("1", "\N"))", FilterOperation::EQ),
+                           std::make_pair(R"(* < timestamp("1970-01-01 00:00:00.000000001"))",
+                                          FilterOperation::LT),
+                           std::make_pair(R"(* < timestamp("1", "\N"))", FilterOperation::LT));
 
         stringstream query_stream{query};
         auto filter{std::dynamic_pointer_cast<FilterExpr>(parse_kql_expression(query_stream))};
@@ -364,17 +344,15 @@ TEST_CASE("Test parsing KQL", "[KQL]") {
     }
 
     SECTION("Invalid timestamp expressions are rejected.") {
-        auto invalid_query = GENERATE(
-                R"(a: timestamp()",
-                R"(a: timestamp())",
-                R"(a: timestamp(,))",
-                R"(a: timestamp("1",)",
-                R"(a: timestamp("1)",
-                R"(a: timestamp(1))",
-                R"(a: timestamp("a"))",
-                R"(a: timestamp("12345", "\Y-\m-\d"))",
-                R"(a: timestamp("12345", "\N))"
-        );
+        auto invalid_query = GENERATE(R"(a: timestamp()",
+                                      R"(a: timestamp())",
+                                      R"(a: timestamp(,))",
+                                      R"(a: timestamp("1",)",
+                                      R"(a: timestamp("1)",
+                                      R"(a: timestamp(1))",
+                                      R"(a: timestamp("a"))",
+                                      R"(a: timestamp("12345", "\Y-\m-\d"))",
+                                      R"(a: timestamp("12345", "\N))");
         stringstream invalid_query_stream{invalid_query};
         REQUIRE(nullptr == parse_kql_expression(invalid_query_stream));
     }

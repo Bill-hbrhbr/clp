@@ -63,8 +63,7 @@ ErrorCode Decompressor::try_read(char* buf, size_t num_bytes_to_read, size_t& nu
                     auto error_code = m_file_reader->try_read(
                             reinterpret_cast<char*>(m_file_read_buffer.get()),
                             m_file_read_buffer_capacity,
-                            m_file_read_buffer_length
-                    );
+                            m_file_read_buffer_length);
                     if (ErrorCode_Success != error_code) {
                         if (ErrorCode_EndOfFile == error_code) {
                             num_bytes_read = decompressed_stream_block.pos;
@@ -88,17 +87,14 @@ ErrorCode Decompressor::try_read(char* buf, size_t num_bytes_to_read, size_t& nu
         }
 
         // Decompress
-        size_t error = ZSTD_decompressStream(
-                m_decompression_stream,
-                &decompressed_stream_block,
-                &m_compressed_stream_block
-        );
+        size_t error = ZSTD_decompressStream(m_decompression_stream,
+                                             &decompressed_stream_block,
+                                             &m_compressed_stream_block);
         if (ZSTD_isError(error)) {
             SPDLOG_ERROR(
                     "streaming_compression::zstd::Decompressor: ZSTD_decompressStream() error: "
                     "{}",
-                    ZSTD_getErrorName(error)
-            );
+                    ZSTD_getErrorName(error));
             return ErrorCode_Failure;
         }
     }
@@ -136,14 +132,10 @@ ErrorCode Decompressor::try_seek_from_begin(size_t pos) {
     // We need to fast forward the decompression stream to decompressed_stream_pos
     ErrorCode error;
     while (m_decompressed_stream_pos < pos) {
-        size_t num_bytes_to_decompress = std::min(
-                m_unused_decompressed_stream_block_size,
-                pos - m_decompressed_stream_pos
-        );
-        error = try_read_exact_length(
-                m_unused_decompressed_stream_block_buffer.get(),
-                num_bytes_to_decompress
-        );
+        size_t num_bytes_to_decompress = std::min(m_unused_decompressed_stream_block_size,
+                                                  pos - m_decompressed_stream_pos);
+        error = try_read_exact_length(m_unused_decompressed_stream_block_buffer.get(),
+                                      num_bytes_to_decompress);
         if (ErrorCode_Success != error) {
             return error;
         }
@@ -226,12 +218,10 @@ ErrorCode Decompressor::open(std::string const& compressed_file_path) {
     size_t compressed_file_size
             = boost::filesystem::file_size(compressed_file_path, boost_error_code);
     if (boost_error_code) {
-        SPDLOG_ERROR(
-                "streaming_compression::zstd::Decompressor: Unable to obtain file size for "
-                "'{}' - {}.",
-                compressed_file_path.c_str(),
-                boost_error_code.message().c_str()
-        );
+        SPDLOG_ERROR("streaming_compression::zstd::Decompressor: Unable to obtain file size for "
+                     "'{}' - {}.",
+                     compressed_file_path.c_str(),
+                     boost_error_code.message().c_str());
         return ErrorCode_Failure;
     }
 
@@ -244,11 +234,9 @@ ErrorCode Decompressor::open(std::string const& compressed_file_path) {
     memory_map_params.hint = m_memory_mapped_compressed_file.data();
     m_memory_mapped_compressed_file.open(memory_map_params);
     if (!m_memory_mapped_compressed_file.is_open()) {
-        SPDLOG_ERROR(
-                "streaming_compression::zstd::Decompressor: Unable to memory map the "
-                "compressed file with path: {}",
-                compressed_file_path.c_str()
-        );
+        SPDLOG_ERROR("streaming_compression::zstd::Decompressor: Unable to memory map the "
+                     "compressed file with path: {}",
+                     compressed_file_path.c_str());
         return ErrorCode_Failure;
     }
 
@@ -260,11 +248,9 @@ ErrorCode Decompressor::open(std::string const& compressed_file_path) {
     return ErrorCode_Success;
 }
 
-ErrorCode Decompressor::get_decompressed_stream_region(
-        size_t decompressed_stream_pos,
-        char* extraction_buf,
-        size_t extraction_len
-) {
+ErrorCode Decompressor::get_decompressed_stream_region(size_t decompressed_stream_pos,
+                                                       char* extraction_buf,
+                                                       size_t extraction_len) {
     auto error_code = try_seek_from_begin(decompressed_stream_pos);
     if (ErrorCode_Success != error_code) {
         return error_code;

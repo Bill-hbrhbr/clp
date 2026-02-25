@@ -92,10 +92,8 @@ auto assert_curl_error_code(CURLcode expected, clp::NetworkReader const& reader)
     if (expected == actual) {
         return true;
     }
-    std::string message_to_log{
-            "Unexpected CURL error code: " + std::to_string(actual)
-            + "; expected: " + std::to_string(expected)
-    };
+    std::string message_to_log{"Unexpected CURL error code: " + std::to_string(actual)
+                               + "; expected: " + std::to_string(expected)};
     auto const curl_error_message{reader.get_curl_error_msg()};
     if (curl_error_message.has_value()) {
         message_to_log += "\nError message:\n" + std::string{curl_error_message.value()};
@@ -160,8 +158,7 @@ TEST_CASE("network_reader_destruct", "[NetworkReader]") {
                 clp::CurlDownloadHandler::cDefaultOverallTimeout,
                 clp::CurlDownloadHandler::cDefaultConnectionTimeout,
                 3,
-                512
-        )};
+                512)};
         std::this_thread::sleep_for(std::chrono::milliseconds{1500});
         // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
         REQUIRE(reader->is_download_in_progress());
@@ -184,10 +181,8 @@ TEST_CASE("network_reader_illegal_offset", "[NetworkReader]") {
     if constexpr (clp::Platform::MacOs == clp::cCurrentPlatform) {
         // On macOS, HTTP response code 416 is not handled as `CURL_HTTP_RETURNED_ERROR` in some
         // `libcurl` versions.
-        REQUIRE(
-                (assert_curl_error_code(CURLE_HTTP_RETURNED_ERROR, reader)
-                 || assert_curl_error_code(CURLE_RECV_ERROR, reader))
-        );
+        REQUIRE((assert_curl_error_code(CURLE_HTTP_RETURNED_ERROR, reader)
+                 || assert_curl_error_code(CURLE_RECV_ERROR, reader)));
     } else {
         REQUIRE(assert_curl_error_code(CURLE_HTTP_RETURNED_ERROR, reader));
     }
@@ -203,10 +198,8 @@ TEST_CASE("network_reader_with_valid_http_header_kv_pairs", "[NetworkReader]") {
     std::unordered_map<std::string, std::string> valid_http_header_kv_pairs;
     constexpr size_t cNumHttpHeaderKeyValuePairs{10};
     for (size_t i{0}; i < cNumHttpHeaderKeyValuePairs; ++i) {
-        valid_http_header_kv_pairs.emplace(
-                fmt::format("Unit-Test-Key{}", i),
-                fmt::format("Unit-Test-Value{}", i)
-        );
+        valid_http_header_kv_pairs.emplace(fmt::format("Unit-Test-Key{}", i),
+                                           fmt::format("Unit-Test-Value{}", i));
     }
     std::optional<std::vector<char>> optional_content;
 
@@ -214,16 +207,14 @@ TEST_CASE("network_reader_with_valid_http_header_kv_pairs", "[NetworkReader]") {
     // This ensures the test is not marked as failed due to temporary issues beyond our control.
     constexpr size_t cNumMaxTrials{10};
     for (size_t i{0}; i < cNumMaxTrials; ++i) {
-        clp::NetworkReader reader{
-                cHttpHeadersEchoServerUrl,
-                0,
-                false,
-                clp::CurlDownloadHandler::cDefaultOverallTimeout,
-                clp::CurlDownloadHandler::cDefaultConnectionTimeout,
-                clp::NetworkReader::cDefaultBufferPoolSize,
-                clp::NetworkReader::cDefaultBufferSize,
-                valid_http_header_kv_pairs
-        };
+        clp::NetworkReader reader{cHttpHeadersEchoServerUrl,
+                                  0,
+                                  false,
+                                  clp::CurlDownloadHandler::cDefaultOverallTimeout,
+                                  clp::CurlDownloadHandler::cDefaultConnectionTimeout,
+                                  clp::NetworkReader::cDefaultBufferPoolSize,
+                                  clp::NetworkReader::cDefaultBufferSize,
+                                  valid_http_header_kv_pairs};
         auto const content = get_content(reader);
         if (assert_curl_error_code(CURLE_OK, reader)) {
             optional_content.emplace(content);
@@ -251,18 +242,15 @@ TEST_CASE("network_reader_with_illegal_http_header_kv_pairs", "[NetworkReader]")
             std::unordered_map<std::string, std::string>{{"Cache-Control", "no-cache"}},
             std::unordered_map<std::string, std::string>{{"Pragma", "no-cache"}},
             // The CRLF-terminated headers should be rejected.
-            std::unordered_map<std::string, std::string>{{"Legal-Name", "CRLF\r\n"}}
-    );
-    clp::NetworkReader reader{
-            cHttpHeadersEchoServerUrl,
-            0,
-            false,
-            clp::CurlDownloadHandler::cDefaultOverallTimeout,
-            clp::CurlDownloadHandler::cDefaultConnectionTimeout,
-            clp::NetworkReader::cDefaultBufferPoolSize,
-            clp::NetworkReader::cDefaultBufferSize,
-            illegal_header_kv_pairs
-    };
+            std::unordered_map<std::string, std::string>{{"Legal-Name", "CRLF\r\n"}});
+    clp::NetworkReader reader{cHttpHeadersEchoServerUrl,
+                              0,
+                              false,
+                              clp::CurlDownloadHandler::cDefaultOverallTimeout,
+                              clp::CurlDownloadHandler::cDefaultConnectionTimeout,
+                              clp::NetworkReader::cDefaultBufferPoolSize,
+                              clp::NetworkReader::cDefaultBufferSize,
+                              illegal_header_kv_pairs};
     auto const content = get_content(reader);
     REQUIRE(content.empty());
     REQUIRE(assert_curl_error_code(CURLE_BAD_FUNCTION_ARGUMENT, reader));

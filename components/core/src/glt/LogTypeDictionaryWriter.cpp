@@ -5,10 +5,8 @@
 using std::string;
 
 namespace glt {
-bool LogTypeDictionaryWriter::add_entry(
-        LogTypeDictionaryEntry& logtype_entry,
-        logtype_dictionary_id_t& logtype_id
-) {
+bool LogTypeDictionaryWriter::add_entry(LogTypeDictionaryEntry& logtype_entry,
+                                        logtype_dictionary_id_t& logtype_id) {
     bool is_new_entry = false;
 
     string const& value = logtype_entry.get_value();

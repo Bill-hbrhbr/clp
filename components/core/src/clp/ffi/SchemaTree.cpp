@@ -9,12 +9,10 @@
 namespace clp::ffi {
 auto SchemaTree::get_node(Node::id_t id) const -> Node const& {
     if (m_tree_nodes.size() <= static_cast<size_t>(id)) {
-        throw OperationFailed(
-                ErrorCode_OutOfBounds,
-                __FILE__,
-                __LINE__,
-                "Invalid node ID: " + std::to_string(id)
-        );
+        throw OperationFailed(ErrorCode_OutOfBounds,
+                              __FILE__,
+                              __LINE__,
+                              "Invalid node ID: " + std::to_string(id));
     }
     return m_tree_nodes[id];
 }
@@ -44,12 +42,10 @@ auto SchemaTree::insert_node(NodeLocator const& locator) -> Node::id_t {
     m_tree_nodes.emplace_back(Node::create(node_id, locator));
     auto& parent_node{m_tree_nodes[locator.get_parent_id()]};
     if (Node::Type::Obj != parent_node.get_type()) {
-        throw OperationFailed(
-                ErrorCode_Failure,
-                __FILE__,
-                __LINE__,
-                "Non-object nodes cannot have children."
-        );
+        throw OperationFailed(ErrorCode_Failure,
+                              __FILE__,
+                              __LINE__,
+                              "Non-object nodes cannot have children.");
     }
     parent_node.append_new_child(node_id);
     return node_id;

@@ -10,11 +10,9 @@
 
 namespace clp::ir {
 template <typename EscapeHandler>
-void append_constant_to_logtype(
-        std::string_view constant,
-        EscapeHandler escape_handler,
-        std::string& logtype
-) {
+void append_constant_to_logtype(std::string_view constant,
+                                EscapeHandler escape_handler,
+                                std::string& logtype) {
     size_t begin_pos = 0;
     auto constant_len = constant.length();
     for (size_t i = 0; i < constant_len; ++i) {

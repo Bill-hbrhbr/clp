@@ -94,29 +94,25 @@ size_t ClpStringColumnWriter::add_value(ParsedMessage::variable_t& value) {
     uint64_t offset{m_encoded_vars.size()};
     std::vector<clp::variable_dictionary_id_t> temp_var_dict_ids;
     if (std::holds_alternative<std::string>(value)) {
-        clp::EncodedVariableInterpreter::encode_and_add_to_dictionary(
-                std::get<std::string>(value),
-                m_logtype_entry,
-                *m_var_dict,
-                m_encoded_vars,
-                temp_var_dict_ids
-        );
+        clp::EncodedVariableInterpreter::encode_and_add_to_dictionary(std::get<std::string>(value),
+                                                                      m_logtype_entry,
+                                                                      *m_var_dict,
+                                                                      m_encoded_vars,
+                                                                      temp_var_dict_ids);
     } else if (std::holds_alternative<clp::ffi::EightByteEncodedTextAst>(value)) {
         auto const result{clp::EncodedVariableInterpreter::encode_and_add_to_dictionary(
                 std::get<clp::ffi::EightByteEncodedTextAst>(value),
                 m_logtype_entry,
                 *m_var_dict,
                 m_encoded_vars,
-                temp_var_dict_ids
-        )};
+                temp_var_dict_ids)};
         if (result.has_error()) {
             auto const error{result.error()};
             throw clp::ffi::ir_stream::DecodingException(
                     clp::ErrorCode_Failure,
                     __FILENAME__,
                     __LINE__,
-                    fmt::format("{}: {}", error.category().name(), error.message())
-            );
+                    fmt::format("{}: {}", error.category().name(), error.message()));
         }
     } else {
         auto const result{clp::EncodedVariableInterpreter::encode_and_add_to_dictionary(
@@ -124,16 +120,14 @@ size_t ClpStringColumnWriter::add_value(ParsedMessage::variable_t& value) {
                 m_logtype_entry,
                 *m_var_dict,
                 m_encoded_vars,
-                temp_var_dict_ids
-        )};
+                temp_var_dict_ids)};
         if (result.has_error()) {
             auto const error{result.error()};
             throw clp::ffi::ir_stream::DecodingException(
                     clp::ErrorCode_Failure,
                     __FILENAME__,
                     __LINE__,
-                    fmt::format("{}: {}", error.category().name(), error.message())
-            );
+                    fmt::format("{}: {}", error.category().name(), error.message()));
         }
     }
 

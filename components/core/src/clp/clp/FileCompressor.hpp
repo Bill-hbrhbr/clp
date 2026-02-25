@@ -22,10 +22,8 @@ namespace clp::clp {
 class FileCompressor {
 public:
     // Constructors
-    FileCompressor(
-            boost::uuids::random_generator& uuid_generator,
-            std::unique_ptr<log_surgeon::ReaderParser> reader_parser
-    )
+    FileCompressor(boost::uuids::random_generator& uuid_generator,
+                   std::unique_ptr<log_surgeon::ReaderParser> reader_parser)
             : m_uuid_generator(uuid_generator),
               m_reader_parser(std::move(reader_parser)) {}
 
@@ -39,14 +37,12 @@ public:
      * @param archive_writer
      * @return true if the file was compressed successfully, false otherwise
      */
-    bool compress_file(
-            size_t target_data_size_of_dicts,
-            streaming_archive::writer::Archive::UserConfig& archive_user_config,
-            size_t target_encoded_file_size,
-            FileToCompress const& file_to_compress,
-            streaming_archive::writer::Archive& archive_writer,
-            bool use_heuristic
-    );
+    bool compress_file(size_t target_data_size_of_dicts,
+                       streaming_archive::writer::Archive::UserConfig& archive_user_config,
+                       size_t target_encoded_file_size,
+                       FileToCompress const& file_to_compress,
+                       streaming_archive::writer::Archive& archive_writer,
+                       bool use_heuristic);
 
 private:
     // Constants
@@ -64,16 +60,14 @@ private:
      * @param reader
      * @param use_heuristic
      */
-    auto parse_and_encode(
-            size_t target_data_size_of_dicts,
-            streaming_archive::writer::Archive::UserConfig& archive_user_config,
-            size_t target_encoded_file_size,
-            std::string const& path_for_compression,
-            group_id_t group_id,
-            streaming_archive::writer::Archive& archive_writer,
-            ReaderInterface& reader,
-            bool use_heuristic
-    ) -> void;
+    auto parse_and_encode(size_t target_data_size_of_dicts,
+                          streaming_archive::writer::Archive::UserConfig& archive_user_config,
+                          size_t target_encoded_file_size,
+                          std::string const& path_for_compression,
+                          group_id_t group_id,
+                          streaming_archive::writer::Archive& archive_writer,
+                          ReaderInterface& reader,
+                          bool use_heuristic) -> void;
 
     void parse_and_encode_with_library(
             size_t target_data_size_of_dicts,
@@ -82,8 +76,7 @@ private:
             std::string const& path_for_compression,
             group_id_t group_id,
             streaming_archive::writer::Archive& archive_writer,
-            ReaderInterface& reader
-    );
+            ReaderInterface& reader);
 
     void parse_and_encode_with_heuristic(
             size_t target_data_size_of_dicts,
@@ -92,8 +85,7 @@ private:
             std::string const& path_for_compression,
             group_id_t group_id,
             streaming_archive::writer::Archive& archive_writer,
-            ReaderInterface& reader
-    );
+            ReaderInterface& reader);
 
     /**
      * Tries to compress the given file as if it were a generic archive_writer
@@ -113,8 +105,7 @@ private:
             FileToCompress const& file_to_compress,
             streaming_archive::writer::Archive& archive_writer,
             ReaderInterface& file_reader,
-            bool use_heuristic
-    );
+            bool use_heuristic);
 
     /**
      * Compresses the IR stream from the given reader into the archive
@@ -127,15 +118,13 @@ private:
      * @param reader
      * @return Whether the IR stream was compressed successfully
      */
-    bool compress_ir_stream(
-            size_t target_data_size_of_dicts,
-            streaming_archive::writer::Archive::UserConfig& archive_user_config,
-            size_t target_encoded_file_size,
-            std::string const& path,
-            group_id_t group_id,
-            streaming_archive::writer::Archive& archive_writer,
-            ReaderInterface& reader
-    );
+    bool compress_ir_stream(size_t target_data_size_of_dicts,
+                            streaming_archive::writer::Archive::UserConfig& archive_user_config,
+                            size_t target_encoded_file_size,
+                            std::string const& path,
+                            group_id_t group_id,
+                            streaming_archive::writer::Archive& archive_writer,
+                            ReaderInterface& reader);
 
     /**
      * Compresses an IR stream using the eight-byte or four-byte encoding based on the given
@@ -158,8 +147,7 @@ private:
             std::string const& path,
             group_id_t group_id,
             streaming_archive::writer::Archive& archive,
-            ir::LogEventDeserializer<encoded_variable_t>& log_event_deserializer
-    );
+            ir::LogEventDeserializer<encoded_variable_t>& log_event_deserializer);
 
     // Variables
     boost::uuids::random_generator& m_uuid_generator;

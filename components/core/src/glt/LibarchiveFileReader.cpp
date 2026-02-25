@@ -21,8 +21,9 @@ ErrorCode LibarchiveFileReader::try_seek_from_begin(size_t pos) {
     throw OperationFailed(ErrorCode_Unsupported, __FILENAME__, __LINE__);
 }
 
-ErrorCode
-LibarchiveFileReader::try_read(char* buf, size_t num_bytes_to_read, size_t& num_bytes_read) {
+ErrorCode LibarchiveFileReader::try_read(char* buf,
+                                         size_t num_bytes_to_read,
+                                         size_t& num_bytes_read) {
     if (nullptr == m_archive) {
         throw OperationFailed(ErrorCode_NotInit, __FILENAME__, __LINE__);
     }
@@ -49,10 +50,9 @@ LibarchiveFileReader::try_read(char* buf, size_t num_bytes_to_read, size_t& num_
 
         // Simulate reading '\0' before the start of the data block
         if (m_pos_in_file < m_data_block_pos_in_file) {
-            size_t num_zeros_to_append = std::min(
-                    (size_t)(m_data_block_pos_in_file - m_pos_in_file),
-                    num_bytes_to_read - num_bytes_read
-            );
+            size_t num_zeros_to_append
+                    = std::min((size_t)(m_data_block_pos_in_file - m_pos_in_file),
+                               num_bytes_to_read - num_bytes_read);
             memset(&buf[num_bytes_read], '\0', num_zeros_to_append);
             num_bytes_read += num_zeros_to_append;
             m_pos_in_file += num_zeros_to_append;
@@ -85,12 +85,10 @@ LibarchiveFileReader::try_read(char* buf, size_t num_bytes_to_read, size_t& num_
     }
 }
 
-ErrorCode LibarchiveFileReader::try_read_to_delimiter(
-        char delim,
-        bool keep_delimiter,
-        bool append,
-        std::string& str
-) {
+ErrorCode LibarchiveFileReader::try_read_to_delimiter(char delim,
+                                                      bool keep_delimiter,
+                                                      bool append,
+                                                      std::string& str) {
     if (nullptr == m_archive) {
         throw OperationFailed(ErrorCode_NotInit, __FILENAME__, __LINE__);
     }
@@ -234,10 +232,8 @@ void LibarchiveFileReader::peek_buffered_data(char const*& buf, size_t& buf_size
         // allocating more bytes, violating the const-ness of this method. Since peek is a
         // best-effort method, this should be sufficient for most callers.
         buf = m_nulls_for_peek.data();
-        buf_size = std::min(
-                m_nulls_for_peek.size(),
-                static_cast<size_t>(m_data_block_pos_in_file - m_pos_in_file)
-        );
+        buf_size = std::min(m_nulls_for_peek.size(),
+                            static_cast<size_t>(m_data_block_pos_in_file - m_pos_in_file));
     } else {
         buf_size = m_data_block_length - m_pos_in_data_block;
         buf = static_cast<char const*>(m_data_block);
@@ -245,22 +241,18 @@ void LibarchiveFileReader::peek_buffered_data(char const*& buf, size_t& buf_size
 }
 
 ErrorCode LibarchiveFileReader::read_next_data_block() {
-    auto return_value = archive_read_data_block(
-            m_archive,
-            &m_data_block,
-            &m_data_block_length,
-            &m_data_block_pos_in_file
-    );
+    auto return_value = archive_read_data_block(m_archive,
+                                                &m_data_block,
+                                                &m_data_block_length,
+                                                &m_data_block_pos_in_file);
     if (ARCHIVE_OK != return_value) {
         if (ARCHIVE_EOF == return_value) {
             m_reached_eof = true;
             m_data_block = nullptr;
             return ErrorCode_EndOfFile;
         } else {
-            SPDLOG_DEBUG(
-                    "Failed to read data block from libarchive - {}",
-                    archive_error_string(m_archive)
-            );
+            SPDLOG_DEBUG("Failed to read data block from libarchive - {}",
+                         archive_error_string(m_archive));
             return ErrorCode_Failure;
         }
     }

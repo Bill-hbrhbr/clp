@@ -70,11 +70,9 @@ void Archive::open(UserConfig const& user_config) {
         throw OperationFailed(ErrorCode_Unsupported, __FILENAME__, __LINE__);
     }
     auto const& archive_path_string = archive_path.string();
-    m_local_metadata = std::make_optional<ArchiveMetadata>(
-            cArchiveFormatVersion::Version,
-            m_creator_id_as_string,
-            m_creation_num
-    );
+    m_local_metadata = std::make_optional<ArchiveMetadata>(cArchiveFormatVersion::Version,
+                                                           m_creator_id_as_string,
+                                                           m_creation_num);
 
     // Create internal directories if necessary
     retval = mkdir(archive_path_string.c_str(), 0750);
@@ -86,11 +84,9 @@ void Archive::open(UserConfig const& user_config) {
     // Get archive directory's file descriptor
     int archive_dir_fd = ::open(archive_path_string.c_str(), O_RDONLY);
     if (-1 == archive_dir_fd) {
-        SPDLOG_ERROR(
-                "Failed to get file descriptor for {}, errno={}",
-                archive_path_string.c_str(),
-                errno
-        );
+        SPDLOG_ERROR("Failed to get file descriptor for {}, errno={}",
+                     archive_path_string.c_str(),
+                     errno);
         throw OperationFailed(ErrorCode_errno, __FILENAME__, __LINE__);
     }
 
@@ -108,11 +104,9 @@ void Archive::open(UserConfig const& user_config) {
     // Get segments directory's file descriptor
     m_segments_dir_fd = ::open(m_segments_dir_path.c_str(), O_RDONLY);
     if (-1 == m_segments_dir_fd) {
-        SPDLOG_ERROR(
-                "Failed to open file descriptor for {}, errno={}",
-                m_segments_dir_path.c_str(),
-                errno
-        );
+        SPDLOG_ERROR("Failed to open file descriptor for {}, errno={}",
+                     m_segments_dir_path.c_str(),
+                     errno);
         throw OperationFailed(ErrorCode_errno, __FILENAME__, __LINE__);
     }
 
@@ -132,10 +126,8 @@ void Archive::open(UserConfig const& user_config) {
             std::filesystem::path const schema_filesystem_path = m_schema_file_path;
             std::filesystem::copy(schema_filesystem_path, archive_schema_filesystem_path);
         } catch (FileWriter::OperationFailed& e) {
-            SPDLOG_CRITICAL(
-                    "Failed to copy schema file to archive: {}",
-                    archive_schema_filesystem_path.c_str()
-            );
+            SPDLOG_CRITICAL("Failed to copy schema file to archive: {}",
+                            archive_schema_filesystem_path.c_str());
             throw;
         }
     }
@@ -145,15 +137,12 @@ void Archive::open(UserConfig const& user_config) {
     try {
         m_metadata_file_writer.open(
                 metadata_file_path.string(),
-                FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING
-        );
+                FileWriter::OpenMode::CREATE_IF_NONEXISTENT_FOR_SEEKABLE_WRITING);
         m_local_metadata->write_to_file(m_metadata_file_writer);
         m_metadata_file_writer.flush();
     } catch (FileWriter::OperationFailed& e) {
-        SPDLOG_CRITICAL(
-                "Failed to write archive file metadata collection in file: {}",
-                metadata_file_path.c_str()
-        );
+        SPDLOG_CRITICAL("Failed to write archive file metadata collection in file: {}",
+                        metadata_file_path.c_str());
         throw;
     }
 
@@ -165,8 +154,9 @@ void Archive::open(UserConfig const& user_config) {
     string logtype_dict_path = archive_path_string + '/' + cLogTypeDictFilename;
     string logtype_dict_segment_index_path
             = archive_path_string + '/' + cLogTypeSegmentIndexFilename;
-    m_logtype_dict
-            .open(logtype_dict_path, logtype_dict_segment_index_path, cLogtypeDictionaryIdMax);
+    m_logtype_dict.open(logtype_dict_path,
+                        logtype_dict_segment_index_path,
+                        cLogtypeDictionaryIdMax);
 
     // Open variable dictionary
     string var_dict_path = archive_path_string + '/' + cVarDictFilename;
@@ -182,11 +172,9 @@ void Archive::open(UserConfig const& user_config) {
 #endif
     if (::close(archive_dir_fd) != 0) {
         // We've already fsynced, so this error shouldn't affect us. Therefore, just log it.
-        SPDLOG_WARN(
-                "Error when closing file descriptor for {}, errno={}",
-                archive_path_string.c_str(),
-                errno
-        );
+        SPDLOG_WARN("Error when closing file descriptor for {}, errno={}",
+                    archive_path_string.c_str(),
+                    errno);
     }
 
     m_path = archive_path_string;
@@ -200,12 +188,10 @@ void Archive::close() {
 
     // Close segments if necessary
     if (m_segment_for_files_with_timestamps.is_open()) {
-        close_segment_and_persist_file_metadata(
-                m_segment_for_files_with_timestamps,
-                m_files_with_timestamps_in_segment,
-                m_logtype_ids_in_segment_for_files_with_timestamps,
-                m_var_ids_in_segment_for_files_with_timestamps
-        );
+        close_segment_and_persist_file_metadata(m_segment_for_files_with_timestamps,
+                                                m_files_with_timestamps_in_segment,
+                                                m_logtype_ids_in_segment_for_files_with_timestamps,
+                                                m_var_ids_in_segment_for_files_with_timestamps);
         m_logtype_ids_in_segment_for_files_with_timestamps.clear();
         m_var_ids_in_segment_for_files_with_timestamps.clear();
     }
@@ -214,8 +200,7 @@ void Archive::close() {
                 m_segment_for_files_without_timestamps,
                 m_files_without_timestamps_in_segment,
                 m_logtype_ids_in_segment_for_files_without_timestamps,
-                m_var_ids_in_segment_for_files_without_timestamps
-        );
+                m_var_ids_in_segment_for_files_without_timestamps);
         m_logtype_ids_in_segment_for_files_without_timestamps.clear();
         m_var_ids_in_segment_for_files_without_timestamps.clear();
     }
@@ -255,13 +240,11 @@ void Archive::close() {
     m_path.clear();
 }
 
-void Archive::create_and_open_file(
-        string const& path,
-        group_id_t const group_id,
-        boost::uuids::uuid const& orig_file_id,
-        size_t split_ix,
-        size_t begin_message_ix
-) {
+void Archive::create_and_open_file(string const& path,
+                                   group_id_t const group_id,
+                                   boost::uuids::uuid const& orig_file_id,
+                                   size_t split_ix,
+                                   size_t begin_message_ix) {
     if (m_file != nullptr) {
         throw OperationFailed(ErrorCode_NotReady, __FILENAME__, __LINE__);
     }
@@ -297,18 +280,17 @@ void Archive::change_ts_pattern(TimestampPattern const* pattern) {
     m_file->change_ts_pattern(pattern);
 }
 
-void
-Archive::write_msg(epochtime_t timestamp, string const& message, size_t num_uncompressed_bytes) {
+void Archive::write_msg(epochtime_t timestamp,
+                        string const& message,
+                        size_t num_uncompressed_bytes) {
     // Encode message and add components to dictionaries
     vector<encoded_variable_t> encoded_vars;
     vector<variable_dictionary_id_t> var_ids;
-    EncodedVariableInterpreter::encode_and_add_to_dictionary(
-            message,
-            m_logtype_dict_entry,
-            m_var_dict,
-            encoded_vars,
-            var_ids
-    );
+    EncodedVariableInterpreter::encode_and_add_to_dictionary(message,
+                                                             m_logtype_dict_entry,
+                                                             m_var_dict,
+                                                             encoded_vars,
+                                                             var_ids);
     logtype_dictionary_id_t logtype_id;
     m_logtype_dict.add_entry(m_logtype_dict_entry, logtype_id);
 
@@ -335,8 +317,7 @@ auto Archive::add_token_to_dicts(log_surgeon::LogEventView const& event, log_sur
             if (false
                 == EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                         token.to_string_view(),
-                        encoded_var
-                ))
+                        encoded_var))
             {
                 variable_dictionary_id_t id{};
                 m_var_dict.add_entry(token.to_string_view(), id);
@@ -354,8 +335,7 @@ auto Archive::add_token_to_dicts(log_surgeon::LogEventView const& event, log_sur
             if (false
                 == EncodedVariableInterpreter::convert_string_to_representable_float_var(
                         token.to_string_view(),
-                        encoded_var
-                ))
+                        encoded_var))
             {
                 variable_dictionary_id_t id{};
                 m_var_dict.add_entry(token.to_string_view(), id);
@@ -387,45 +367,38 @@ auto Archive::add_token_to_dicts(log_surgeon::LogEventView const& event, log_sur
             }
 
             if (captures.value().empty()) {
-                SPDLOG_ERROR(
-                        "Capture group list empty for token {}. Storing token as static text.",
-                        event.get_log_parser().get_id_symbol(token_type)
-                );
+                SPDLOG_ERROR("Capture group list empty for token {}. Storing token as static text.",
+                             event.get_log_parser().get_id_symbol(token_type));
                 m_logtype_dict_entry.add_static_text(token.to_string_view());
                 break;
             }
 
             auto capture_pos_result{event.get_capture_position(token, captures.value().at(0))};
             if (capture_pos_result.has_error()) {
-                SPDLOG_ERROR(
-                        "Capture group match not found for token {} ({} {}). Storing token as "
-                        "static text.",
-                        event.get_log_parser().get_id_symbol(token_type),
-                        capture_pos_result.error().category().name(),
-                        capture_pos_result.error().message()
-                );
+                SPDLOG_ERROR("Capture group match not found for token {} ({} {}). Storing token as "
+                             "static text.",
+                             event.get_log_parser().get_id_symbol(token_type),
+                             capture_pos_result.error().category().name(),
+                             capture_pos_result.error().message());
                 m_logtype_dict_entry.add_static_text(token.to_string_view());
                 break;
             }
             auto const [capture_start_pos, capture_end_pos]{capture_pos_result.value()};
 
             auto const before_capture{
-                    token.get_sub_token(token.get_start_pos(), capture_start_pos).to_string_view()
-            };
+                    token.get_sub_token(token.get_start_pos(), capture_start_pos).to_string_view()};
             m_logtype_dict_entry.add_static_text(before_capture);
 
             variable_dictionary_id_t id{};
             m_var_dict.add_entry(
                     token.get_sub_token(capture_start_pos, capture_end_pos).to_string_view(),
-                    id
-            );
+                    id);
             m_var_ids.push_back(id);
             m_encoded_vars.push_back(EncodedVariableInterpreter::encode_var_dict_id(id));
             m_logtype_dict_entry.add_dictionary_var();
 
             auto const after_capture{
-                    token.get_sub_token(capture_end_pos, token.get_end_pos()).to_string_view()
-            };
+                    token.get_sub_token(capture_end_pos, token.get_end_pos()).to_string_view()};
             m_logtype_dict_entry.add_static_text(after_capture);
             break;
         }
@@ -443,14 +416,11 @@ auto Archive::write_msg_using_schema(log_surgeon::LogEventView const& event) -> 
                 log_buf->get_mutable_token(0).to_string(),
                 timestamp,
                 start,
-                end
-        );
+                end);
         if (nullptr == timestamp_pattern) {
-            throw(std::runtime_error(
-                    "Schema contains a timestamp regex that matches "
-                    + log_buf->get_mutable_token(0).to_string()
-                    + " which does not match any known timestamp pattern."
-            ));
+            throw(std::runtime_error("Schema contains a timestamp regex that matches "
+                                     + log_buf->get_mutable_token(0).to_string()
+                                     + " which does not match any known timestamp pattern."));
         }
         if (m_old_ts_pattern != timestamp_pattern) {
             change_ts_pattern(timestamp_pattern);
@@ -458,13 +428,11 @@ auto Archive::write_msg_using_schema(log_surgeon::LogEventView const& event) -> 
         }
     }
     if (get_data_size_of_dictionaries() >= m_target_data_size_of_dicts) {
-        split_file_and_archive(
-                m_archive_user_config,
-                m_path_for_compression,
-                m_group_id,
-                timestamp_pattern,
-                *this
-        );
+        split_file_and_archive(m_archive_user_config,
+                               m_path_for_compression,
+                               m_group_id,
+                               timestamp_pattern,
+                               *this);
     } else if (m_file->get_encoded_size_in_bytes() >= m_target_encoded_file_size) {
         split_file(m_path_for_compression, m_group_id, timestamp_pattern, *this);
     }
@@ -503,13 +471,11 @@ auto Archive::write_msg_using_schema(log_surgeon::LogEventView const& event) -> 
     if (false == m_logtype_dict_entry.get_value().empty()) {
         logtype_dictionary_id_t logtype_id{};
         m_logtype_dict.add_entry(m_logtype_dict_entry, logtype_id);
-        m_file->write_encoded_msg(
-                timestamp,
-                logtype_id,
-                m_encoded_vars,
-                m_var_ids,
-                num_uncompressed_bytes
-        );
+        m_file->write_encoded_msg(timestamp,
+                                  logtype_id,
+                                  m_encoded_vars,
+                                  m_var_ids,
+                                  num_uncompressed_bytes);
 
         update_segment_indices(logtype_id, m_var_ids);
     }
@@ -520,25 +486,21 @@ void Archive::write_log_event_ir(ir::LogEvent<encoded_variable_t> const& log_eve
     vector<eight_byte_encoded_variable_t> encoded_vars;
     vector<variable_dictionary_id_t> var_ids;
     size_t original_num_bytes{0};
-    EncodedVariableInterpreter::encode_and_add_to_dictionary(
-            log_event.get_message(),
-            m_logtype_dict_entry,
-            m_var_dict,
-            encoded_vars,
-            var_ids,
-            original_num_bytes
-    );
+    EncodedVariableInterpreter::encode_and_add_to_dictionary(log_event.get_message(),
+                                                             m_logtype_dict_entry,
+                                                             m_var_dict,
+                                                             encoded_vars,
+                                                             var_ids,
+                                                             original_num_bytes);
 
     logtype_dictionary_id_t logtype_id{cLogtypeDictionaryIdMax};
     m_logtype_dict.add_entry(m_logtype_dict_entry, logtype_id);
 
-    m_file->write_encoded_msg(
-            log_event.get_timestamp(),
-            logtype_id,
-            encoded_vars,
-            var_ids,
-            original_num_bytes
-    );
+    m_file->write_encoded_msg(log_event.get_timestamp(),
+                              logtype_id,
+                              encoded_vars,
+                              var_ids,
+                              original_num_bytes);
 
     update_segment_indices(logtype_id, var_ids);
 }
@@ -549,10 +511,8 @@ void Archive::write_dir_snapshot() {
     m_var_dict.write_header_and_flush_to_disk();
 }
 
-void Archive::update_segment_indices(
-        logtype_dictionary_id_t logtype_id,
-        vector<variable_dictionary_id_t> const& var_ids
-) {
+void Archive::update_segment_indices(logtype_dictionary_id_t logtype_id,
+                                     vector<variable_dictionary_id_t> const& var_ids) {
     if (m_file->has_ts_pattern()) {
         m_logtype_ids_in_segment_for_files_with_timestamps.insert(logtype_id);
         m_var_ids_in_segment_for_files_with_timestamps.insert_all(var_ids);
@@ -566,8 +526,7 @@ void Archive::append_file_contents_to_segment(
         Segment& segment,
         ArrayBackedPosIntSet<logtype_dictionary_id_t>& logtype_ids_in_segment,
         ArrayBackedPosIntSet<variable_dictionary_id_t>& var_ids_in_segment,
-        vector<File*>& files_in_segment
-) {
+        vector<File*>& files_in_segment) {
     if (!segment.is_open()) {
         segment.open(m_segments_dir_path, m_next_segment_id++, m_compression_level);
     }
@@ -579,12 +538,10 @@ void Archive::append_file_contents_to_segment(
 
     // Close current segment if its uncompressed size is greater than the target
     if (segment.get_uncompressed_size() >= m_target_segment_uncompressed_size) {
-        close_segment_and_persist_file_metadata(
-                segment,
-                files_in_segment,
-                logtype_ids_in_segment,
-                var_ids_in_segment
-        );
+        close_segment_and_persist_file_metadata(segment,
+                                                files_in_segment,
+                                                logtype_ids_in_segment,
+                                                var_ids_in_segment);
         logtype_ids_in_segment.clear();
         var_ids_in_segment.clear();
     }
@@ -597,30 +554,22 @@ void Archive::append_file_to_segment() {
 
     if (m_file->has_ts_pattern()) {
         m_logtype_ids_in_segment_for_files_with_timestamps.insert_all(
-                m_logtype_ids_for_file_with_unassigned_segment
-        );
+                m_logtype_ids_for_file_with_unassigned_segment);
         m_var_ids_in_segment_for_files_with_timestamps.insert_all(
-                m_var_ids_for_file_with_unassigned_segment
-        );
-        append_file_contents_to_segment(
-                m_segment_for_files_with_timestamps,
-                m_logtype_ids_in_segment_for_files_with_timestamps,
-                m_var_ids_in_segment_for_files_with_timestamps,
-                m_files_with_timestamps_in_segment
-        );
+                m_var_ids_for_file_with_unassigned_segment);
+        append_file_contents_to_segment(m_segment_for_files_with_timestamps,
+                                        m_logtype_ids_in_segment_for_files_with_timestamps,
+                                        m_var_ids_in_segment_for_files_with_timestamps,
+                                        m_files_with_timestamps_in_segment);
     } else {
         m_logtype_ids_in_segment_for_files_without_timestamps.insert_all(
-                m_logtype_ids_for_file_with_unassigned_segment
-        );
+                m_logtype_ids_for_file_with_unassigned_segment);
         m_var_ids_in_segment_for_files_without_timestamps.insert_all(
-                m_var_ids_for_file_with_unassigned_segment
-        );
-        append_file_contents_to_segment(
-                m_segment_for_files_without_timestamps,
-                m_logtype_ids_in_segment_for_files_without_timestamps,
-                m_var_ids_in_segment_for_files_without_timestamps,
-                m_files_without_timestamps_in_segment
-        );
+                m_var_ids_for_file_with_unassigned_segment);
+        append_file_contents_to_segment(m_segment_for_files_without_timestamps,
+                                        m_logtype_ids_in_segment_for_files_without_timestamps,
+                                        m_var_ids_in_segment_for_files_without_timestamps,
+                                        m_files_without_timestamps_in_segment);
     }
     m_logtype_ids_for_file_with_unassigned_segment.clear();
     m_var_ids_for_file_with_unassigned_segment.clear();
@@ -645,8 +594,7 @@ void Archive::close_segment_and_persist_file_metadata(
         Segment& segment,
         std::vector<File*>& files,
         ArrayBackedPosIntSet<logtype_dictionary_id_t>& segment_logtype_ids,
-        ArrayBackedPosIntSet<variable_dictionary_id_t>& segment_var_ids
-) {
+        ArrayBackedPosIntSet<variable_dictionary_id_t>& segment_var_ids) {
     auto segment_id = segment.get_id();
     m_logtype_dict.index_segment(segment_id, segment_logtype_ids);
     m_var_dict.index_segment(segment_id, segment_var_ids);
@@ -722,19 +670,15 @@ auto Archive::update_global_metadata() -> void {
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
     m_global_metadata_db->add_archive(m_id_as_string, m_local_metadata.value());
-    m_global_metadata_db->update_metadata_for_files(
-            m_id_as_string,
-            m_file_metadata_for_global_update
-    );
+    m_global_metadata_db->update_metadata_for_files(m_id_as_string,
+                                                    m_file_metadata_for_global_update);
     m_global_metadata_db->close();
 }
 
 // Explicitly declare template specializations so that we can define the template methods in this
 // file
 template void Archive::write_log_event_ir<eight_byte_encoded_variable_t>(
-        ir::LogEvent<eight_byte_encoded_variable_t> const& log_event
-);
+        ir::LogEvent<eight_byte_encoded_variable_t> const& log_event);
 template void Archive::write_log_event_ir<four_byte_encoded_variable_t>(
-        ir::LogEvent<four_byte_encoded_variable_t> const& log_event
-);
+        ir::LogEvent<four_byte_encoded_variable_t> const& log_event);
 }  // namespace clp::streaming_archive::writer

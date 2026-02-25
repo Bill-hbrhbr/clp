@@ -26,12 +26,10 @@ namespace clp::clp {
 class FileDecompressor {
 public:
     // Methods
-    bool decompress_file(
-            streaming_archive::MetadataDB::FileIterator const& file_metadata_ix,
-            std::string const& output_dir,
-            streaming_archive::reader::Archive& archive_reader,
-            std::unordered_map<std::string, std::string>& temp_path_to_final_path
-    );
+    bool decompress_file(streaming_archive::MetadataDB::FileIterator const& file_metadata_ix,
+                         std::string const& output_dir,
+                         streaming_archive::reader::Archive& archive_reader,
+                         std::unordered_map<std::string, std::string>& temp_path_to_final_path);
 
     /**
      * Decompresses the given file split into one or more IR files (chunks). The function creates a
@@ -49,13 +47,11 @@ public:
      * @return Whether decompression was successful.
      */
     template <typename IrOutputHandler>
-    auto decompress_to_ir(
-            streaming_archive::reader::Archive& archive_reader,
-            streaming_archive::MetadataDB::FileIterator const& file_metadata_ix,
-            size_t ir_target_size,
-            std::string const& output_dir,
-            IrOutputHandler ir_output_handler
-    ) -> bool;
+    auto decompress_to_ir(streaming_archive::reader::Archive& archive_reader,
+                          streaming_archive::MetadataDB::FileIterator const& file_metadata_ix,
+                          size_t ir_target_size,
+                          std::string const& output_dir,
+                          IrOutputHandler ir_output_handler) -> bool;
 
 private:
     // Variables
@@ -72,8 +68,7 @@ auto FileDecompressor::decompress_to_ir(
         streaming_archive::MetadataDB::FileIterator const& file_metadata_ix,
         size_t ir_target_size,
         std::string const& output_dir,
-        IrOutputHandler ir_output_handler
-) -> bool {
+        IrOutputHandler ir_output_handler) -> bool {
     // Open encoded file
     if (auto const error_code = archive_reader.open_file(m_encoded_file, file_metadata_ix);
         ErrorCode_Success != error_code)
@@ -90,11 +85,9 @@ auto FileDecompressor::decompress_to_ir(
     if (auto const error_code = create_directory_structure(output_dir, 0700);
         ErrorCode_Success != error_code)
     {
-        SPDLOG_ERROR(
-                "Failed to create directory structure {}, errno={}",
-                output_dir.c_str(),
-                errno
-        );
+        SPDLOG_ERROR("Failed to create directory structure {}, errno={}",
+                     output_dir.c_str(),
+                     errno);
         return false;
     }
 
@@ -115,8 +108,8 @@ auto FileDecompressor::decompress_to_ir(
 
     while (archive_reader.get_next_message(m_encoded_file, m_encoded_message)) {
         if (false
-            == archive_reader
-                       .decompress_message_without_ts(m_encoded_message, m_decompressed_message))
+            == archive_reader.decompress_message_without_ts(m_encoded_message,
+                                                            m_decompressed_message))
         {
             SPDLOG_ERROR("Failed to decompress message");
             return false;
@@ -127,13 +120,11 @@ auto FileDecompressor::decompress_to_ir(
 
             auto const end_message_ix = begin_message_ix + ir_serializer.get_num_log_events();
             if (false
-                == ir_output_handler(
-                        ir_output_path,
-                        file_orig_id,
-                        begin_message_ix,
-                        end_message_ix,
-                        false
-                ))
+                == ir_output_handler(ir_output_path,
+                                     file_orig_id,
+                                     begin_message_ix,
+                                     end_message_ix,
+                                     false))
             {
                 return false;
             }
@@ -146,16 +137,12 @@ auto FileDecompressor::decompress_to_ir(
         }
 
         if (false
-            == ir_serializer.serialize_log_event(
-                    m_encoded_message.get_ts_in_milli(),
-                    m_decompressed_message
-            ))
+            == ir_serializer.serialize_log_event(m_encoded_message.get_ts_in_milli(),
+                                                 m_decompressed_message))
         {
-            SPDLOG_ERROR(
-                    "Failed to serialize log event: {} with ts {}",
-                    m_decompressed_message.c_str(),
-                    m_encoded_message.get_ts_in_milli()
-            );
+            SPDLOG_ERROR("Failed to serialize log event: {} with ts {}",
+                         m_decompressed_message.c_str(),
+                         m_encoded_message.get_ts_in_milli());
             return false;
         }
     }

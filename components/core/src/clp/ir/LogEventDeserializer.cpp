@@ -99,14 +99,12 @@ auto LogEventDeserializer<encoded_variable_t>::deserialize_log_event()
     std::vector<std::string> dict_vars;
     std::vector<encoded_variable_t> encoded_vars;
 
-    auto ir_error_code = ffi::ir_stream::deserialize_log_event(
-            m_reader,
-            tag,
-            logtype,
-            encoded_vars,
-            dict_vars,
-            timestamp_or_timestamp_delta
-    );
+    auto ir_error_code = ffi::ir_stream::deserialize_log_event(m_reader,
+                                                               tag,
+                                                               logtype,
+                                                               encoded_vars,
+                                                               dict_vars,
+                                                               timestamp_or_timestamp_delta);
     if (ffi::ir_stream::IRErrorCode_Success != ir_error_code) {
         switch (ir_error_code) {
             case ffi::ir_stream::IRErrorCode_Incomplete_IR:
@@ -128,8 +126,7 @@ auto LogEventDeserializer<encoded_variable_t>::deserialize_log_event()
     return LogEvent<encoded_variable_t>{
             timestamp,
             m_utc_offset,
-            EncodedTextAst<encoded_variable_t>{logtype, dict_vars, encoded_vars}
-    };
+            EncodedTextAst<encoded_variable_t>{logtype, dict_vars, encoded_vars}};
 }
 
 // Explicitly declare template specializations so that we can define the template methods in this

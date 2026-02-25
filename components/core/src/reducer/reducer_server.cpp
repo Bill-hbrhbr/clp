@@ -79,10 +79,8 @@ private:
 
 void queue_accept_task(std::shared_ptr<ServerContext> const& ctx);
 void queue_receive_task(std::shared_ptr<RecordReceiverContext> const& ctx);
-void queue_scheduler_update_listener_task(
-        std::shared_ptr<ServerContext>& ctx,
-        size_t current_buffer_occupancy
-);
+void queue_scheduler_update_listener_task(std::shared_ptr<ServerContext>& ctx,
+                                          size_t current_buffer_occupancy);
 void queue_validate_sender_task(std::shared_ptr<RecordReceiverContext> const& ctx);
 std::string server_status_to_string(ServerStatus status);
 
@@ -101,10 +99,8 @@ void AcceptTask::operator()(boost::system::error_code const& error) {
             server_ctx->get_tcp_acceptor().close();
         }
     } else {
-        SPDLOG_WARN(
-                "Rejecting connection while not in Running state, state={}",
-                server_status_to_string(server_ctx->get_status())
-        );
+        SPDLOG_WARN("Rejecting connection while not in Running state, state={}",
+                    server_status_to_string(server_ctx->get_status()));
         queue_accept_task(server_ctx);
     }
 }
@@ -147,10 +143,8 @@ void ReceiveTask::operator()(boost::system::error_code const& error, size_t num_
     }
 }
 
-void SchedulerUpdateListenerTask::operator()(
-        boost::system::error_code const& error,
-        size_t num_bytes_read
-) {
+void SchedulerUpdateListenerTask::operator()(boost::system::error_code const& error,
+                                             size_t num_bytes_read) {
     // This can include the scheduler closing the connection because the job has been cancelled
     if (0 == num_bytes_read || error.failed()) {
         SPDLOG_ERROR("Closing connection with scheduler due to connection error or shutdown");
@@ -206,8 +200,7 @@ void SchedulerUpdateListenerTask::operator()(
         if (m_server_ctx->is_timeline_aggregation()) {
             auto& upsert_timer = m_server_ctx->get_upsert_timer();
             upsert_timer.expires_after(
-                    std::chrono::milliseconds(m_server_ctx->get_upsert_interval())
-            );
+                    std::chrono::milliseconds(m_server_ctx->get_upsert_interval()));
             upsert_timer.async_wait(PeriodicUpsertTask(m_server_ctx));
         }
 
@@ -267,36 +260,30 @@ void queue_accept_task(std::shared_ptr<ServerContext> const& ctx) {
 }
 
 void queue_receive_task(std::shared_ptr<RecordReceiverContext> const& ctx) {
-    boost::asio::async_read(
-            ctx->get_socket(),
-            boost::asio::buffer(ctx->get_buf_write_head(), ctx->get_buf_num_bytes_avail()),
-            ReceiveTask(ctx)
-    );
+    boost::asio::async_read(ctx->get_socket(),
+                            boost::asio::buffer(ctx->get_buf_write_head(),
+                                                ctx->get_buf_num_bytes_avail()),
+                            ReceiveTask(ctx));
 }
 
-void queue_scheduler_update_listener_task(
-        std::shared_ptr<ServerContext>& ctx,
-        size_t current_buffer_occupancy
-) {
+void queue_scheduler_update_listener_task(std::shared_ptr<ServerContext>& ctx,
+                                          size_t current_buffer_occupancy) {
     boost::asio::async_read(
             ctx->get_scheduler_update_socket(),
             boost::asio::dynamic_buffer(ctx->get_scheduler_update_buffer()),
             boost::asio::transfer_at_least(1),  // Makes boost::asio forward results right away
-            SchedulerUpdateListenerTask(ctx, current_buffer_occupancy)
-    );
+            SchedulerUpdateListenerTask(ctx, current_buffer_occupancy));
 }
 
 void queue_validate_sender_task(std::shared_ptr<RecordReceiverContext> const& ctx) {
     ctx->get_server_ctx()->increment_num_active_receiver_tasks();
     static_assert(sizeof(job_id_t) <= RecordReceiverContext::cMinBufSize);
-    boost::asio::async_read(
-            ctx->get_socket(),
-            boost::asio::buffer(ctx->get_buf_write_head(), sizeof(job_id_t)),
-            // transfer_at_least(1) helps us avoid hanging when a broken client sends fewer than
-            // sizeof(job_id_t) bytes
-            boost::asio::transfer_at_least(1),
-            ValidateSenderTask(ctx)
-    );
+    boost::asio::async_read(ctx->get_socket(),
+                            boost::asio::buffer(ctx->get_buf_write_head(), sizeof(job_id_t)),
+                            // transfer_at_least(1) helps us avoid hanging when a broken client
+                            // sends fewer than sizeof(job_id_t) bytes
+                            boost::asio::transfer_at_least(1),
+                            ValidateSenderTask(ctx));
 }
 
 std::string server_status_to_string(ServerStatus status) {
@@ -361,18 +348,14 @@ int main(int argc, char const* argv[]) {
         // Connect to scheduler and register this reducer as available
         tcp::resolver resolver(ctx->get_io_context());
         boost::system::error_code e;
-        auto endpoints = resolver.resolve(
-                args.get_scheduler_host(),
-                std::to_string(args.get_scheduler_port()),
-                e
-        );
+        auto endpoints = resolver.resolve(args.get_scheduler_host(),
+                                          std::to_string(args.get_scheduler_port()),
+                                          e);
         if (e) {
-            SPDLOG_CRITICAL(
-                    "Failed to resolve endpoints for {}:{} - {}",
-                    args.get_scheduler_host(),
-                    args.get_scheduler_port(),
-                    e.message()
-            );
+            SPDLOG_CRITICAL("Failed to resolve endpoints for {}:{} - {}",
+                            args.get_scheduler_host(),
+                            args.get_scheduler_port(),
+                            e.message());
             return 1;
         }
         if (false == ctx->register_with_scheduler(endpoints)) {
@@ -406,11 +389,9 @@ int main(int argc, char const* argv[]) {
             SPDLOG_CRITICAL("Job {} finished with an unrecoverable error", ctx->get_job_id());
             return 1;
         } else {
-            SPDLOG_CRITICAL(
-                    "Job {} finished in unexpected state {}",
-                    ctx->get_job_id(),
-                    reducer::server_status_to_string(ctx->get_status())
-            );
+            SPDLOG_CRITICAL("Job {} finished in unexpected state {}",
+                            ctx->get_job_id(),
+                            reducer::server_status_to_string(ctx->get_status()));
             return 1;
         }
 

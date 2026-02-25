@@ -32,8 +32,7 @@ int main(int argc, char const* argv[]) {
     }
 
     clp::make_dictionaries_readable::CommandLineArguments command_line_args(
-            "make-dictionaries-readable"
-    );
+            "make-dictionaries-readable");
     auto parsing_result = command_line_args.parse_arguments(argc, argv);
     switch (parsing_result) {
         case CommandLineArgumentsBase::ParsingResult::Failure:
@@ -66,10 +65,8 @@ int main(int argc, char const* argv[]) {
     readable_logtype_dict_path += ".hr";
     readable_logtype_segment_index_path += ".hr";
     file_writer.open(readable_logtype_dict_path.string(), FileWriter::OpenMode::CREATE_FOR_WRITING);
-    index_writer.open(
-            readable_logtype_segment_index_path.string(),
-            FileWriter::OpenMode::CREATE_FOR_WRITING
-    );
+    index_writer.open(readable_logtype_segment_index_path.string(),
+                      FileWriter::OpenMode::CREATE_FOR_WRITING);
     string human_readable_value;
     for (auto const& entry : logtype_dict.get_entries()) {
         auto const& value = entry.get_value();
@@ -84,8 +81,9 @@ int main(int argc, char const* argv[]) {
                     = entry.get_placeholder_info(placeholder_ix, var_placeholder);
 
             // Add the constant that's between the last variable and this one, with newlines escaped
-            human_readable_value
-                    .append(value, constant_begin_pos, placeholder_pos - constant_begin_pos);
+            human_readable_value.append(value,
+                                        constant_begin_pos,
+                                        placeholder_pos - constant_begin_pos);
 
             switch (var_placeholder) {
                 case VariablePlaceholder::Integer:
@@ -100,11 +98,9 @@ int main(int argc, char const* argv[]) {
                 case VariablePlaceholder::Escape:
                     break;
                 default:
-                    SPDLOG_ERROR(
-                            "Logtype '{}' contains unexpected variable placeholder 0x{:x}",
-                            value,
-                            clp::enum_to_underlying_type(var_placeholder)
-                    );
+                    SPDLOG_ERROR("Logtype '{}' contains unexpected variable placeholder 0x{:x}",
+                                 value,
+                                 clp::enum_to_underlying_type(var_placeholder));
                     return -1;
             }
             // Move past the variable placeholder
@@ -116,8 +112,7 @@ int main(int argc, char const* argv[]) {
         }
 
         file_writer.write_string(
-                clp::string_utils::replace_characters("\n", "n", human_readable_value, true)
-        );
+                clp::string_utils::replace_characters("\n", "n", human_readable_value, true));
         file_writer.write_char('\n');
 
         std::set<segment_id_t> const& segment_ids = entry.get_ids_of_segments_containing_entry();
@@ -150,10 +145,8 @@ int main(int argc, char const* argv[]) {
     readable_var_dict_path += ".hr";
     readable_var_segment_index_path += ".hr";
     file_writer.open(readable_var_dict_path.string(), FileWriter::OpenMode::CREATE_FOR_WRITING);
-    index_writer.open(
-            readable_var_segment_index_path.string(),
-            FileWriter::OpenMode::CREATE_FOR_WRITING
-    );
+    index_writer.open(readable_var_segment_index_path.string(),
+                      FileWriter::OpenMode::CREATE_FOR_WRITING);
     for (auto const& entry : var_dict.get_entries()) {
         file_writer.write_string(entry.get_value());
         file_writer.write_char('\n');

@@ -30,10 +30,8 @@ namespace {
  */
 class SimpleFilterClass : public clp_s::FilterClass {
 public:
-    void init(
-            clp_s::SchemaReader* reader,
-            std::vector<clp_s::BaseColumnReader*> const& column_readers
-    ) override {
+    void init(clp_s::SchemaReader* reader,
+              std::vector<clp_s::BaseColumnReader*> const& column_readers) override {
         m_column_readers = column_readers;
     }
 
@@ -66,20 +64,17 @@ TEST_CASE("clp-s-delta-encode-log-order", "[clp-s][delta-encode-log-order]") {
     auto start_index = GENERATE(0ULL, 1ULL, 2ULL);
     TestOutputCleaner const test_cleanup{{std::string{cTestDeltaEncodeOrderArchiveDirectory}}};
 
-    REQUIRE_NOTHROW(compress_archive(
-            get_test_input_local_path(),
-            std::string{cTestDeltaEncodeOrderArchiveDirectory},
-            std::nullopt,
-            false,
-            true,
-            false
-    ));
+    REQUIRE_NOTHROW(compress_archive(get_test_input_local_path(),
+                                     std::string{cTestDeltaEncodeOrderArchiveDirectory},
+                                     std::nullopt,
+                                     false,
+                                     true,
+                                     false));
 
     std::vector<clp_s::Path> archive_paths;
     REQUIRE(clp_s::get_input_archives_for_raw_path(
             std::string{cTestDeltaEncodeOrderArchiveDirectory},
-            archive_paths
-    ));
+            archive_paths));
     REQUIRE(1 == archive_paths.size());
 
     clp_s::ArchiveReader archive_reader;

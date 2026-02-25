@@ -17,12 +17,10 @@ void SegmentManager::close() {
     m_lru_ids_of_open_segments.clear();
 }
 
-ErrorCode SegmentManager::try_read(
-        segment_id_t segment_id,
-        uint64_t const decompressed_stream_pos,
-        char* extraction_buf,
-        uint64_t const extraction_len
-) {
+ErrorCode SegmentManager::try_read(segment_id_t segment_id,
+                                   uint64_t const decompressed_stream_pos,
+                                   char* extraction_buf,
+                                   uint64_t const extraction_len) {
     static size_t const cMaxLRUSegments = 2;
 
     // Check that segment exists or insert it if not

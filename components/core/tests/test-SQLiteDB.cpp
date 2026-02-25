@@ -127,12 +127,10 @@ auto create_table(SQLiteDB& db, TestTableSchema const& table_schema) -> void {
     fmt::memory_buffer statement_buffer;
     auto stmt_buf_it{std::back_inserter(statement_buffer)};
 
-    fmt::format_to(
-            stmt_buf_it,
-            "CREATE TABLE IF NOT EXISTS {} ({}) WITHOUT ROWID",
-            table_schema.get_name(),
-            clp::get_field_names_and_types_sql(table_schema.get_column_names_and_types())
-    );
+    fmt::format_to(stmt_buf_it,
+                   "CREATE TABLE IF NOT EXISTS {} ({}) WITHOUT ROWID",
+                   table_schema.get_name(),
+                   clp::get_field_names_and_types_sql(table_schema.get_column_names_and_types()));
     auto create_table_stmt{db.prepare_statement(statement_buffer.data(), statement_buffer.size())};
     create_table_stmt.step();
     statement_buffer.clear();
@@ -147,40 +145,31 @@ auto create_indices(SQLiteDB& db, TestTableSchema const& table_schema) -> void {
     fmt::memory_buffer statement_buffer;
     auto stmt_buf_it{std::back_inserter(statement_buffer)};
 
-    fmt::format_to(
-            stmt_buf_it,
-            "CREATE INDEX IF NOT EXISTS files_begin_timestamp ON {} ({})",
-            table_schema.get_name(),
-            TestTableSchema::cBeginTs
-    );
+    fmt::format_to(stmt_buf_it,
+                   "CREATE INDEX IF NOT EXISTS files_begin_timestamp ON {} ({})",
+                   table_schema.get_name(),
+                   TestTableSchema::cBeginTs);
     auto create_begin_ts_idx_stmt{
-            db.prepare_statement(statement_buffer.data(), statement_buffer.size())
-    };
+            db.prepare_statement(statement_buffer.data(), statement_buffer.size())};
     create_begin_ts_idx_stmt.step();
     statement_buffer.clear();
 
-    fmt::format_to(
-            stmt_buf_it,
-            "CREATE INDEX IF NOT EXISTS files_end_timestamp ON {} ({})",
-            table_schema.get_name(),
-            TestTableSchema::cEndTs
-    );
+    fmt::format_to(stmt_buf_it,
+                   "CREATE INDEX IF NOT EXISTS files_end_timestamp ON {} ({})",
+                   table_schema.get_name(),
+                   TestTableSchema::cEndTs);
     auto create_end_ts_idx_stmt{
-            db.prepare_statement(statement_buffer.data(), statement_buffer.size())
-    };
+            db.prepare_statement(statement_buffer.data(), statement_buffer.size())};
     create_end_ts_idx_stmt.step();
     statement_buffer.clear();
 
-    fmt::format_to(
-            stmt_buf_it,
-            "CREATE INDEX IF NOT EXISTS files_segment_order ON {} ({},{})",
-            table_schema.get_name(),
-            TestTableSchema::cSegmentId,
-            TestTableSchema::cSegmentTsPos
-    );
+    fmt::format_to(stmt_buf_it,
+                   "CREATE INDEX IF NOT EXISTS files_segment_order ON {} ({},{})",
+                   table_schema.get_name(),
+                   TestTableSchema::cSegmentId,
+                   TestTableSchema::cSegmentTsPos);
     auto create_segment_order_idx_stmt{
-            db.prepare_statement(statement_buffer.data(), statement_buffer.size())
-    };
+            db.prepare_statement(statement_buffer.data(), statement_buffer.size())};
     create_segment_order_idx_stmt.step();
     statement_buffer.clear();
 }
@@ -253,13 +242,11 @@ auto create_db(TestTableSchema const& table_schema, vector<Row> const& rows) -> 
     auto transaction_end_stmt{sqlite_db.prepare_statement("END TRANSACTION")};
     fmt::memory_buffer stmt_buf;
     auto stmt_buf_it{std::back_inserter(stmt_buf)};
-    fmt::format_to(
-            stmt_buf_it,
-            "INSERT INTO {} ({}) VALUES ({})",
-            table_schema.get_name(),
-            clp::get_field_names_sql(table_columns),
-            fmt::to_string(param_id_buf)
-    );
+    fmt::format_to(stmt_buf_it,
+                   "INSERT INTO {} ({}) VALUES ({})",
+                   table_schema.get_name(),
+                   clp::get_field_names_sql(table_columns),
+                   fmt::to_string(param_id_buf));
     auto insert_stmt{sqlite_db.prepare_statement(stmt_buf.data(), stmt_buf.size())};
     stmt_buf.clear();
 
@@ -281,25 +268,19 @@ auto create_db(TestTableSchema const& table_schema, vector<Row> const& rows) -> 
 
         auto const seg_id_param_id_it{column_name_to_param_id.find(TestTableSchema::cSegmentId)};
         REQUIRE((column_name_to_param_id.cend() != seg_id_param_id_it));
-        insert_stmt.bind_int64(
-                seg_id_param_id_it->second,
-                static_cast<int64_t>(row.get_segment_id())
-        );
+        insert_stmt.bind_int64(seg_id_param_id_it->second,
+                               static_cast<int64_t>(row.get_segment_id()));
 
         auto const seg_ts_pos_param_id_it{
-                column_name_to_param_id.find(TestTableSchema::cSegmentTsPos)
-        };
+                column_name_to_param_id.find(TestTableSchema::cSegmentTsPos)};
         REQUIRE((column_name_to_param_id.cend() != seg_ts_pos_param_id_it));
-        insert_stmt.bind_int64(
-                seg_ts_pos_param_id_it->second,
-                static_cast<int64_t>(row.get_segment_ts_pos())
-        );
+        insert_stmt.bind_int64(seg_ts_pos_param_id_it->second,
+                               static_cast<int64_t>(row.get_segment_ts_pos()));
 
         // We don't need to bind segment_var_pos explicitly since it has the same
         // parameter ID as segment_ts_pos
         auto const seg_var_pos_param_id_it{
-                column_name_to_param_id.find(TestTableSchema::cSegmentVarPos)
-        };
+                column_name_to_param_id.find(TestTableSchema::cSegmentVarPos)};
         REQUIRE((column_name_to_param_id.cend() != seg_var_pos_param_id_it));
         REQUIRE((seg_ts_pos_param_id_it->second == seg_var_pos_param_id_it->second));
         REQUIRE((row.get_segment_ts_pos() == row.get_segment_var_pos()));
@@ -350,13 +331,11 @@ TEST_CASE("sqlite_db_basic", "[SQLiteDB]") {
     // Prepare a statement to read all columns from the database, sorted by begin_ts
     fmt::memory_buffer stmt_buf;
     auto stmt_buf_it{std::back_inserter(stmt_buf)};
-    fmt::format_to(
-            stmt_buf_it,
-            "SELECT {} FROM {} ORDER BY {} ASC",
-            clp::get_field_names_sql(table_columns),
-            table_schema.get_name(),
-            TestTableSchema::cBeginTs
-    );
+    fmt::format_to(stmt_buf_it,
+                   "SELECT {} FROM {} ORDER BY {} ASC",
+                   clp::get_field_names_sql(table_columns),
+                   table_schema.get_name(),
+                   TestTableSchema::cBeginTs);
     auto select_stmt{sqlite_db.prepare_statement(stmt_buf.data(), stmt_buf.size())};
     stmt_buf.clear();
 
@@ -388,14 +367,12 @@ TEST_CASE("sqlite_db_basic", "[SQLiteDB]") {
         auto const seg_ts_pos_idx_it{column_name_to_idx.find(TestTableSchema::cSegmentTsPos)};
         REQUIRE((column_name_to_idx.cend() != seg_ts_pos_idx_it));
         size_t const seg_ts_pos{
-                static_cast<size_t>(select_stmt.column_int64(seg_ts_pos_idx_it->second))
-        };
+                static_cast<size_t>(select_stmt.column_int64(seg_ts_pos_idx_it->second))};
 
         auto const seg_var_pos_idx_it{column_name_to_idx.find(TestTableSchema::cSegmentVarPos)};
         REQUIRE((column_name_to_idx.cend() != seg_var_pos_idx_it));
         size_t const seg_var_pos{
-                static_cast<size_t>(select_stmt.column_int64(seg_var_pos_idx_it->second))
-        };
+                static_cast<size_t>(select_stmt.column_int64(seg_var_pos_idx_it->second))};
 
         rows.emplace_back(path, begin_ts, end_ts, seg_id, seg_ts_pos, seg_var_pos);
     }

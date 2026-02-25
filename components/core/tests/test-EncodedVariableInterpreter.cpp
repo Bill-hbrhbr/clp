@@ -33,22 +33,19 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
         value = "0";
         REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
         REQUIRE(0 == encoded_var);
 
         value = "-1";
         REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
         REQUIRE(-1 == encoded_var);
 
         value = "1";
         REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
         REQUIRE(1 == encoded_var);
 
         // Test edges of representable range
@@ -56,145 +53,122 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
         value = to_string(representable_int_range_begin);
         REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
         REQUIRE(representable_int_range_begin == encoded_var);
 
         encoded_variable_t representable_int_range_end = INT64_MIN;
         value = to_string(representable_int_range_end);
         REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
         REQUIRE(representable_int_range_end == encoded_var);
 
         // Test non-integers
         value = "";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "a";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "-";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "+";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "-a";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "+a";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "--";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "++";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         // Test unrepresentable values
         value = " 1";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "- 1";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1 ";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "01";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "+1";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1u";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1U";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1l";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1L";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1ll";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1LL";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "0.0";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "-0";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_integer_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
     }
 
     SECTION("Test convert_string_to_representable_float_var") {
@@ -204,67 +178,51 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
 
         // Test basic conversions
         value = "0.0";
-        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(
-                value,
-                encoded_var
-        ));
+        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(value,
+                                                                                      encoded_var));
         EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_var, value);
         REQUIRE("0.0" == value);
 
         value = "-1.0";
-        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(
-                value,
-                encoded_var
-        ));
+        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(value,
+                                                                                      encoded_var));
         EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_var, value);
         REQUIRE("-1.0" == value);
 
         value = "1.0";
-        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(
-                value,
-                encoded_var
-        ));
+        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(value,
+                                                                                      encoded_var));
         EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_var, value);
         REQUIRE("1.0" == value);
 
         value = ".1";
-        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(
-                value,
-                encoded_var
-        ));
+        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(value,
+                                                                                      encoded_var));
         EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_var, value);
         REQUIRE(".1" == value);
 
         value = "-00.00";
-        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(
-                value,
-                encoded_var
-        ));
+        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(value,
+                                                                                      encoded_var));
         EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_var, value);
         REQUIRE("-00.00" == value);
 
         // Test edges of representable range
         value = "-999999999999999.9";
-        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(
-                value,
-                encoded_var
-        ));
+        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(value,
+                                                                                      encoded_var));
         EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_var, value);
         REQUIRE("-999999999999999.9" == value);
 
         value = "-.9999999999999999";
-        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(
-                value,
-                encoded_var
-        ));
+        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(value,
+                                                                                      encoded_var));
         EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_var, value);
         REQUIRE("-.9999999999999999" == value);
 
         value = ".9999999999999999";
-        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(
-                value,
-                encoded_var
-        ));
+        REQUIRE(EncodedVariableInterpreter::convert_string_to_representable_float_var(value,
+                                                                                      encoded_var));
         EncodedVariableInterpreter::convert_encoded_float_to_string(encoded_var, value);
         REQUIRE(".9999999999999999" == value);
 
@@ -272,184 +230,152 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
         value = "";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "a";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "-";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "+";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "-a";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "+a";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "--";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "++";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         // Test unrepresentable values
         value = ".";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1.";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = " 1.0";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "- 1.0";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1.0 ";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "+1.0";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1.0f";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1.0F";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1.0l";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = "1.0L";
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
 
         value = to_string(UINT64_MAX);
         REQUIRE(!EncodedVariableInterpreter::convert_string_to_representable_float_var(
                 value,
-                encoded_var
-        ));
+                encoded_var));
     }
 
     SECTION("Test matches for wildcard_string_could_be_representable_integer_var") {
-        auto const value = GENERATE(
-                std::string_view{"?"},
-                std::string_view{"*"},
-                std::string_view{"*123456789*"},
-                std::string_view{"*12*34*56*"},
-                std::string_view{"?987"},
-                std::string_view{"-12*"},
-                std::string_view{"-12?"}
-        );
+        auto const value = GENERATE(std::string_view{"?"},
+                                    std::string_view{"*"},
+                                    std::string_view{"*123456789*"},
+                                    std::string_view{"*12*34*56*"},
+                                    std::string_view{"?987"},
+                                    std::string_view{"-12*"},
+                                    std::string_view{"-12?"});
         REQUIRE(EncodedVariableInterpreter::wildcard_string_could_be_representable_integer_var(
-                value
-        ));
+                value));
     }
 
     SECTION("Test rejections for wildcard_string_could_be_representable_integer_var") {
-        auto const value = GENERATE(
-                std::string_view{"\\*"},
-                std::string_view{"\\?"},
-                std::string_view{"\\\\"},
-                std::string_view{""},
-                std::string_view{"*1abcABC*"},
-                std::string_view{"*\u2345*"},
-                std::string_view{"?1234\\?"},
-                std::string_view{"?1234\\*"},
-                std::string_view{"*1.2*"}
-        );
+        auto const value = GENERATE(std::string_view{"\\*"},
+                                    std::string_view{"\\?"},
+                                    std::string_view{"\\\\"},
+                                    std::string_view{""},
+                                    std::string_view{"*1abcABC*"},
+                                    std::string_view{"*\u2345*"},
+                                    std::string_view{"?1234\\?"},
+                                    std::string_view{"?1234\\*"},
+                                    std::string_view{"*1.2*"});
         REQUIRE_FALSE(
                 EncodedVariableInterpreter::wildcard_string_could_be_representable_integer_var(
-                        value
-                )
-        );
+                        value));
     }
 
     SECTION("Test matches for wildcard_string_could_be_representable_float_var") {
-        auto const value = GENERATE(
-                std::string_view{"?"},
-                std::string_view{"*"},
-                std::string_view{"*123456789*"},
-                std::string_view{"*12*34*56*"},
-                std::string_view{"-12*"},
-                std::string_view{"-12?1"},
-                std::string_view{"*25.987*"}
-        );
-        REQUIRE(
-                EncodedVariableInterpreter::wildcard_string_could_be_representable_float_var(value)
-        );
+        auto const value = GENERATE(std::string_view{"?"},
+                                    std::string_view{"*"},
+                                    std::string_view{"*123456789*"},
+                                    std::string_view{"*12*34*56*"},
+                                    std::string_view{"-12*"},
+                                    std::string_view{"-12?1"},
+                                    std::string_view{"*25.987*"});
+        REQUIRE(EncodedVariableInterpreter::wildcard_string_could_be_representable_float_var(
+                value));
     }
 
     SECTION("Test rejections for wildcard_string_could_be_representable_float_var") {
-        auto const value = GENERATE(
-                std::string_view{"\\*"},
-                std::string_view{"\\?"},
-                std::string_view{"\\\\"},
-                std::string_view{""},
-                std::string_view{"*1abcABC*"},
-                std::string_view{"*\u2345*"},
-                std::string_view{"?1234\\?1"},
-                std::string_view{"?1234\\*"},
-                std::string_view{"*1.4E09*"},
-                std::string_view{"*1.4e09*"}
-        );
-        REQUIRE_FALSE(
-                EncodedVariableInterpreter::wildcard_string_could_be_representable_float_var(value)
-        );
+        auto const value = GENERATE(std::string_view{"\\*"},
+                                    std::string_view{"\\?"},
+                                    std::string_view{"\\\\"},
+                                    std::string_view{""},
+                                    std::string_view{"*1abcABC*"},
+                                    std::string_view{"*\u2345*"},
+                                    std::string_view{"?1234\\?1"},
+                                    std::string_view{"?1234\\*"},
+                                    std::string_view{"*1.4E09*"},
+                                    std::string_view{"*1.4e09*"});
+        REQUIRE_FALSE(EncodedVariableInterpreter::wildcard_string_could_be_representable_float_var(
+                value));
     }
 
     SECTION("Test multiple metching values") {
@@ -459,11 +385,9 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
                 = {"python2.7.3", "Python2.7.3", "PyThOn2.7.3", "PYTHON2.7.3"};
         clp::VariableDictionaryWriter var_dict_writer;
 
-        var_dict_writer.open(
-                std::string{cVarDictPath},
-                std::string{cVarSegmentIndexPath},
-                cVariableDictionaryIdMax
-        );
+        var_dict_writer.open(std::string{cVarDictPath},
+                             std::string{cVarSegmentIndexPath},
+                             cVariableDictionaryIdMax);
 
         std::vector<encoded_variable_t> encoded_vars;
         std::vector<clp::variable_dictionary_id_t> var_ids;
@@ -471,13 +395,12 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
         std::string const msg_template{"here is a string with a dictionary var: "};
 
         for (auto const& var_str : var_strs) {
-            EncodedVariableInterpreter::encode_and_add_to_dictionary(
-                    msg_template + std::string{var_str},
-                    logtype_dict_entry,
-                    var_dict_writer,
-                    encoded_vars,
-                    var_ids
-            );
+            EncodedVariableInterpreter::encode_and_add_to_dictionary(msg_template
+                                                                             + std::string{var_str},
+                                                                     logtype_dict_entry,
+                                                                     var_dict_writer,
+                                                                     encoded_vars,
+                                                                     var_ids);
         }
         var_dict_writer.close();
 
@@ -531,13 +454,11 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
         // clang-format on
 
         clp::LogTypeDictionaryEntry logtype_dict_entry;
-        EncodedVariableInterpreter::encode_and_add_to_dictionary(
-                msg,
-                logtype_dict_entry,
-                var_dict_writer,
-                encoded_vars,
-                var_ids
-        );
+        EncodedVariableInterpreter::encode_and_add_to_dictionary(msg,
+                                                                 logtype_dict_entry,
+                                                                 var_dict_writer,
+                                                                 encoded_vars,
+                                                                 var_ids);
         var_dict_writer.close();
 
         // Test var_ids is correctly populated
@@ -565,45 +486,35 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
         // Test searching
         string search_logtype = "here is a string with a small int ";
         clp::SubQuery sub_query;
-        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(
-                var_strs[0],
-                var_dict_reader,
-                false,
-                search_logtype,
-                sub_query
-        ));
+        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(var_strs[0],
+                                                                         var_dict_reader,
+                                                                         false,
+                                                                         search_logtype,
+                                                                         sub_query));
         search_logtype += " and a very large int ";
-        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(
-                var_strs[1],
-                var_dict_reader,
-                false,
-                search_logtype,
-                sub_query
-        ));
+        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(var_strs[1],
+                                                                         var_dict_reader,
+                                                                         false,
+                                                                         search_logtype,
+                                                                         sub_query));
         search_logtype += " and a double ";
-        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(
-                var_strs[2],
-                var_dict_reader,
-                false,
-                search_logtype,
-                sub_query
-        ));
+        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(var_strs[2],
+                                                                         var_dict_reader,
+                                                                         false,
+                                                                         search_logtype,
+                                                                         sub_query));
         search_logtype += " and a weird double ";
-        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(
-                var_strs[3],
-                var_dict_reader,
-                false,
-                search_logtype,
-                sub_query
-        ));
+        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(var_strs[3],
+                                                                         var_dict_reader,
+                                                                         false,
+                                                                         search_logtype,
+                                                                         sub_query));
         search_logtype += " and a str with numbers ";
-        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(
-                var_strs[4],
-                var_dict_reader,
-                false,
-                search_logtype,
-                sub_query
-        ));
+        REQUIRE(EncodedVariableInterpreter::encode_and_search_dictionary(var_strs[4],
+                                                                         var_dict_reader,
+                                                                         false,
+                                                                         search_logtype,
+                                                                         sub_query));
         auto escape_handler = [](std::string_view str) -> std::string {
             std::string escaped_string;
             for (auto const c : str) {
@@ -625,8 +536,7 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
                 var_dict_reader,
                 false,
                 search_logtype,
-                sub_query
-        ));
+                sub_query));
 
         search_logtype += " and an escape ";
         search_logtype += enum_to_underlying_type(VariablePlaceholder::Escape);
@@ -648,24 +558,20 @@ TEST_CASE("EncodedVariableInterpreter", "[EncodedVariableInterpreter]") {
 
         // Test search for unknown variable
         REQUIRE(false
-                == EncodedVariableInterpreter::encode_and_search_dictionary(
-                        "abc123",
-                        var_dict_reader,
-                        false,
-                        search_logtype,
-                        sub_query
-                ));
+                == EncodedVariableInterpreter::encode_and_search_dictionary("abc123",
+                                                                            var_dict_reader,
+                                                                            false,
+                                                                            search_logtype,
+                                                                            sub_query));
 
         REQUIRE(logtype_dict_entry.get_value() == search_logtype);
 
         // Test decoding
         string decompressed_msg;
-        REQUIRE(EncodedVariableInterpreter::decode_variables_into_message(
-                logtype_dict_entry,
-                var_dict_reader,
-                encoded_vars,
-                decompressed_msg
-        ));
+        REQUIRE(EncodedVariableInterpreter::decode_variables_into_message(logtype_dict_entry,
+                                                                          var_dict_reader,
+                                                                          encoded_vars,
+                                                                          decompressed_msg));
         REQUIRE(msg == decompressed_msg);
 
         var_dict_reader.close();

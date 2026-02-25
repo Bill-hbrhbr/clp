@@ -30,12 +30,10 @@ constexpr typename std::underlying_type<T>::type enum_to_underlying_type(T enum_
  * @return
  */
 template <class Destination, class Source>
-std::enable_if_t<
-        sizeof(Destination) == sizeof(Source)
-                && std::is_trivially_copyable_v<Destination> && std::is_trivially_copyable_v<Source>
-                && std::is_trivially_constructible_v<Destination>,
-        Destination
->
+std::enable_if_t<sizeof(Destination) == sizeof(Source) && std::is_trivially_copyable_v<Destination>
+                         && std::is_trivially_copyable_v<Source>
+                         && std::is_trivially_constructible_v<Destination>,
+                 Destination>
 bit_cast(Source const& src) {
     Destination dst;
     std::memcpy(&dst, &src, sizeof(Destination));
@@ -64,8 +62,8 @@ overloaded(Ts...) -> overloaded<Ts...>;
  * @return The casted pointer
  */
 template <typename Destination, class Source>
-std::enable_if_t<sizeof(Destination) == sizeof(Source), Destination*>
-size_checked_pointer_cast(Source* src) {
+std::enable_if_t<sizeof(Destination) == sizeof(Source), Destination*> size_checked_pointer_cast(
+        Source* src) {
     return reinterpret_cast<Destination*>(src);
 }
 }  // namespace glt

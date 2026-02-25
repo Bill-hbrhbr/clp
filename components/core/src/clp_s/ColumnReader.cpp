@@ -17,8 +17,7 @@ void Int64ColumnReader::load(BufferViewReader& reader, uint64_t num_messages) {
 }
 
 std::variant<int64_t, double, std::string, uint8_t> Int64ColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     return m_values[cur_message];
 }
 
@@ -47,8 +46,7 @@ auto DeltaEncodedInt64ColumnReader::get_value_at_idx(size_t idx) -> int64_t {
 }
 
 std::variant<int64_t, double, std::string, uint8_t> DeltaEncodedInt64ColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     return get_value_at_idx(cur_message);
 }
 
@@ -61,27 +59,23 @@ void FormattedFloatColumnReader::load(BufferViewReader& reader, uint64_t num_mes
     m_formats = reader.read_unaligned_span<float_format_t>(num_messages);
 }
 
-void
-Int64ColumnReader::extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) {
+void Int64ColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                         std::string& buffer) {
     buffer.append(std::to_string(m_values[cur_message]));
 }
 
-void DeltaEncodedInt64ColumnReader::extract_string_value_into_buffer(
-        uint64_t cur_message,
-        std::string& buffer
-) {
+void DeltaEncodedInt64ColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                                     std::string& buffer) {
     buffer.append(std::to_string(get_value_at_idx(cur_message)));
 }
 
 std::variant<int64_t, double, std::string, uint8_t> FloatColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     return m_values[cur_message];
 }
 
 std::variant<int64_t, double, std::string, uint8_t> FormattedFloatColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     return m_values[cur_message];
 }
 
@@ -89,21 +83,18 @@ void BooleanColumnReader::load(BufferViewReader& reader, uint64_t num_messages) 
     m_values = reader.read_unaligned_span<uint8_t>(num_messages);
 }
 
-void
-FloatColumnReader::extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) {
+void FloatColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                         std::string& buffer) {
     buffer.append(std::to_string(m_values[cur_message]));
 }
 
-void FormattedFloatColumnReader::extract_string_value_into_buffer(
-        uint64_t cur_message,
-        std::string& buffer
-) {
+void FormattedFloatColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                                  std::string& buffer) {
     buffer.append(restore_encoded_float(m_values[cur_message], m_formats[cur_message]).value());
 }
 
 std::variant<int64_t, double, std::string, uint8_t> BooleanColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     return m_values[cur_message];
 }
 
@@ -112,15 +103,12 @@ void DictionaryFloatColumnReader::load(BufferViewReader& reader, uint64_t num_me
 }
 
 std::variant<int64_t, double, std::string, uint8_t> DictionaryFloatColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     return std::stod(m_var_dict->get_value(m_var_dict_ids[cur_message]));
 }
 
-void DictionaryFloatColumnReader::extract_string_value_into_buffer(
-        uint64_t cur_message,
-        std::string& buffer
-) {
+void DictionaryFloatColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                                   std::string& buffer) {
     buffer.append(m_var_dict->get_value(m_var_dict_ids[cur_message]));
 }
 
@@ -130,21 +118,20 @@ void ClpStringColumnReader::load(BufferViewReader& reader, uint64_t num_messages
     m_encoded_vars = reader.read_unaligned_span<int64_t>(encoded_vars_length);
 }
 
-void
-BooleanColumnReader::extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) {
+void BooleanColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                           std::string& buffer) {
     buffer.append(0 == m_values[cur_message] ? "false" : "true");
 }
 
 std::variant<int64_t, double, std::string, uint8_t> ClpStringColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     std::string message;
     extract_string_value_into_buffer(cur_message, message);
     return message;
 }
 
-void
-ClpStringColumnReader::extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) {
+void ClpStringColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                             std::string& buffer) {
     auto value = m_logtypes[cur_message];
     int64_t logtype_id = ClpStringColumnWriter::get_encoded_log_dict_id(value);
     auto& entry = m_log_dict->get_entry(logtype_id);
@@ -156,18 +143,14 @@ ClpStringColumnReader::extract_string_value_into_buffer(uint64_t cur_message, st
     int64_t encoded_vars_offset = ClpStringColumnWriter::get_encoded_offset(value);
     auto encoded_vars = m_encoded_vars.sub_span(encoded_vars_offset, entry.get_num_variables());
 
-    clp::EncodedVariableInterpreter::decode_variables_into_message(
-            entry,
-            *m_var_dict,
-            encoded_vars,
-            buffer
-    );
+    clp::EncodedVariableInterpreter::decode_variables_into_message(entry,
+                                                                   *m_var_dict,
+                                                                   encoded_vars,
+                                                                   buffer);
 }
 
-void ClpStringColumnReader::extract_escaped_string_value_into_buffer(
-        uint64_t cur_message,
-        std::string& buffer
-) {
+void ClpStringColumnReader::extract_escaped_string_value_into_buffer(uint64_t cur_message,
+                                                                     std::string& buffer) {
     if (false == m_is_array) {
         // TODO: escape while decoding instead of after.
         std::string tmp;
@@ -203,22 +186,17 @@ void VariableStringColumnReader::load(BufferViewReader& reader, uint64_t num_mes
 }
 
 std::variant<int64_t, double, std::string, uint8_t> VariableStringColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     return m_var_dict->get_value(m_variables[cur_message]);
 }
 
-void VariableStringColumnReader::extract_string_value_into_buffer(
-        uint64_t cur_message,
-        std::string& buffer
-) {
+void VariableStringColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                                  std::string& buffer) {
     buffer.append(m_var_dict->get_value(m_variables[cur_message]));
 }
 
-void VariableStringColumnReader::extract_escaped_string_value_into_buffer(
-        uint64_t cur_message,
-        std::string& buffer
-) {
+void VariableStringColumnReader::extract_escaped_string_value_into_buffer(uint64_t cur_message,
+                                                                          std::string& buffer) {
     StringUtils::escape_json_string(buffer, m_var_dict->get_value(m_variables[cur_message]));
 }
 
@@ -232,22 +210,17 @@ void DeprecatedDateStringColumnReader::load(BufferViewReader& reader, uint64_t n
 }
 
 std::variant<int64_t, double, std::string, uint8_t> DeprecatedDateStringColumnReader::extract_value(
-        uint64_t cur_message
-) {
+        uint64_t cur_message) {
     return m_timestamp_dict->get_deprecated_timestamp_string_encoding(
             m_timestamps[cur_message],
-            m_timestamp_encodings[cur_message]
-    );
+            m_timestamp_encodings[cur_message]);
 }
 
-void DeprecatedDateStringColumnReader::extract_string_value_into_buffer(
-        uint64_t cur_message,
-        std::string& buffer
-) {
+void DeprecatedDateStringColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                                        std::string& buffer) {
     buffer.append(m_timestamp_dict->get_deprecated_timestamp_string_encoding(
             m_timestamps[cur_message],
-            m_timestamp_encodings[cur_message]
-    ));
+            m_timestamp_encodings[cur_message]));
 }
 
 epochtime_t DeprecatedDateStringColumnReader::get_encoded_time(uint64_t cur_message) {
@@ -262,21 +235,17 @@ void TimestampColumnReader::load(BufferViewReader& reader, uint64_t num_messages
 auto TimestampColumnReader::extract_value(uint64_t cur_message)
         -> std::variant<int64_t, double, std::string, uint8_t> {
     std::string ret;
-    m_timestamp_dict->append_timestamp_to_buffer(
-            m_timestamps.get_value_at_idx(cur_message),
-            m_timestamp_encodings[cur_message],
-            ret
-    );
+    m_timestamp_dict->append_timestamp_to_buffer(m_timestamps.get_value_at_idx(cur_message),
+                                                 m_timestamp_encodings[cur_message],
+                                                 ret);
     return ret;
 }
 
-void
-TimestampColumnReader::extract_string_value_into_buffer(uint64_t cur_message, std::string& buffer) {
-    m_timestamp_dict->append_timestamp_to_buffer(
-            m_timestamps.get_value_at_idx(cur_message),
-            m_timestamp_encodings[cur_message],
-            buffer
-    );
+void TimestampColumnReader::extract_string_value_into_buffer(uint64_t cur_message,
+                                                             std::string& buffer) {
+    m_timestamp_dict->append_timestamp_to_buffer(m_timestamps.get_value_at_idx(cur_message),
+                                                 m_timestamp_encodings[cur_message],
+                                                 buffer);
 }
 
 auto TimestampColumnReader::get_encoded_time(uint64_t cur_message) -> epochtime_t {

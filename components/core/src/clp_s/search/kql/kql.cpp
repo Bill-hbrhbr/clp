@@ -54,10 +54,8 @@ using generated::KqlParser;
 namespace {
 class ParseTreeVisitor : public KqlBaseVisitor {
 private:
-    static void prepend_column(
-            std::shared_ptr<ColumnDescriptor> const& desc,
-            std::shared_ptr<ColumnDescriptor> const& prefix
-    ) {
+    static void prepend_column(std::shared_ptr<ColumnDescriptor> const& desc,
+                               std::shared_ptr<ColumnDescriptor> const& prefix) {
         desc->insert(desc->get_descriptor_list().begin(), prefix->get_descriptor_list());
         if (false == desc->get_namespace().empty()) {
             throw std::runtime_error{"Invalid descriptor."};
@@ -66,10 +64,8 @@ private:
         desc->set_namespace(prefix->get_namespace());
     }
 
-    void prepend_column(
-            std::shared_ptr<Expression> const& expr,
-            std::shared_ptr<ColumnDescriptor> const& prefix
-    ) {
+    void prepend_column(std::shared_ptr<Expression> const& expr,
+                        std::shared_ptr<ColumnDescriptor> const& prefix) {
         for (auto const& op : expr->get_op_list()) {
             if (auto col = std::dynamic_pointer_cast<ColumnDescriptor>(op)) {
                 prepend_column(col, prefix);
@@ -80,8 +76,7 @@ private:
     }
 
     static std::shared_ptr<Literal> create_timestamp_literal(
-            KqlParser::Timestamp_expressionContext const& ctx
-    ) {
+            KqlParser::Timestamp_expressionContext const& ctx) {
         if (nullptr == ctx.timestamp) {
             return nullptr;
         }
@@ -92,54 +87,42 @@ private:
             auto const pattern_str{ctx.pattern->getText()};
             auto const pattern_result{timestamp_parser::TimestampPattern::create(pattern_str)};
             if (pattern_result.has_error()) {
-                SPDLOG_ERROR(
-                        "Invalid timestamp pattern {} - {}",
-                        pattern_str,
-                        pattern_result.error().message()
-                );
+                SPDLOG_ERROR("Invalid timestamp pattern {} - {}",
+                             pattern_str,
+                             pattern_result.error().message());
                 return nullptr;
             }
 
-            auto const timestamp_result{timestamp_parser::parse_timestamp(
-                    timestamp_str,
-                    pattern_result.value(),
-                    true,
-                    generated_pattern
-            )};
+            auto const timestamp_result{timestamp_parser::parse_timestamp(timestamp_str,
+                                                                          pattern_result.value(),
+                                                                          true,
+                                                                          generated_pattern)};
             if (timestamp_result.has_error()) {
-                SPDLOG_ERROR(
-                        "Failed to parse timestamp {} using pattern {} - {}",
-                        timestamp_str,
-                        pattern_str,
-                        timestamp_result.error().message()
-                );
+                SPDLOG_ERROR("Failed to parse timestamp {} using pattern {} - {}",
+                             timestamp_str,
+                             pattern_str,
+                             timestamp_result.error().message());
                 return nullptr;
             }
             return TimestampLiteral::create(timestamp_result.value().first);
         }
 
         auto const quoted_patterns_result{
-                timestamp_parser::get_all_default_quoted_timestamp_patterns()
-        };
+                timestamp_parser::get_all_default_quoted_timestamp_patterns()};
         if (quoted_patterns_result.has_error()) {
-            SPDLOG_ERROR(
-                    "Unexpected error while trying to load default timestamp patterns - {}",
-                    quoted_patterns_result.error().message()
-            );
+            SPDLOG_ERROR("Unexpected error while trying to load default timestamp patterns - {}",
+                         quoted_patterns_result.error().message());
             return nullptr;
         }
 
-        auto const optional_timestamp{timestamp_parser::search_known_timestamp_patterns(
-                timestamp_str,
-                quoted_patterns_result.value(),
-                true,
-                generated_pattern
-        )};
+        auto const optional_timestamp{
+                timestamp_parser::search_known_timestamp_patterns(timestamp_str,
+                                                                  quoted_patterns_result.value(),
+                                                                  true,
+                                                                  generated_pattern)};
         if (false == optional_timestamp.has_value()) {
-            SPDLOG_ERROR(
-                    "Failed to parse timestamp {} using default timestamp patterns.",
-                    timestamp_str
-            );
+            SPDLOG_ERROR("Failed to parse timestamp {} using default timestamp patterns.",
+                         timestamp_str);
             return nullptr;
         }
         return TimestampLiteral::create(optional_timestamp->first);
@@ -192,20 +175,16 @@ public:
         std::vector<std::string> descriptor_tokens;
         std::string descriptor_namespace;
         if (false
-            == clp_s::search::ast::tokenize_column_descriptor(
-                    column,
-                    descriptor_tokens,
-                    descriptor_namespace
-            ))
+            == clp_s::search::ast::tokenize_column_descriptor(column,
+                                                              descriptor_tokens,
+                                                              descriptor_namespace))
         {
             SPDLOG_ERROR("Can not tokenize invalid column: \"{}\"", column);
             return std::any{};
         }
 
-        return ColumnDescriptor::create_from_escaped_tokens(
-                descriptor_tokens,
-                descriptor_namespace
-        );
+        return ColumnDescriptor::create_from_escaped_tokens(descriptor_tokens,
+                                                            descriptor_namespace);
     }
 
     std::any visitNestedQuery(KqlParser::NestedQueryContext* ctx) override {
@@ -311,18 +290,15 @@ public:
             base = OrExpr::create();
         }
 
-        auto empty_descriptor = ColumnDescriptor::create_from_descriptors(
-                DescriptorList(),
-                constants::cDefaultNamespace
-        );
+        auto empty_descriptor
+                = ColumnDescriptor::create_from_descriptors(DescriptorList(),
+                                                            constants::cDefaultNamespace);
         for (auto token : ctx->literals) {
             auto literal{std::any_cast<std::shared_ptr<Literal>>(token->accept(this))};
-            auto expr = FilterExpr::create(
-                    empty_descriptor,
-                    FilterOperation::EQ,
-                    literal,
-                    invert_each_filter
-            );
+            auto expr = FilterExpr::create(empty_descriptor,
+                                           FilterOperation::EQ,
+                                           literal,
+                                           invert_each_filter);
             base->add_operand(expr);
         }
         return base;

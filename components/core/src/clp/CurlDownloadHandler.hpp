@@ -72,8 +72,7 @@ public:
             std::chrono::seconds connection_timeout = cDefaultConnectionTimeout,
             std::chrono::seconds overall_timeout = cDefaultOverallTimeout,
             std::optional<std::unordered_map<std::string, std::string>> const& http_header_kv_pairs
-            = std::nullopt
-    );
+            = std::nullopt);
 
     // Disable copy/move constructors/assignment operators
     CurlDownloadHandler(CurlDownloadHandler const&) = delete;

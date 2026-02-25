@@ -34,8 +34,9 @@ ZstdDecompressor::~ZstdDecompressor() {
     ZSTD_freeDStream(m_decompression_stream);
 }
 
-ErrorCode
-ZstdDecompressor::try_read(char const* buf, size_t num_bytes_to_read, size_t& num_bytes_read) {
+ErrorCode ZstdDecompressor::try_read(char const* buf,
+                                     size_t num_bytes_to_read,
+                                     size_t& num_bytes_read) {
     if (InputType::NotInitialized == m_input_type) {
         throw OperationFailed(ErrorCodeNotInit, __FILENAME__, __LINE__);
     }
@@ -63,8 +64,7 @@ ZstdDecompressor::try_read(char const* buf, size_t num_bytes_to_read, size_t& nu
                     auto error_code = m_file_reader->try_read(
                             reinterpret_cast<char*>(m_file_read_buffer.get()),
                             m_file_read_buffer_capacity,
-                            m_file_read_buffer_length
-                    );
+                            m_file_read_buffer_length);
                     if (ErrorCodeSuccess != error_code) {
                         if (ErrorCodeEndOfFile == error_code) {
                             num_bytes_read = decompressed_stream_block.pos;
@@ -83,11 +83,10 @@ ZstdDecompressor::try_read(char const* buf, size_t num_bytes_to_read, size_t& nu
                     break;
                 }
                 case InputType::ClpReader: {
-                    auto error_code = m_reader->try_read(
-                            reinterpret_cast<char*>(m_file_read_buffer.get()),
-                            m_file_read_buffer_capacity,
-                            m_file_read_buffer_length
-                    );
+                    auto error_code
+                            = m_reader->try_read(reinterpret_cast<char*>(m_file_read_buffer.get()),
+                                                 m_file_read_buffer_capacity,
+                                                 m_file_read_buffer_length);
                     if (clp::ErrorCode::ErrorCode_Success != error_code) {
                         if (clp::ErrorCode::ErrorCode_EndOfFile == error_code) {
                             num_bytes_read = decompressed_stream_block.pos;
@@ -112,16 +111,12 @@ ZstdDecompressor::try_read(char const* buf, size_t num_bytes_to_read, size_t& nu
         }
 
         // Decompress
-        size_t error = ZSTD_decompressStream(
-                m_decompression_stream,
-                &decompressed_stream_block,
-                &m_compressed_stream_block
-        );
+        size_t error = ZSTD_decompressStream(m_decompression_stream,
+                                             &decompressed_stream_block,
+                                             &m_compressed_stream_block);
         if (ZSTD_isError(error)) {
-            SPDLOG_ERROR(
-                    "ZstdDecompressor: ZSTD_decompressStream() error: {}",
-                    ZSTD_getErrorName(error)
-            );
+            SPDLOG_ERROR("ZstdDecompressor: ZSTD_decompressStream() error: {}",
+                         ZSTD_getErrorName(error));
             return ErrorCodeFailure;
         }
     }
@@ -255,8 +250,7 @@ ErrorCode ZstdDecompressor::open(std::string const& compressed_file_path) {
                 "{} - {}",
                 compressed_file_path.c_str(),
                 error.category().name(),
-                error.message()
-        );
+                error.message());
         return ErrorCodeFailure;
     }
     m_memory_mapped_file.emplace(std::move(result.value()));

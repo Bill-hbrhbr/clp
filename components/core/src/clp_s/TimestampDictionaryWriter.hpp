@@ -53,12 +53,11 @@ public:
      * - The timestamp in epoch nanoseconds.
      * - The pattern ID corresponding to the timestamp format.
      */
-    [[nodiscard]] auto ingest_string_timestamp(
-            std::string_view key,
-            int32_t node_id,
-            std::string_view timestamp,
-            bool is_json_literal
-    ) -> std::pair<epochtime_t, uint64_t>;
+    [[nodiscard]] auto ingest_string_timestamp(std::string_view key,
+                                               int32_t node_id,
+                                               std::string_view timestamp,
+                                               bool is_json_literal)
+            -> std::pair<epochtime_t, uint64_t>;
 
     /**
      * Ingests a numeric JSON entry.
@@ -69,8 +68,9 @@ public:
      * - The timestamp in epoch nanoseconds.
      * - The pattern ID corresponding to the timestamp format.
      */
-    [[nodiscard]] auto
-    ingest_numeric_json_timestamp(std::string_view key, int32_t node_id, std::string_view timestamp)
+    [[nodiscard]] auto ingest_numeric_json_timestamp(std::string_view key,
+                                                     int32_t node_id,
+                                                     std::string_view timestamp)
             -> std::pair<epochtime_t, uint64_t>;
 
     /**
@@ -82,11 +82,10 @@ public:
      * - The timestamp in epoch nanoseconds.
      * - The pattern ID corresponding to the timestamp format.
      */
-    [[nodiscard]] auto ingest_unknown_precision_epoch_timestamp(
-            std::string_view key,
-            int32_t node_id,
-            int64_t timestamp
-    ) -> std::pair<epochtime_t, uint64_t>;
+    [[nodiscard]] auto ingest_unknown_precision_epoch_timestamp(std::string_view key,
+                                                                int32_t node_id,
+                                                                int64_t timestamp)
+            -> std::pair<epochtime_t, uint64_t>;
 
     /**
      * @return The beginning of this archive's time range as milliseconds since the UNIX epoch

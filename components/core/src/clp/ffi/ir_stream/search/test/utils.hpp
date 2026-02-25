@@ -40,12 +40,10 @@ public:
     }
 
     [[nodiscard]] auto get_matchable_node_ids_from_literal_type(
-            clp_s::search::ast::LiteralType type
-    ) const -> std::vector<SchemaTree::Node::id_t>;
+            clp_s::search::ast::LiteralType type) const -> std::vector<SchemaTree::Node::id_t>;
 
     [[nodiscard]] auto get_matchable_node_ids_from_schema_tree_type(
-            SchemaTree::Node::Type type
-    ) const -> std::vector<SchemaTree::Node::id_t>;
+            SchemaTree::Node::Type type) const -> std::vector<SchemaTree::Node::id_t>;
 
     auto set_matchable_node(SchemaTree::Node::id_t node_id, SchemaTree::Node::Type type) -> void {
         m_matchable_node_ids.emplace(node_id);
@@ -76,8 +74,8 @@ private:
 [[nodiscard]] auto trivial_new_projected_schema_tree_node_callback(
         bool is_auto_generated,
         SchemaTree::Node::id_t node_id,
-        std::pair<std::string_view, size_t> projected_key_path_and_index
-) -> ystdlib::error_handling::Result<void>;
+        std::pair<std::string_view, size_t> projected_key_path_and_index)
+        -> ystdlib::error_handling::Result<void>;
 
 /**
  * Gets all possible column queries to every single node in the schema-tree with a bitmask
@@ -91,8 +89,8 @@ private:
 
 [[maybe_unused]] auto operator<<(
         std::ostream& os,
-        std::map<std::string, ColumnQueryPossibleMatches> const& column_query_to_possible_matches
-) -> std::ostream&;
+        std::map<std::string, ColumnQueryPossibleMatches> const& column_query_to_possible_matches)
+        -> std::ostream&;
 
 /**
  * Unpacks and serializes the given msgpack bytes using the given serializer.
@@ -106,20 +104,16 @@ template <typename encoded_variable_t>
 [[nodiscard]] auto unpack_and_serialize_msgpack_bytes(
         std::vector<uint8_t> const& auto_gen_msgpack_bytes,
         std::vector<uint8_t> const& user_gen_msgpack_bytes,
-        Serializer<encoded_variable_t>& serializer
-) -> bool;
+        Serializer<encoded_variable_t>& serializer) -> bool;
 
 template <typename encoded_variable_t>
-auto unpack_and_serialize_msgpack_bytes(
-        std::vector<uint8_t> const& auto_gen_msgpack_bytes,
-        std::vector<uint8_t> const& user_gen_msgpack_bytes,
-        Serializer<encoded_variable_t>& serializer
-) -> bool {
+auto unpack_and_serialize_msgpack_bytes(std::vector<uint8_t> const& auto_gen_msgpack_bytes,
+                                        std::vector<uint8_t> const& user_gen_msgpack_bytes,
+                                        Serializer<encoded_variable_t>& serializer) -> bool {
     // NOLINTNEXTLINE(misc-include-cleaner)
     auto const auto_gen_msgpack_byte_handle{msgpack::unpack(
             clp::size_checked_pointer_cast<char const>(auto_gen_msgpack_bytes.data()),
-            auto_gen_msgpack_bytes.size()
-    )};
+            auto_gen_msgpack_bytes.size())};
     auto const auto_gen_msgpack_obj{auto_gen_msgpack_byte_handle.get()};
 
     // NOLINTNEXTLINE(misc-include-cleaner)
@@ -130,8 +124,7 @@ auto unpack_and_serialize_msgpack_bytes(
     // NOLINTNEXTLINE(misc-include-cleaner)
     auto const user_gen_msgpack_byte_handle{msgpack::unpack(
             clp::size_checked_pointer_cast<char const>(user_gen_msgpack_bytes.data()),
-            user_gen_msgpack_bytes.size()
-    )};
+            user_gen_msgpack_bytes.size())};
     auto const user_gen_msgpack_obj{user_gen_msgpack_byte_handle.get()};
 
     // NOLINTNEXTLINE(misc-include-cleaner)
@@ -142,10 +135,8 @@ auto unpack_and_serialize_msgpack_bytes(
     // The following clang-tidy suppression is needed because it's the only way to access the
     // msgpack object as a map.
     // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-    return serializer.serialize_msgpack_map(
-            auto_gen_msgpack_obj.via.map,
-            user_gen_msgpack_obj.via.map
-    );
+    return serializer.serialize_msgpack_map(auto_gen_msgpack_obj.via.map,
+                                            user_gen_msgpack_obj.via.map);
     // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 }
 }  // namespace clp::ffi::ir_stream::search::test

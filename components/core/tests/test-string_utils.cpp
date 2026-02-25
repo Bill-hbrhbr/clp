@@ -41,37 +41,35 @@ TEST_CASE("replace_unescaped_char", "[replace_unescaped_char]") {
     };
 
     SECTION("Conventional escape and wildcard characters") {
-        auto [str, expected] = GENERATE(
-                as<std::pair<string, string>>{},
+        auto [str, expected] = GENERATE(as<std::pair<string, string>>{},
 
-                // Replacements with no escape chars present
-                std::pair{R"(a?b)", R"(a*b)"},
-                std::pair{R"(?leading)", R"(*leading)"},
-                std::pair{R"(trailing?)", R"(trailing*)"},
-                std::pair{R"(multiple??q)", R"(multiple**q)"},
+                                        // Replacements with no escape chars present
+                                        std::pair{R"(a?b)", R"(a*b)"},
+                                        std::pair{R"(?leading)", R"(*leading)"},
+                                        std::pair{R"(trailing?)", R"(trailing*)"},
+                                        std::pair{R"(multiple??q)", R"(multiple**q)"},
 
-                // Replacements with escape chars present
-                std::pair{R"(a\\?b)", R"(a\\*b)"},
-                std::pair{R"(\\?abc)", R"(\\*abc)"},
-                std::pair{R"(abc\\?)", R"(abc\\*)"},
+                                        // Replacements with escape chars present
+                                        std::pair{R"(a\\?b)", R"(a\\*b)"},
+                                        std::pair{R"(\\?abc)", R"(\\*abc)"},
+                                        std::pair{R"(abc\\?)", R"(abc\\*)"},
 
-                // No replacements with escape chars present
-                std::pair{R"(a\?b)", R"(a\?b)"},
-                std::pair{R"(\?abc)", R"(\?abc)"},
-                std::pair{R"(abc\?)", R"(abc\?)"},
+                                        // No replacements with escape chars present
+                                        std::pair{R"(a\?b)", R"(a\?b)"},
+                                        std::pair{R"(\?abc)", R"(\?abc)"},
+                                        std::pair{R"(abc\?)", R"(abc\?)"},
 
-                // Mixed
-                std::pair{R"(a\\?b a\?b a?b)", R"(a\\*b a\?b a*b)"},
-                std::pair{R"(\\?abc \?abc a?b)", R"(\\*abc \?abc a*b)"},
-                std::pair{R"(abc\\? abc\? a?b)", R"(abc\\* abc\? a*b)"},
+                                        // Mixed
+                                        std::pair{R"(a\\?b a\?b a?b)", R"(a\\*b a\?b a*b)"},
+                                        std::pair{R"(\\?abc \?abc a?b)", R"(\\*abc \?abc a*b)"},
+                                        std::pair{R"(abc\\? abc\? a?b)", R"(abc\\* abc\? a*b)"},
 
-                // Additional edge cases
-                std::pair{R"(no change)", R"(no change)"},
-                std::pair{R"()", R"()"},
-                std::pair{R"(\)", R"(\)"},
-                std::pair{R"(\\)", R"(\\)"},
-                std::pair{R"(?\)", R"(*\)"}
-        );
+                                        // Additional edge cases
+                                        std::pair{R"(no change)", R"(no change)"},
+                                        std::pair{R"()", R"()"},
+                                        std::pair{R"(\)", R"(\)"},
+                                        std::pair{R"(\\)", R"(\\)"},
+                                        std::pair{R"(?\)", R"(*\)"});
 
         check(cWildcardEscapeChar, cSingleCharWildcard, cZeroOrMoreCharsWildcard, str, expected);
     }
@@ -291,9 +289,8 @@ SCENARIO("Test case sensitive wild card match in all possible ways", "[wildcard]
             REQUIRE(wildcard_match_unsafe_case_sensitive(tameString, wildString) == false);
         }
 
-        GIVEN(
-                "MISSING matching literals in the beginning with both \"*\" and \"?\" in the middle"
-        ) {
+        GIVEN("MISSING matching literals in the beginning with both \"*\" and \"?\" in the "
+              "middle") {
             tameString = "abcd", wildString = "b*?d";
             REQUIRE(wildcard_match_unsafe_case_sensitive(tameString, wildString) == false);
         }
@@ -470,59 +467,45 @@ SCENARIO("Test case sensitive wild card match in all possible ways", "[wildcard]
             allPassed &= wildcard_match_unsafe_case_sensitive(
                     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                     "aaaaaaaaaaaab",
-                    "a*a*a*a*a*a*aa*aaa*a*a*b"
-            );
+                    "a*a*a*a*a*a*aa*aaa*a*a*b");
             allPassed &= wildcard_match_unsafe_case_sensitive(
                     "abababababababababababababababababababaacacacacacacacadaeafagahaiajakalaaaaaaa"
                     "aaaaaaaaaaffafagaagggagaaaaaaaab",
-                    "*a*b*ba*ca*a*aa*aaa*fa*ga*b*"
-            );
+                    "*a*b*ba*ca*a*aa*aaa*fa*ga*b*");
             allPassed &= !wildcard_match_unsafe_case_sensitive(
                     "abababababababababababababababababababaacacacacacacacadaeafagahaiajakalaaaaaaa"
                     "aaaaaaaaaaffafagaagggagaaaaaaaab",
-                    "*a*b*ba*ca*a*x*aaa*fa*ga*b*"
-            );
+                    "*a*b*ba*ca*a*x*aaa*fa*ga*b*");
             allPassed &= !wildcard_match_unsafe_case_sensitive(
                     "abababababababababababababababababababaacacacacacacacadaeafagahaiajakalaaaaaaa"
                     "aaaaaaaaaaffafagaagggagaaaaaaaab",
-                    "*a*b*ba*ca*aaaa*fa*ga*gggg*b*"
-            );
+                    "*a*b*ba*ca*aaaa*fa*ga*gggg*b*");
             allPassed &= wildcard_match_unsafe_case_sensitive(
                     "abababababababababababababababababababaacacacacacacacadaeafagahaiajakalaaaaaaa"
                     "aaaaaaaaaaffafagaagggagaaaaaaaab",
-                    "*a*b*ba*ca*aaaa*fa*ga*ggg*b*"
-            );
+                    "*a*b*ba*ca*aaaa*fa*ga*ggg*b*");
             allPassed &= wildcard_match_unsafe_case_sensitive("aaabbaabbaab", "*aabbaa*a*");
-            allPassed &= wildcard_match_unsafe_case_sensitive(
-                    "a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*",
-                    "a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*"
-            );
-            allPassed &= wildcard_match_unsafe_case_sensitive(
-                    "aaaaaaaaaaaaaaaaa",
-                    "*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*"
-            );
-            allPassed &= !wildcard_match_unsafe_case_sensitive(
-                    "aaaaaaaaaaaaaaaa",
-                    "*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*"
-            );
+            allPassed &= wildcard_match_unsafe_case_sensitive("a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*",
+                                                              "a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*");
+            allPassed
+                    &= wildcard_match_unsafe_case_sensitive("aaaaaaaaaaaaaaaaa",
+                                                            "*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*");
+            allPassed
+                    &= !wildcard_match_unsafe_case_sensitive("aaaaaaaaaaaaaaaa",
+                                                             "*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*");
             allPassed &= !wildcard_match_unsafe_case_sensitive(
                     "abc*abcd*abcde*abcdef*abcdefg*abcdefgh*abcdefghi*abcdefghij*abcdefghijk*"
                     "abcdefghijkl*abcdefghijklm*abcdefghijklmn",
-                    "abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*"
-            );
+                    "abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*");
             allPassed &= wildcard_match_unsafe_case_sensitive(
                     "abc*abcd*abcde*abcdef*abcdefg*abcdefgh*abcdefghi*abcdefghij*abcdefghijk*"
                     "abcdefghijkl*abcdefghijklm*abcdefghijklmn",
-                    "abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*"
-            );
-            allPassed &= !wildcard_match_unsafe_case_sensitive(
-                    "abc*abcd*abcd*abc*abcd",
-                    "abc*abc*abc*abc*abc"
-            );
+                    "abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*");
+            allPassed &= !wildcard_match_unsafe_case_sensitive("abc*abcd*abcd*abc*abcd",
+                                                               "abc*abc*abc*abc*abc");
             allPassed &= wildcard_match_unsafe_case_sensitive(
                     "abc*abcd*abcd*abc*abcd*abcd*abc*abcd*abc*abc*abcd",
-                    "abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abcd"
-            );
+                    "abc*abc*abc*abc*abc*abc*abc*abc*abc*abc*abcd");
             REQUIRE(allPassed == true);
         }
 
@@ -555,8 +538,7 @@ SCENARIO("Test wild card performance", "[wildcard performance]") {
     // Typical apache log
     tameVec.push_back(
             "64.242.88.10 - - [07/Mar/2004:16:06:51 -0800]"
-            " \"GET /twiki/bin/rdiff/TWiki/NewUserTemplate?rev1=1.3&rev2=1.2 HTTP/1.1\" 200 4523"
-    );
+            " \"GET /twiki/bin/rdiff/TWiki/NewUserTemplate?rev1=1.3&rev2=1.2 HTTP/1.1\" 200 4523");
     wildVec.push_back("*64.242.88.10*Mar/2004*GET*200*");
 
     /***********************************************************************************************

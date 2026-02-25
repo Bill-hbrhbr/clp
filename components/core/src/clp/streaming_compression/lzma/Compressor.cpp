@@ -21,10 +21,8 @@ auto Compressor::open(WriterInterface& writer) -> void {
 
     m_lzma_stream.detach_input();
     if (false
-        == m_lzma_stream.attach_output(
-                m_compressed_stream_block_buffer.data(),
-                m_compressed_stream_block_buffer.size()
-        ))
+        == m_lzma_stream.attach_output(m_compressed_stream_block_buffer.data(),
+                                       m_compressed_stream_block_buffer.size()))
     {
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }
@@ -51,8 +49,8 @@ auto Compressor::write(char const* data, size_t data_length) -> void {
         throw OperationFailed(ErrorCode_NotInit, __FILENAME__, __LINE__);
     }
     if (false
-        == m_lzma_stream
-                   .attach_input(clp::size_checked_pointer_cast<uint8_t const>(data), data_length))
+        == m_lzma_stream.attach_input(clp::size_checked_pointer_cast<uint8_t const>(data),
+                                      data_length))
     {
         throw OperationFailed(ErrorCode_BadParam, __FILENAME__, __LINE__);
     }
@@ -86,15 +84,12 @@ auto Compressor::encode_lzma() -> void {
             case LZMA_OK:
                 break;
             case LZMA_BUF_ERROR:
-                SPDLOG_ERROR(
-                        "LZMA compressor input stream is corrupt. No encoding progress can be made."
-                );
+                SPDLOG_ERROR("LZMA compressor input stream is corrupt. No encoding progress can be "
+                             "made.");
                 throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
             default:
-                SPDLOG_ERROR(
-                        "lzma_code() returned an unexpected value - {}.",
-                        static_cast<int>(rc)
-                );
+                SPDLOG_ERROR("lzma_code() returned an unexpected value - {}.",
+                             static_cast<int>(rc));
                 throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
         }
     }
@@ -102,10 +97,8 @@ auto Compressor::encode_lzma() -> void {
 
 auto Compressor::flush_lzma(lzma_action flush_action) -> void {
     if (false == LzmaStream::is_flush_action(flush_action)) {
-        SPDLOG_ERROR(
-                "lzma_code() supplied with invalid flush action - {}.",
-                static_cast<int>(flush_action)
-        );
+        SPDLOG_ERROR("lzma_code() supplied with invalid flush action - {}.",
+                     static_cast<int>(flush_action));
         throw OperationFailed(ErrorCode_BadParam, __FILENAME__, __LINE__);
     }
 
@@ -126,15 +119,12 @@ auto Compressor::flush_lzma(lzma_action flush_action) -> void {
             case LZMA_BUF_ERROR:
                 // NOTE: this can happen if we are using LZMA_FULL_FLUSH or LZMA_FULL_BARRIER. These
                 // two actions keeps encoding input data alongside flushing buffered encoded data.
-                SPDLOG_ERROR(
-                        "LZMA compressor input stream is corrupt. No encoding progress can be made."
-                );
+                SPDLOG_ERROR("LZMA compressor input stream is corrupt. No encoding progress can be "
+                             "made.");
                 throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
             default:
-                SPDLOG_ERROR(
-                        "lzma_code() returned an unexpected value - {}.",
-                        static_cast<int>(rc)
-                );
+                SPDLOG_ERROR("lzma_code() returned an unexpected value - {}.",
+                             static_cast<int>(rc));
                 throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
         }
     }
@@ -147,13 +137,10 @@ auto Compressor::flush_stream_output_block_buffer() -> void {
     }
     m_compressed_stream_writer->write(
             clp::size_checked_pointer_cast<char>(m_compressed_stream_block_buffer.data()),
-            cCompressedStreamBlockBufferSize - m_lzma_stream.avail_out()
-    );
+            cCompressedStreamBlockBufferSize - m_lzma_stream.avail_out());
     if (false
-        == m_lzma_stream.attach_output(
-                m_compressed_stream_block_buffer.data(),
-                m_compressed_stream_block_buffer.size()
-        ))
+        == m_lzma_stream.attach_output(m_compressed_stream_block_buffer.data(),
+                                       m_compressed_stream_block_buffer.size()))
     {
         throw OperationFailed(ErrorCode_Failure, __FILENAME__, __LINE__);
     }

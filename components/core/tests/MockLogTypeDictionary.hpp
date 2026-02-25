@@ -28,12 +28,10 @@ public:
 
     auto reserve_constant_length(size_t const length) -> void { m_value.reserve(length); }
 
-    auto parse_next_var(
-            [[maybe_unused]] std::string_view msg,
-            [[maybe_unused]] size_t begin,
-            [[maybe_unused]] size_t end,
-            [[maybe_unused]] std::string_view& parsed
-    ) -> bool {
+    auto parse_next_var([[maybe_unused]] std::string_view msg,
+                        [[maybe_unused]] size_t begin,
+                        [[maybe_unused]] size_t end,
+                        [[maybe_unused]] std::string_view& parsed) -> bool {
         return false;
     }
 
@@ -56,8 +54,7 @@ public:
                 [&]([[maybe_unused]] std::string_view constant,
                     [[maybe_unused]] size_t char_to_escape_pos,
                     [[maybe_unused]] std::string& logtype) -> void { add_escape(); },
-                m_value
-        );
+                m_value);
     }
 
     [[nodiscard]] auto get_value() const -> std::string const& { return m_value; }
@@ -66,8 +63,8 @@ public:
 
     [[nodiscard]] auto get_num_placeholders() const -> size_t { return 0; }
 
-    [[nodiscard]] auto
-    get_placeholder_info([[maybe_unused]] size_t idx, [[maybe_unused]] auto& ref) const -> size_t {
+    [[nodiscard]] auto get_placeholder_info([[maybe_unused]] size_t idx,
+                                            [[maybe_unused]] auto& ref) const -> size_t {
         return SIZE_MAX;
     }
 
@@ -92,10 +89,9 @@ public:
         m_storage.emplace_back(value, id);
     }
 
-    [[nodiscard]] auto get_entry_matching_value(
-            std::string_view const logtype,
-            [[maybe_unused]] bool ignore_case
-    ) const -> std::vector<Entry const*> {
+    [[nodiscard]] auto get_entry_matching_value(std::string_view const logtype,
+                                                [[maybe_unused]] bool ignore_case) const
+            -> std::vector<Entry const*> {
         std::vector<Entry const*> results;
         for (auto const& entry : m_storage) {
             if (logtype == entry.get_value()) {
@@ -105,11 +101,10 @@ public:
         return results;
     }
 
-    auto get_entries_matching_wildcard_string(
-            std::string_view const logtype,
-            [[maybe_unused]] bool ignore_case,
-            std::unordered_set<Entry const*>& results
-    ) const -> void {
+    auto get_entries_matching_wildcard_string(std::string_view const logtype,
+                                              [[maybe_unused]] bool ignore_case,
+                                              std::unordered_set<Entry const*>& results) const
+            -> void {
         for (auto const& entry : m_storage) {
             if (clp::string_utils::wildcard_match_unsafe_case_sensitive(entry.get_value(), logtype))
             {

@@ -52,11 +52,9 @@ public:
      */
     virtual void close() = 0;
 
-    virtual ErrorCode get_decompressed_stream_region(
-            size_t decompressed_stream_pos,
-            char* extraction_buf,
-            size_t extraction_len
-    ) = 0;
+    virtual ErrorCode get_decompressed_stream_region(size_t decompressed_stream_pos,
+                                                     char* extraction_buf,
+                                                     size_t extraction_len) = 0;
 
 protected:
     // Variables

@@ -68,10 +68,9 @@ using clp_s::search::ast::literal_type_bitmask_t;
  */
 [[nodiscard]] auto create_projected_columns_and_projection_map(
         std::vector<std::pair<std::string, literal_type_bitmask_t>> const& projections,
-        bool allow_duplicate_projected_columns
-) -> ystdlib::error_handling::Result<std::
-                                             pair<std::vector<std::shared_ptr<ColumnDescriptor>>,
-                                                  QueryHandlerImpl::ProjectionMap>>;
+        bool allow_duplicate_projected_columns)
+        -> ystdlib::error_handling::Result<std::pair<std::vector<std::shared_ptr<ColumnDescriptor>>,
+                                                     QueryHandlerImpl::ProjectionMap>>;
 
 /**
  * Creates initial partial resolutions for the given query and projections.
@@ -88,10 +87,9 @@ using clp_s::search::ast::literal_type_bitmask_t;
  */
 [[nodiscard]] auto create_initial_partial_resolutions(
         std::shared_ptr<Expression> const& query,
-        QueryHandlerImpl::ProjectionMap const& projected_column_to_original_key_and_index
-) -> ystdlib::error_handling::Result<std::
-                                             pair<QueryHandlerImpl::PartialResolutionMap,
-                                                  QueryHandlerImpl::PartialResolutionMap>>;
+        QueryHandlerImpl::ProjectionMap const& projected_column_to_original_key_and_index)
+        -> ystdlib::error_handling::Result<std::pair<QueryHandlerImpl::PartialResolutionMap,
+                                                     QueryHandlerImpl::PartialResolutionMap>>;
 
 /**
  * Initializes partial resolutions from a search AST.
@@ -105,8 +103,8 @@ using clp_s::search::ast::literal_type_bitmask_t;
 [[nodiscard]] auto initialize_partial_resolution_from_search_ast(
         std::shared_ptr<Expression> const& root,
         QueryHandlerImpl::PartialResolutionMap& auto_gen_namespace_partial_resolutions,
-        QueryHandlerImpl::PartialResolutionMap& user_gen_namespace_partial_resolutions
-) -> ystdlib::error_handling::Result<void>;
+        QueryHandlerImpl::PartialResolutionMap& user_gen_namespace_partial_resolutions)
+        -> ystdlib::error_handling::Result<void>;
 
 /**
  * @param key_namespace
@@ -133,8 +131,7 @@ using clp_s::search::ast::literal_type_bitmask_t;
         SchemaTree::Node::id_t node_id,
         std::optional<Value> const& value,
         SchemaTree const& schema_tree,
-        bool case_sensitive_match
-) -> ystdlib::error_handling::Result<AstEvaluationResult>;
+        bool case_sensitive_match) -> ystdlib::error_handling::Result<AstEvaluationResult>;
 
 /**
  * Evaluates a wildcard filter expression.
@@ -150,8 +147,7 @@ using clp_s::search::ast::literal_type_bitmask_t;
         clp_s::search::ast::FilterExpr* filter_expr,
         KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs,
         SchemaTree const& schema_tree,
-        bool case_sensitive_match
-) -> ystdlib::error_handling::Result<AstEvaluationResult>;
+        bool case_sensitive_match) -> ystdlib::error_handling::Result<AstEvaluationResult>;
 
 auto preprocess_query(std::shared_ptr<Expression> query)
         -> ystdlib::error_handling::Result<std::shared_ptr<Expression>> {
@@ -184,10 +180,9 @@ auto preprocess_query(std::shared_ptr<Expression> query)
 
 auto create_projected_columns_and_projection_map(
         std::vector<std::pair<std::string, literal_type_bitmask_t>> const& projections,
-        bool allow_duplicate_projected_columns
-) -> ystdlib::error_handling::Result<std::
-                                             pair<std::vector<std::shared_ptr<ColumnDescriptor>>,
-                                                  QueryHandlerImpl::ProjectionMap>> {
+        bool allow_duplicate_projected_columns)
+        -> ystdlib::error_handling::Result<std::pair<std::vector<std::shared_ptr<ColumnDescriptor>>,
+                                                     QueryHandlerImpl::ProjectionMap>> {
     std::unordered_set<std::string_view> unique_projected_columns;
     std::vector<std::shared_ptr<ColumnDescriptor>> projected_columns;
     QueryHandlerImpl::ProjectionMap projected_column_to_original_key_and_index;
@@ -204,11 +199,9 @@ auto create_projected_columns_and_projection_map(
         std::vector<std::string> descriptor_tokens;
         std::string descriptor_namespace;
         if (false
-            == clp_s::search::ast::tokenize_column_descriptor(
-                    key,
-                    descriptor_tokens,
-                    descriptor_namespace
-            ))
+            == clp_s::search::ast::tokenize_column_descriptor(key,
+                                                              descriptor_tokens,
+                                                              descriptor_namespace))
         {
             return ErrorCode{ErrorCodeEnum::ColumnTokenizationFailure};
         }
@@ -216,18 +209,15 @@ auto create_projected_columns_and_projection_map(
         try {
             auto column_descriptor{clp_s::search::ast::ColumnDescriptor::create_from_escaped_tokens(
                     descriptor_tokens,
-                    descriptor_namespace
-            )};
+                    descriptor_namespace)};
             column_descriptor->set_matching_types(types);
             if (column_descriptor->is_unresolved_descriptor()
                 || column_descriptor->get_descriptor_list().empty())
             {
                 return ErrorCode{ErrorCodeEnum::ProjectionColumnDescriptorCreationFailure};
             }
-            projected_column_to_original_key_and_index.emplace(
-                    column_descriptor.get(),
-                    std::make_pair(key, index)
-            );
+            projected_column_to_original_key_and_index.emplace(column_descriptor.get(),
+                                                               std::make_pair(key, index));
             projected_columns.emplace_back(std::move(column_descriptor));
         } catch (std::exception const& e) {
             return ErrorCode{ErrorCodeEnum::ProjectionColumnDescriptorCreationFailure};
@@ -239,10 +229,9 @@ auto create_projected_columns_and_projection_map(
 
 auto create_initial_partial_resolutions(
         std::shared_ptr<Expression> const& query,
-        QueryHandlerImpl::ProjectionMap const& projected_column_to_original_key_and_index
-) -> ystdlib::error_handling::Result<std::
-                                             pair<QueryHandlerImpl::PartialResolutionMap,
-                                                  QueryHandlerImpl::PartialResolutionMap>> {
+        QueryHandlerImpl::ProjectionMap const& projected_column_to_original_key_and_index)
+        -> ystdlib::error_handling::Result<std::pair<QueryHandlerImpl::PartialResolutionMap,
+                                                     QueryHandlerImpl::PartialResolutionMap>> {
     QueryHandlerImpl::PartialResolutionMap auto_gen_namespace_partial_resolutions;
     QueryHandlerImpl::PartialResolutionMap user_gen_namespace_partial_resolutions;
     for (auto const& [col, _] : projected_column_to_original_key_and_index) {
@@ -251,24 +240,20 @@ auto create_initial_partial_resolutions(
             // Ignore unrecognized namespace
             continue;
         }
-        auto& partial_resolutions{
-                optional_is_auto_gen.value() ? auto_gen_namespace_partial_resolutions
-                                             : user_gen_namespace_partial_resolutions
-        };
+        auto& partial_resolutions{optional_is_auto_gen.value()
+                                          ? auto_gen_namespace_partial_resolutions
+                                          : user_gen_namespace_partial_resolutions};
         auto [it, inserted] = partial_resolutions.try_emplace(
                 SchemaTree::cRootId,
-                std::vector<QueryHandlerImpl::ColumnDescriptorTokenIterator>{}
-        );
+                std::vector<QueryHandlerImpl::ColumnDescriptorTokenIterator>{});
         it->second.emplace_back(YSTDLIB_ERROR_HANDLING_TRYX(
-                QueryHandlerImpl::ColumnDescriptorTokenIterator::create(col)
-        ));
+                QueryHandlerImpl::ColumnDescriptorTokenIterator::create(col)));
     }
 
-    YSTDLIB_ERROR_HANDLING_TRYV(initialize_partial_resolution_from_search_ast(
-            query,
-            auto_gen_namespace_partial_resolutions,
-            user_gen_namespace_partial_resolutions
-    ));
+    YSTDLIB_ERROR_HANDLING_TRYV(
+            initialize_partial_resolution_from_search_ast(query,
+                                                          auto_gen_namespace_partial_resolutions,
+                                                          user_gen_namespace_partial_resolutions));
 
     return {std::move(auto_gen_namespace_partial_resolutions),
             std::move(user_gen_namespace_partial_resolutions)};
@@ -277,8 +262,8 @@ auto create_initial_partial_resolutions(
 auto initialize_partial_resolution_from_search_ast(
         std::shared_ptr<Expression> const& root,
         QueryHandlerImpl::PartialResolutionMap& auto_gen_namespace_partial_resolutions,
-        QueryHandlerImpl::PartialResolutionMap& user_gen_namespace_partial_resolutions
-) -> ystdlib::error_handling::Result<void> {
+        QueryHandlerImpl::PartialResolutionMap& user_gen_namespace_partial_resolutions)
+        -> ystdlib::error_handling::Result<void> {
     if (nullptr == root) {
         return ystdlib::error_handling::success();
     }
@@ -316,19 +301,16 @@ auto initialize_partial_resolution_from_search_ast(
             // Ignore unrecognized namespace
             continue;
         }
-        auto& partial_resolutions{
-                optional_is_auto_gen.value() ? auto_gen_namespace_partial_resolutions
-                                             : user_gen_namespace_partial_resolutions
-        };
+        auto& partial_resolutions{optional_is_auto_gen.value()
+                                          ? auto_gen_namespace_partial_resolutions
+                                          : user_gen_namespace_partial_resolutions};
 
         auto [it, inserted] = partial_resolutions.try_emplace(
                 SchemaTree::cRootId,
-                std::vector<QueryHandlerImpl::ColumnDescriptorTokenIterator>{}
-        );
+                std::vector<QueryHandlerImpl::ColumnDescriptorTokenIterator>{});
 
         auto const begin_token_it{YSTDLIB_ERROR_HANDLING_TRYX(
-                QueryHandlerImpl::ColumnDescriptorTokenIterator::create(col)
-        )};
+                QueryHandlerImpl::ColumnDescriptorTokenIterator::create(col))};
         it->second.emplace_back(begin_token_it);
         if (false == begin_token_it.is_last() && begin_token_it.is_wildcard()) {
             // To handle the case where the prefix wildcard matches nothing
@@ -349,25 +331,23 @@ auto is_auto_generated(std::string_view key_namespace) -> std::optional<bool> {
     return std::nullopt;
 }
 
-auto evaluate_filter_against_node_id_value_pair(
-        clp_s::search::ast::FilterExpr* filter_expr,
-        SchemaTree::Node::id_t node_id,
-        std::optional<Value> const& value,
-        SchemaTree const& schema_tree,
-        bool case_sensitive_match
-) -> ystdlib::error_handling::Result<AstEvaluationResult> {
+auto evaluate_filter_against_node_id_value_pair(clp_s::search::ast::FilterExpr* filter_expr,
+                                                SchemaTree::Node::id_t node_id,
+                                                std::optional<Value> const& value,
+                                                SchemaTree const& schema_tree,
+                                                bool case_sensitive_match)
+        -> ystdlib::error_handling::Result<AstEvaluationResult> {
     try {
         auto const node_type{schema_tree.get_node(node_id).get_type()};
         auto const literal_type{schema_tree_node_type_value_pair_to_literal_type(node_type, value)};
         if (false == filter_expr->get_column()->matches_type(literal_type)) {
             return AstEvaluationResult::Pruned;
         }
-        auto const evaluation_result{evaluate_filter_against_literal_type_value_pair(
-                filter_expr,
-                literal_type,
-                value,
-                case_sensitive_match
-        )};
+        auto const evaluation_result{
+                evaluate_filter_against_literal_type_value_pair(filter_expr,
+                                                                literal_type,
+                                                                value,
+                                                                case_sensitive_match)};
         if (false == evaluation_result.has_error()) {
             return evaluation_result.value() ? AstEvaluationResult::True
                                              : AstEvaluationResult::False;
@@ -382,23 +362,19 @@ auto evaluate_filter_against_node_id_value_pair(
     }
 }
 
-auto evaluate_wildcard_filter(
-        clp_s::search::ast::FilterExpr* filter_expr,
-        KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs,
-        SchemaTree const& schema_tree,
-        bool case_sensitive_match
-) -> ystdlib::error_handling::Result<AstEvaluationResult> {
+auto evaluate_wildcard_filter(clp_s::search::ast::FilterExpr* filter_expr,
+                              KeyValuePairLogEvent::NodeIdValuePairs const& node_id_value_pairs,
+                              SchemaTree const& schema_tree,
+                              bool case_sensitive_match)
+        -> ystdlib::error_handling::Result<AstEvaluationResult> {
     ast_evaluation_result_bitmask_t evaluation_results{};
     for (auto const& [node_id, value] : node_id_value_pairs) {
-        auto const evaluation_result{
-                YSTDLIB_ERROR_HANDLING_TRYX(evaluate_filter_against_node_id_value_pair(
-                        filter_expr,
-                        node_id,
-                        value,
-                        schema_tree,
-                        case_sensitive_match
-                ))
-        };
+        auto const evaluation_result{YSTDLIB_ERROR_HANDLING_TRYX(
+                evaluate_filter_against_node_id_value_pair(filter_expr,
+                                                           node_id,
+                                                           value,
+                                                           schema_tree,
+                                                           case_sensitive_match))};
         if (AstEvaluationResult::True == evaluation_result) {
             return AstEvaluationResult::True;
         }
@@ -415,28 +391,24 @@ auto QueryHandlerImpl::create(
         std::shared_ptr<Expression> query,
         std::vector<std::pair<std::string, literal_type_bitmask_t>> const& projections,
         bool case_sensitive_match,
-        bool allow_duplicate_projected_columns
-) -> ystdlib::error_handling::Result<QueryHandlerImpl> {
+        bool allow_duplicate_projected_columns)
+        -> ystdlib::error_handling::Result<QueryHandlerImpl> {
     query = YSTDLIB_ERROR_HANDLING_TRYX(preprocess_query(query));
     auto [projected_columns, projected_column_to_original_key_and_index]
-            = YSTDLIB_ERROR_HANDLING_TRYX(create_projected_columns_and_projection_map(
-                    projections,
-                    allow_duplicate_projected_columns
-            ));
+            = YSTDLIB_ERROR_HANDLING_TRYX(
+                    create_projected_columns_and_projection_map(projections,
+                                                                allow_duplicate_projected_columns));
     auto [auto_gen_namespace_partial_resolutions, user_gen_namespace_partial_resolutions]
-            = YSTDLIB_ERROR_HANDLING_TRYX(create_initial_partial_resolutions(
-                    query,
-                    projected_column_to_original_key_and_index
-            ));
+            = YSTDLIB_ERROR_HANDLING_TRYX(
+                    create_initial_partial_resolutions(query,
+                                                       projected_column_to_original_key_and_index));
 
-    return QueryHandlerImpl{
-            std::move(query),
-            std::move(auto_gen_namespace_partial_resolutions),
-            std::move(user_gen_namespace_partial_resolutions),
-            std::move(projected_columns),
-            std::move(projected_column_to_original_key_and_index),
-            case_sensitive_match
-    };
+    return QueryHandlerImpl{std::move(query),
+                            std::move(auto_gen_namespace_partial_resolutions),
+                            std::move(user_gen_namespace_partial_resolutions),
+                            std::move(projected_columns),
+                            std::move(projected_column_to_original_key_and_index),
+                            case_sensitive_match};
 }
 
 auto QueryHandlerImpl::evaluate_kv_pair_log_event(KeyValuePairLogEvent const& log_event)
@@ -453,9 +425,8 @@ auto QueryHandlerImpl::evaluate_kv_pair_log_event(KeyValuePairLogEvent const& lo
     m_ast_dfs_stack.clear();
     push_to_ast_dfs_stack(YSTDLIB_ERROR_HANDLING_TRYX(AstExprIterator::create(m_query.get())));
     while (false == m_ast_dfs_stack.empty()) {
-        YSTDLIB_ERROR_HANDLING_TRYV(
-                advance_ast_dfs_evaluation(log_event, optional_evaluation_result)
-        );
+        YSTDLIB_ERROR_HANDLING_TRYV(advance_ast_dfs_evaluation(log_event,
+                                                               optional_evaluation_result));
     }
 
     if (false == optional_evaluation_result.has_value()) {
@@ -468,32 +439,26 @@ auto QueryHandlerImpl::evaluate_kv_pair_log_event(KeyValuePairLogEvent const& lo
 auto QueryHandlerImpl::AstExprIterator::create(clp_s::search::ast::Value* expr)
         -> ystdlib::error_handling::Result<AstExprIterator> {
     if (auto* and_expr{dynamic_cast<clp_s::search::ast::AndExpr*>(expr)}; nullptr != and_expr) {
-        return AstExprIterator{
-                ExprVariant{and_expr},
-                and_expr->op_begin(),
-                and_expr->op_end(),
-                and_expr->is_inverted()
-        };
+        return AstExprIterator{ExprVariant{and_expr},
+                               and_expr->op_begin(),
+                               and_expr->op_end(),
+                               and_expr->is_inverted()};
     }
 
     if (auto* or_expr{dynamic_cast<clp_s::search::ast::OrExpr*>(expr)}; nullptr != or_expr) {
-        return AstExprIterator{
-                ExprVariant{or_expr},
-                or_expr->op_begin(),
-                or_expr->op_end(),
-                or_expr->is_inverted()
-        };
+        return AstExprIterator{ExprVariant{or_expr},
+                               or_expr->op_begin(),
+                               or_expr->op_end(),
+                               or_expr->is_inverted()};
     }
 
     if (auto* filter_expr{dynamic_cast<clp_s::search::ast::FilterExpr*>(expr)};
         nullptr != filter_expr)
     {
-        return AstExprIterator{
-                ExprVariant{filter_expr},
-                filter_expr->op_begin(),
-                filter_expr->op_end(),
-                filter_expr->is_inverted()
-        };
+        return AstExprIterator{ExprVariant{filter_expr},
+                               filter_expr->op_begin(),
+                               filter_expr->op_end(),
+                               filter_expr->is_inverted()};
     }
 
     return ErrorCode{ErrorCodeEnum::ExpressionTypeUnexpected};
@@ -510,29 +475,26 @@ auto QueryHandlerImpl::AstExprIterator::next_op()
     return create((m_op_next_it++)->get());
 }
 
-auto QueryHandlerImpl::evaluate_filter_expr(
-        clp_s::search::ast::FilterExpr* filter_expr,
-        KeyValuePairLogEvent const& log_event
-) -> ystdlib::error_handling::Result<AstEvaluationResult> {
+auto QueryHandlerImpl::evaluate_filter_expr(clp_s::search::ast::FilterExpr* filter_expr,
+                                            KeyValuePairLogEvent const& log_event)
+        -> ystdlib::error_handling::Result<AstEvaluationResult> {
     auto* col{filter_expr->get_column().get()};
 
     if (col->is_pure_wildcard()) {
-        auto const auto_gen_evaluation_result{YSTDLIB_ERROR_HANDLING_TRYX(evaluate_wildcard_filter(
-                filter_expr,
-                log_event.get_auto_gen_node_id_value_pairs(),
-                log_event.get_auto_gen_keys_schema_tree(),
-                m_case_sensitive_match
-        ))};
+        auto const auto_gen_evaluation_result{YSTDLIB_ERROR_HANDLING_TRYX(
+                evaluate_wildcard_filter(filter_expr,
+                                         log_event.get_auto_gen_node_id_value_pairs(),
+                                         log_event.get_auto_gen_keys_schema_tree(),
+                                         m_case_sensitive_match))};
         if (AstEvaluationResult::True == auto_gen_evaluation_result) {
             return AstEvaluationResult::True;
         }
 
-        auto const user_gen_evaluation_result{YSTDLIB_ERROR_HANDLING_TRYX(evaluate_wildcard_filter(
-                filter_expr,
-                log_event.get_user_gen_node_id_value_pairs(),
-                log_event.get_user_gen_keys_schema_tree(),
-                m_case_sensitive_match
-        ))};
+        auto const user_gen_evaluation_result{YSTDLIB_ERROR_HANDLING_TRYX(
+                evaluate_wildcard_filter(filter_expr,
+                                         log_event.get_user_gen_node_id_value_pairs(),
+                                         log_event.get_user_gen_keys_schema_tree(),
+                                         m_case_sensitive_match))};
         if (AstEvaluationResult::True == user_gen_evaluation_result) {
             return AstEvaluationResult::True;
         }
@@ -553,14 +515,11 @@ auto QueryHandlerImpl::evaluate_filter_expr(
     if (false == optional_is_auto_gen.has_value()) {
         return ErrorCode{ErrorCodeEnum::AstEvaluationInvariantViolation};
     }
-    auto const& schema_tree{
-            *optional_is_auto_gen ? log_event.get_auto_gen_keys_schema_tree()
-                                  : log_event.get_user_gen_keys_schema_tree()
-    };
-    auto const& node_id_value_pairs{
-            *optional_is_auto_gen ? log_event.get_auto_gen_node_id_value_pairs()
-                                  : log_event.get_user_gen_node_id_value_pairs()
-    };
+    auto const& schema_tree{*optional_is_auto_gen ? log_event.get_auto_gen_keys_schema_tree()
+                                                  : log_event.get_user_gen_keys_schema_tree()};
+    auto const& node_id_value_pairs{*optional_is_auto_gen
+                                            ? log_event.get_auto_gen_node_id_value_pairs()
+                                            : log_event.get_user_gen_node_id_value_pairs()};
     auto const& matchable_node_ids{m_resolved_column_to_schema_tree_node_ids.at(col)};
 
     ast_evaluation_result_bitmask_t evaluation_results{};
@@ -574,9 +533,7 @@ auto QueryHandlerImpl::evaluate_filter_expr(
                         matchable_node_id,
                         node_id_value_pairs.at(matchable_node_id),
                         schema_tree,
-                        m_case_sensitive_match
-                ))
-        };
+                        m_case_sensitive_match))};
         if (AstEvaluationResult::True == evaluation_result) {
             return AstEvaluationResult::True;
         }
@@ -591,8 +548,7 @@ auto QueryHandlerImpl::evaluate_filter_expr(
 
 auto QueryHandlerImpl::pop_from_ast_dfs_stack_and_update_evaluation_results(
         clp::ffi::ir_stream::search::AstEvaluationResult evaluation_result,
-        std::optional<AstEvaluationResult>& query_evaluation_result
-) -> void {
+        std::optional<AstEvaluationResult>& query_evaluation_result) -> void {
     auto const is_inverted{m_ast_dfs_stack.back().first.is_inverted()};
     if (AstEvaluationResult::Pruned != evaluation_result && is_inverted) {
         evaluation_result = AstEvaluationResult::True == evaluation_result
@@ -609,41 +565,34 @@ auto QueryHandlerImpl::pop_from_ast_dfs_stack_and_update_evaluation_results(
 
 auto QueryHandlerImpl::advance_ast_dfs_evaluation(
         KeyValuePairLogEvent const& log_event,
-        std::optional<AstEvaluationResult>& query_evaluation_result
-) -> ystdlib::error_handling::Result<void> {
+        std::optional<AstEvaluationResult>& query_evaluation_result)
+        -> ystdlib::error_handling::Result<void> {
     auto& [expr_it, evaluation_results] = m_ast_dfs_stack.back();
     if (auto* filter_expr{expr_it.as_filter_expr()}; nullptr != filter_expr) {
         pop_from_ast_dfs_stack_and_update_evaluation_results(
                 YSTDLIB_ERROR_HANDLING_TRYX(evaluate_filter_expr(filter_expr, log_event)),
-                query_evaluation_result
-        );
+                query_evaluation_result);
         return ystdlib::error_handling::success();
     }
 
     if (auto const* and_expr{expr_it.as_and_expr()}; nullptr != and_expr) {
         // Handle `AndExpr` evaluation
         if (0 != (evaluation_results & AstEvaluationResult::Pruned)) {
-            pop_from_ast_dfs_stack_and_update_evaluation_results(
-                    AstEvaluationResult::Pruned,
-                    query_evaluation_result
-            );
+            pop_from_ast_dfs_stack_and_update_evaluation_results(AstEvaluationResult::Pruned,
+                                                                 query_evaluation_result);
             return ystdlib::error_handling::success();
         }
         if (0 != (evaluation_results & AstEvaluationResult::False)) {
-            pop_from_ast_dfs_stack_and_update_evaluation_results(
-                    AstEvaluationResult::False,
-                    query_evaluation_result
-            );
+            pop_from_ast_dfs_stack_and_update_evaluation_results(AstEvaluationResult::False,
+                                                                 query_evaluation_result);
             return ystdlib::error_handling::success();
         }
         auto const optional_next_op_it{expr_it.next_op()};
         if (optional_next_op_it.has_value()) {
             push_to_ast_dfs_stack(YSTDLIB_ERROR_HANDLING_TRYX(optional_next_op_it.value()));
         } else {
-            pop_from_ast_dfs_stack_and_update_evaluation_results(
-                    AstEvaluationResult::True,
-                    query_evaluation_result
-            );
+            pop_from_ast_dfs_stack_and_update_evaluation_results(AstEvaluationResult::True,
+                                                                 query_evaluation_result);
         }
         return ystdlib::error_handling::success();
     }
@@ -654,10 +603,8 @@ auto QueryHandlerImpl::advance_ast_dfs_evaluation(
         return ErrorCode{ErrorCodeEnum::AstEvaluationInvariantViolation};
     }
     if (0 != (evaluation_results & AstEvaluationResult::True)) {
-        pop_from_ast_dfs_stack_and_update_evaluation_results(
-                AstEvaluationResult::True,
-                query_evaluation_result
-        );
+        pop_from_ast_dfs_stack_and_update_evaluation_results(AstEvaluationResult::True,
+                                                             query_evaluation_result);
         return ystdlib::error_handling::success();
     }
     auto const optional_next_op_it{expr_it.next_op()};
@@ -666,18 +613,14 @@ auto QueryHandlerImpl::advance_ast_dfs_evaluation(
         return ystdlib::error_handling::success();
     }
     if (0 != (evaluation_results & AstEvaluationResult::False)) {
-        pop_from_ast_dfs_stack_and_update_evaluation_results(
-                AstEvaluationResult::False,
-                query_evaluation_result
-        );
+        pop_from_ast_dfs_stack_and_update_evaluation_results(AstEvaluationResult::False,
+                                                             query_evaluation_result);
         return ystdlib::error_handling::success();
     }
 
     // All pruned
-    pop_from_ast_dfs_stack_and_update_evaluation_results(
-            AstEvaluationResult::Pruned,
-            query_evaluation_result
-    );
+    pop_from_ast_dfs_stack_and_update_evaluation_results(AstEvaluationResult::Pruned,
+                                                         query_evaluation_result);
     return ystdlib::error_handling::success();
 }
 }  // namespace clp::ffi::ir_stream::search

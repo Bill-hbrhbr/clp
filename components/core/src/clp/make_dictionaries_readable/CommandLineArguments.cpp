@@ -14,8 +14,8 @@ using std::invalid_argument;
 using std::string;
 
 namespace clp::make_dictionaries_readable {
-CommandLineArgumentsBase::ParsingResult
-CommandLineArguments::parse_arguments(int argc, char const* argv[]) {
+CommandLineArgumentsBase::ParsingResult CommandLineArguments::parse_arguments(int argc,
+                                                                              char const* argv[]) {
     // Print out basic usage if user doesn't specify any options
     if (1 == argc) {
         print_basic_usage();

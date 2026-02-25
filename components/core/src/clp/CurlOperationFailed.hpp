@@ -15,13 +15,11 @@ namespace clp {
  */
 class CurlOperationFailed : public TraceableException {
 public:
-    CurlOperationFailed(
-            ErrorCode error_code,
-            char const* const filename,
-            int line_number,
-            CURLcode err,
-            std::string msg
-    )
+    CurlOperationFailed(ErrorCode error_code,
+                        char const* const filename,
+                        int line_number,
+                        CURLcode err,
+                        std::string msg)
             : TraceableException{error_code, filename, line_number},
               m_curl_err{err},
               m_msg{std::move(msg)} {}

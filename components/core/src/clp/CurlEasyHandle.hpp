@@ -19,13 +19,11 @@ public:
     // Constructors
     explicit CurlEasyHandle() : m_handle{curl_easy_init()} {
         if (nullptr == m_handle) {
-            throw CurlOperationFailed(
-                    ErrorCode_Failure,
-                    __FILE__,
-                    __LINE__,
-                    CURLE_FAILED_INIT,
-                    "`curl_easy_init` failed."
-            );
+            throw CurlOperationFailed(ErrorCode_Failure,
+                                      __FILE__,
+                                      __LINE__,
+                                      CURLE_FAILED_INIT,
+                                      "`curl_easy_init` failed.");
         }
         set_option(CURLOPT_FAILONERROR, cCurlOptionEnable);
     }
@@ -56,13 +54,11 @@ public:
     template <typename ValueType>
     auto set_option(CURLoption option, ValueType value) -> void {
         if (auto const err{curl_easy_setopt(m_handle, option, value)}; CURLE_OK != err) {
-            throw CurlOperationFailed(
-                    ErrorCode_Failure,
-                    __FILE__,
-                    __LINE__,
-                    err,
-                    "`curl_easy_setopt` failed."
-            );
+            throw CurlOperationFailed(ErrorCode_Failure,
+                                      __FILE__,
+                                      __LINE__,
+                                      err,
+                                      "`curl_easy_setopt` failed.");
         }
     }
 

@@ -81,12 +81,10 @@ public:
      * @param timestamp_end_pos
      * @return pointer to the timestamp pattern if found, nullptr otherwise
      */
-    static TimestampPattern const* search_known_ts_patterns(
-            std::string const& line,
-            epochtime_t& timestamp,
-            size_t& timestamp_begin_pos,
-            size_t& timestamp_end_pos
-    );
+    static TimestampPattern const* search_known_ts_patterns(std::string const& line,
+                                                            epochtime_t& timestamp,
+                                                            size_t& timestamp_begin_pos,
+                                                            size_t& timestamp_end_pos);
 
     /**
      * Gets the timestamp pattern's format string
@@ -117,12 +115,10 @@ public:
      * @param timestamp_end_pos
      * @return true if parsed successfully, false otherwise
      */
-    bool parse_timestamp(
-            std::string const& line,
-            epochtime_t& timestamp,
-            size_t& timestamp_begin_pos,
-            size_t& timestamp_end_pos
-    ) const;
+    bool parse_timestamp(std::string const& line,
+                         epochtime_t& timestamp,
+                         size_t& timestamp_begin_pos,
+                         size_t& timestamp_end_pos) const;
     /**
      * Inserts the timestamp into the given message using this pattern
      * @param timestamp

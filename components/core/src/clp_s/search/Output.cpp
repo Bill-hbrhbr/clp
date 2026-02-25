@@ -86,22 +86,19 @@ bool Output::filter() {
             continue;
         }
 
-        auto& reader = m_archive_reader->read_schema_table(
-                schema_id,
-                m_output_handler->should_output_metadata(),
-                m_should_marshal_records
-        );
+        auto& reader
+                = m_archive_reader->read_schema_table(schema_id,
+                                                      m_output_handler->should_output_metadata(),
+                                                      m_should_marshal_records);
         reader.initialize_filter(&m_query_runner);
 
         if (m_output_handler->should_output_metadata()) {
             epochtime_t timestamp{};
             int64_t log_event_idx{};
-            while (reader.get_next_message_with_metadata(
-                    message,
-                    timestamp,
-                    log_event_idx,
-                    &m_query_runner
-            ))
+            while (reader.get_next_message_with_metadata(message,
+                                                         timestamp,
+                                                         log_event_idx,
+                                                         &m_query_runner))
             {
                 m_output_handler->write(message, timestamp, archive_id, log_event_idx);
             }
@@ -112,19 +109,15 @@ bool Output::filter() {
         }
         auto ecode = m_output_handler->flush();
         if (ErrorCode::ErrorCodeSuccess != ecode) {
-            SPDLOG_ERROR(
-                    "Failed to flush output handler, error={}.",
-                    clp::enum_to_underlying_type(ecode)
-            );
+            SPDLOG_ERROR("Failed to flush output handler, error={}.",
+                         clp::enum_to_underlying_type(ecode));
             return false;
         }
     }
     auto ecode = m_output_handler->finish();
     if (ErrorCode::ErrorCodeSuccess != ecode) {
-        SPDLOG_ERROR(
-                "Failed to flush output handler, error={}.",
-                clp::enum_to_underlying_type(ecode)
-        );
+        SPDLOG_ERROR("Failed to flush output handler, error={}.",
+                     clp::enum_to_underlying_type(ecode));
         return false;
     }
     return true;

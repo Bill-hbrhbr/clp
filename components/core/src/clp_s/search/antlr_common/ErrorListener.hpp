@@ -11,14 +11,12 @@
 namespace clp_s::search::antlr_common {
 class ErrorListener : public antlr4::BaseErrorListener {
 public:
-    auto syntaxError(
-            [[maybe_unused]] antlr4::Recognizer* recognizer,
-            [[maybe_unused]] antlr4::Token* offending_symbol,
-            [[maybe_unused]] size_t line,
-            [[maybe_unused]] size_t char_position_in_line,
-            std::string const& msg,
-            [[maybe_unused]] std::exception_ptr e
-    ) -> void override {
+    auto syntaxError([[maybe_unused]] antlr4::Recognizer* recognizer,
+                     [[maybe_unused]] antlr4::Token* offending_symbol,
+                     [[maybe_unused]] size_t line,
+                     [[maybe_unused]] size_t char_position_in_line,
+                     std::string const& msg,
+                     [[maybe_unused]] std::exception_ptr e) -> void override {
         m_error = true;
         m_error_message = msg;
     }

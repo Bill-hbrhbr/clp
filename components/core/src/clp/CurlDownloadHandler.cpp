@@ -32,8 +32,7 @@ CurlDownloadHandler::CurlDownloadHandler(
         bool disable_caching,
         std::chrono::seconds connection_timeout,
         std::chrono::seconds overall_timeout,
-        std::optional<std::unordered_map<std::string, std::string>> const& http_header_kv_pairs
-)
+        std::optional<std::unordered_map<std::string, std::string>> const& http_header_kv_pairs)
         : m_error_msg_buf{std::move(error_msg_buf)} {
     if (nullptr != m_error_msg_buf) {
         // Set up error message buffer
@@ -71,11 +70,9 @@ CurlDownloadHandler::CurlDownloadHandler(
     constexpr std::string_view cRangeHeaderName{"range"};
     constexpr std::string_view cCacheControlHeaderName{"cache-control"};
     constexpr std::string_view cPragmaHeaderName{"pragma"};
-    std::unordered_set<std::string_view> const reserved_headers{
-            cRangeHeaderName,
-            cCacheControlHeaderName,
-            cPragmaHeaderName
-    };
+    std::unordered_set<std::string_view> const reserved_headers{cRangeHeaderName,
+                                                                cCacheControlHeaderName,
+                                                                cPragmaHeaderName};
     if (0 != offset) {
         m_http_headers.append(fmt::format("{}: bytes={}-", cRangeHeaderName, offset));
     }
@@ -91,29 +88,24 @@ CurlDownloadHandler::CurlDownloadHandler(
             // NOTE: We do not check for duplicate keys due to case insensitivity, leaving duplicate
             // handling to the server.
             auto lower_key{key};
-            std::transform(
-                    lower_key.begin(),
-                    lower_key.end(),
-                    lower_key.begin(),
-                    [](unsigned char c) -> char {
-                        // Implicitly cast the input character into `unsigned char` to avoid UB:
-                        // https://en.cppreference.com/w/cpp/string/byte/tolower
-                        return static_cast<char>(std::tolower(c));
-                    }
-            );
+            std::transform(lower_key.begin(),
+                           lower_key.end(),
+                           lower_key.begin(),
+                           [](unsigned char c) -> char {
+                               // Implicitly cast the input character into `unsigned char` to avoid
+                               // UB: https://en.cppreference.com/w/cpp/string/byte/tolower
+                               return static_cast<char>(std::tolower(c));
+                           });
             if (reserved_headers.contains(lower_key) || value.ends_with("\r\n")) {
                 throw CurlOperationFailed(
                         ErrorCode_Failure,
                         __FILE__,
                         __LINE__,
                         CURLE_BAD_FUNCTION_ARGUMENT,
-                        fmt::format(
-                                "`CurlDownloadHandler` failed to construct with the following "
-                                "invalid header: {}:{}",
-                                key,
-                                value
-                        )
-                );
+                        fmt::format("`CurlDownloadHandler` failed to construct with the following "
+                                    "invalid header: {}:{}",
+                                    key,
+                                    value));
             }
             m_http_headers.append(fmt::format("{}: {}", key, value));
         }

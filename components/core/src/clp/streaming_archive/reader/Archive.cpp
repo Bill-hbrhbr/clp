@@ -48,8 +48,7 @@ void Archive::open(string const& path) {
                     metadata_file_path.c_str(),
                     traceable_exception.get_filename(),
                     traceable_exception.get_line_number(),
-                    errno
-            );
+                    errno);
         } else {
             SPDLOG_CRITICAL(
                     "streaming_archive::reader::Archive: Failed to read archive metadata file "
@@ -57,8 +56,7 @@ void Archive::open(string const& path) {
                     metadata_file_path.c_str(),
                     traceable_exception.get_filename(),
                     traceable_exception.get_line_number(),
-                    error_code
-            );
+                    error_code);
         }
         throw;
     }
@@ -71,10 +69,8 @@ void Archive::open(string const& path) {
 
     auto metadata_db_path = boost::filesystem::path(path) / cMetadataDBFileName;
     if (false == boost::filesystem::exists(metadata_db_path)) {
-        SPDLOG_ERROR(
-                "streaming_archive::reader::Archive: Metadata DB not found: {}",
-                metadata_db_path.string()
-        );
+        SPDLOG_ERROR("streaming_archive::reader::Archive: Metadata DB not found: {}",
+                     metadata_db_path.string());
         throw OperationFailed(ErrorCode_FileNotFound, __FILENAME__, __LINE__);
     }
     m_metadata_db.open(metadata_db_path.string());
@@ -143,12 +139,10 @@ VariableDictionaryReader const& Archive::get_var_dictionary() const {
     return m_var_dictionary;
 }
 
-bool Archive::find_message_in_time_range(
-        File& file,
-        epochtime_t search_begin_timestamp,
-        epochtime_t search_end_timestamp,
-        Message& msg
-) {
+bool Archive::find_message_in_time_range(File& file,
+                                         epochtime_t search_begin_timestamp,
+                                         epochtime_t search_end_timestamp,
+                                         Message& msg) {
     return file.find_message_in_time_range(search_begin_timestamp, search_end_timestamp, msg);
 }
 
@@ -160,8 +154,9 @@ bool Archive::get_next_message(File& file, Message& msg) {
     return file.get_next_message(msg);
 }
 
-bool
-Archive::decompress_message(File& file, Message const& compressed_msg, string& decompressed_msg) {
+bool Archive::decompress_message(File& file,
+                                 Message const& compressed_msg,
+                                 string& decompressed_msg) {
     if (false == decompress_message_without_ts(compressed_msg, decompressed_msg)) {
         return false;
     }
@@ -187,33 +182,28 @@ Archive::decompress_message(File& file, Message const& compressed_msg, string& d
         }
         timestamp_patterns[file.get_current_ts_pattern_ix()].second.insert_formatted_timestamp(
                 compressed_msg.get_ts_in_milli(),
-                decompressed_msg
-        );
+                decompressed_msg);
     }
 
     return true;
 }
 
-bool
-Archive::decompress_message_without_ts(Message const& compressed_msg, string& decompressed_msg) {
+bool Archive::decompress_message_without_ts(Message const& compressed_msg,
+                                            string& decompressed_msg) {
     decompressed_msg.clear();
 
     // Build original message content
     auto const logtype_id = compressed_msg.get_logtype_id();
     auto const& logtype_entry = m_logtype_dictionary.get_entry(logtype_id);
     if (false
-        == EncodedVariableInterpreter::decode_variables_into_message(
-                logtype_entry,
-                m_var_dictionary,
-                compressed_msg.get_vars(),
-                decompressed_msg
-        ))
+        == EncodedVariableInterpreter::decode_variables_into_message(logtype_entry,
+                                                                     m_var_dictionary,
+                                                                     compressed_msg.get_vars(),
+                                                                     decompressed_msg))
     {
-        SPDLOG_ERROR(
-                "streaming_archive::reader::Archive: Failed to decompress variables from "
-                "logtype id {}",
-                compressed_msg.get_logtype_id()
-        );
+        SPDLOG_ERROR("streaming_archive::reader::Archive: Failed to decompress variables from "
+                     "logtype id {}",
+                     compressed_msg.get_logtype_id());
         return false;
     }
 
@@ -230,11 +220,9 @@ void Archive::decompress_empty_directories(string const& output_dir) {
         auto empty_directory_path = output_dir_path / path;
         auto error_code = create_directory_structure(empty_directory_path.string(), 0700);
         if (ErrorCode_Success != error_code) {
-            SPDLOG_ERROR(
-                    "Failed to create directory structure {}, errno={}",
-                    empty_directory_path.string().c_str(),
-                    errno
-            );
+            SPDLOG_ERROR("Failed to create directory structure {}, errno={}",
+                         empty_directory_path.string().c_str(),
+                         errno);
             throw OperationFailed(error_code, __FILENAME__, __LINE__);
         }
     }

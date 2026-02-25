@@ -40,9 +40,8 @@ auto get_test_dir() -> std::filesystem::path {
 }  // namespace
 
 TEST_CASE("memory_mapped_file_view_basic", "[ReadOnlyMemoryMappedFile]") {
-    auto const test_input_path{
-            get_test_dir() / std::filesystem::path{"test_network_reader_src"} / "random.log"
-    };
+    auto const test_input_path{get_test_dir() / std::filesystem::path{"test_network_reader_src"}
+                               / "random.log"};
     clp::FileReader file_reader{test_input_path.string()};
     auto const expected{read_content(file_reader)};
 
@@ -56,9 +55,8 @@ TEST_CASE("memory_mapped_file_view_basic", "[ReadOnlyMemoryMappedFile]") {
 }
 
 TEST_CASE("memory_mapped_file_view_empty", "[ReadOnlyMemoryMappedFile]") {
-    auto const test_input_path{
-            get_test_dir() / std::filesystem::path{"test_schema_files"} / "empty_schema.txt"
-    };
+    auto const test_input_path{get_test_dir() / std::filesystem::path{"test_schema_files"}
+                               / "empty_schema.txt"};
 
     auto result{clp::ReadOnlyMemoryMappedFile::create(test_input_path.string())};
     REQUIRE_FALSE(result.has_error());

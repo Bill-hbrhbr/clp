@@ -36,12 +36,10 @@ void ArchiveWriter::open(ArchiveWriterOption const& option) {
 
     m_archive_path = archive_path.string();
     if (false == std::filesystem::create_directory(m_archive_path, ec)) {
-        SPDLOG_ERROR(
-                "Failed to create archive directory \"{}\" - ({}) {}",
-                m_archive_path,
-                ec.value(),
-                ec.message()
-        );
+        SPDLOG_ERROR("Failed to create archive directory \"{}\" - ({}) {}",
+                     m_archive_path,
+                     ec.value(),
+                     ec.message());
         throw OperationFailed(ErrorCodeFailure, __FILENAME__, __LINE__);
     }
 
@@ -78,8 +76,7 @@ auto ArchiveWriter::close(bool is_split) -> ArchiveStats {
             {constants::cArchiveVarDictFile, var_dict_compressed_size},
             {constants::cArchiveLogDictFile, log_dict_compressed_size},
             {constants::cArchiveArrayDictFile, array_dict_compressed_size},
-            {constants::cArchiveTablesFile, table_compressed_size}
-    };
+            {constants::cArchiveTablesFile, table_compressed_size}};
     uint64_t offset = 0;
     for (auto& file : files) {
         uint64_t original_size = file.o;
@@ -92,10 +89,8 @@ auto ArchiveWriter::close(bool is_split) -> ArchiveStats {
         archive_range_index = write_single_file_archive(files);
     } else {
         FileWriter header_and_metadata_writer;
-        header_and_metadata_writer.open(
-                m_archive_path + constants::cArchiveHeaderFile,
-                FileWriter::OpenMode::CreateForWriting
-        );
+        header_and_metadata_writer.open(m_archive_path + constants::cArchiveHeaderFile,
+                                        FileWriter::OpenMode::CreateForWriting);
         archive_range_index = write_archive_metadata(header_and_metadata_writer, files);
         size_t metadata_size = header_and_metadata_writer.get_pos() - sizeof(ArchiveHeader);
 
@@ -108,15 +103,13 @@ auto ArchiveWriter::close(bool is_split) -> ArchiveStats {
         header_and_metadata_writer.close();
     }
 
-    ArchiveStats archive_stats{
-            m_id,
-            m_timestamp_dict.get_begin_timestamp(),
-            m_timestamp_dict.get_end_timestamp(),
-            m_uncompressed_size,
-            m_compressed_size,
-            archive_range_index,
-            is_split
-    };
+    ArchiveStats archive_stats{m_id,
+                               m_timestamp_dict.get_begin_timestamp(),
+                               m_timestamp_dict.get_end_timestamp(),
+                               m_uncompressed_size,
+                               m_compressed_size,
+                               archive_range_index,
+                               is_split};
     if (m_print_archive_stats) {
         std::cout << archive_stats.as_string() << '\n';
         std::cout << std::flush;
@@ -158,10 +151,9 @@ auto ArchiveWriter::write_single_file_archive(std::vector<ArchiveFileInfo> const
     return archive_range_index;
 }
 
-auto ArchiveWriter::write_archive_metadata(
-        FileWriter& archive_writer,
-        std::vector<ArchiveFileInfo> const& files
-) -> nlohmann::json {
+auto ArchiveWriter::write_archive_metadata(FileWriter& archive_writer,
+                                           std::vector<ArchiveFileInfo> const& files)
+        -> nlohmann::json {
     archive_writer.seek_from_begin(sizeof(ArchiveHeader));
 
     ZstdCompressor compressor;
@@ -210,10 +202,8 @@ auto ArchiveWriter::write_archive_metadata(
     return archive_range_index;
 }
 
-void ArchiveWriter::write_archive_files(
-        FileWriter& archive_writer,
-        std::vector<ArchiveFileInfo> const& files
-) {
+void ArchiveWriter::write_archive_files(FileWriter& archive_writer,
+                                        std::vector<ArchiveFileInfo> const& files) {
     FileReader reader;
     for (auto const& file : files) {
         std::string file_path = m_archive_path + file.n;
@@ -238,19 +228,18 @@ void ArchiveWriter::write_archive_files(
 }
 
 void ArchiveWriter::write_archive_header(FileWriter& archive_writer, size_t metadata_section_size) {
-    ArchiveHeader header{
-            cArchiveVersion,
-            m_uncompressed_size,
-            m_compressed_size,
-            static_cast<uint32_t>(metadata_section_size),
-            static_cast<uint16_t>(ArchiveCompressionType::Zstd)
-    };
+    ArchiveHeader header{cArchiveVersion,
+                         m_uncompressed_size,
+                         m_compressed_size,
+                         static_cast<uint32_t>(metadata_section_size),
+                         static_cast<uint16_t>(ArchiveCompressionType::Zstd)};
     archive_writer.seek_from_begin(0);
     archive_writer.write(reinterpret_cast<char const*>(&header), sizeof(header));
 }
 
-void
-ArchiveWriter::append_message(int32_t schema_id, Schema const& schema, ParsedMessage& message) {
+void ArchiveWriter::append_message(int32_t schema_id,
+                                   Schema const& schema,
+                                   ParsedMessage& message) {
     auto it = m_id_to_schema_writer.find(schema_id);
     if (it == m_id_to_schema_writer.end()) {
         auto schema_writer = std::make_unique<SchemaWriter>();
@@ -313,14 +302,12 @@ void ArchiveWriter::initialize_schema_writer(SchemaWriter* writer, Schema const&
                 writer->append_column(std::make_unique<FormattedFloatColumnWriter>(id));
                 break;
             case NodeType::DictionaryFloat:
-                writer->append_column(
-                        std::make_unique<DictionaryFloatColumnWriter>(id, m_var_dict)
-                );
+                writer->append_column(std::make_unique<DictionaryFloatColumnWriter>(id,
+                                                                                    m_var_dict));
                 break;
             case NodeType::ClpString:
                 writer->append_column(
-                        std::make_unique<ClpStringColumnWriter>(id, m_var_dict, m_log_dict)
-                );
+                        std::make_unique<ClpStringColumnWriter>(id, m_var_dict, m_log_dict));
                 break;
             case NodeType::VarString:
                 writer->append_column(std::make_unique<VariableStringColumnWriter>(id, m_var_dict));
@@ -330,8 +317,7 @@ void ArchiveWriter::initialize_schema_writer(SchemaWriter* writer, Schema const&
                 break;
             case NodeType::UnstructuredArray:
                 writer->append_column(
-                        std::make_unique<ClpStringColumnWriter>(id, m_var_dict, m_array_dict)
-                );
+                        std::make_unique<ClpStringColumnWriter>(id, m_var_dict, m_array_dict));
                 break;
             case NodeType::DeltaInteger:
                 writer->append_column(std::make_unique<DeltaEncodedInt64ColumnWriter>(id));
@@ -351,14 +337,10 @@ void ArchiveWriter::initialize_schema_writer(SchemaWriter* writer, Schema const&
 }
 
 std::pair<size_t, size_t> ArchiveWriter::store_tables() {
-    m_tables_file_writer.open(
-            m_archive_path + constants::cArchiveTablesFile,
-            FileWriter::OpenMode::CreateForWriting
-    );
-    m_table_metadata_file_writer.open(
-            m_archive_path + constants::cArchiveTableMetadataFile,
-            FileWriter::OpenMode::CreateForWriting
-    );
+    m_tables_file_writer.open(m_archive_path + constants::cArchiveTablesFile,
+                              FileWriter::OpenMode::CreateForWriting);
+    m_table_metadata_file_writer.open(m_archive_path + constants::cArchiveTableMetadataFile,
+                                      FileWriter::OpenMode::CreateForWriting);
     m_table_metadata_compressor.open(m_table_metadata_file_writer, m_compression_level);
 
     /**
@@ -418,12 +400,10 @@ std::pair<size_t, size_t> ArchiveWriter::store_tables() {
     m_tables_compressor.open(m_tables_file_writer, m_compression_level);
     for (auto it : schemas) {
         it->second->store(m_tables_compressor);
-        schema_metadata.emplace_back(
-                current_stream_id,
-                current_stream_offset,
-                it->first,
-                it->second->get_num_messages()
-        );
+        schema_metadata.emplace_back(current_stream_id,
+                                     current_stream_offset,
+                                     it->first,
+                                     it->second->get_num_messages());
         current_stream_offset += it->second->get_total_uncompressed_size();
 
         if (current_stream_offset > m_min_table_size || schemas.size() == schema_metadata.size()) {

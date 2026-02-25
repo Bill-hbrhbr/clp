@@ -33,15 +33,13 @@ auto EncodedTextAst<encoded_variable_t>::decode_and_unparse() const -> optional<
     auto dict_var_handler = [&](string const& dict_var) { decoded_string.append(dict_var); };
 
     try {
-        generic_decode_message<true>(
-                m_logtype,
-                m_encoded_vars,
-                m_dict_vars,
-                constant_handler,
-                encoded_int_handler,
-                encoded_float_handler,
-                dict_var_handler
-        );
+        generic_decode_message<true>(m_logtype,
+                                     m_encoded_vars,
+                                     m_dict_vars,
+                                     constant_handler,
+                                     encoded_int_handler,
+                                     encoded_float_handler,
+                                     dict_var_handler);
     } catch (DecodingException const& e) {
         return std::nullopt;
     }

@@ -32,12 +32,10 @@ static bool serialize_logtype(string_view logtype, vector<int8_t>& ir_buf);
  * @param time_zone_id
  * @param metadata
  */
-static void add_base_metadata_fields(
-        string_view timestamp_pattern,
-        string_view timestamp_pattern_syntax,
-        string_view time_zone_id,
-        nlohmann::json& metadata
-);
+static void add_base_metadata_fields(string_view timestamp_pattern,
+                                     string_view timestamp_pattern_syntax,
+                                     string_view time_zone_id,
+                                     nlohmann::json& metadata);
 
 /**
  * A functor for encoding dictionary variables in a message
@@ -92,12 +90,10 @@ static bool serialize_logtype(string_view logtype, vector<int8_t>& ir_buf) {
     return true;
 }
 
-static void add_base_metadata_fields(
-        string_view timestamp_pattern,
-        string_view timestamp_pattern_syntax,
-        string_view time_zone_id,
-        nlohmann::json& metadata
-) {
+static void add_base_metadata_fields(string_view timestamp_pattern,
+                                     string_view timestamp_pattern_syntax,
+                                     string_view time_zone_id,
+                                     nlohmann::json& metadata) {
     metadata[cProtocol::Metadata::VersionKey]
             = cProtocol::Metadata::LatestBackwardCompatibleVersion;
     metadata[cProtocol::Metadata::VariablesSchemaIdKey] = cVariablesSchemaVersion;
@@ -108,12 +104,10 @@ static void add_base_metadata_fields(
 }
 
 namespace eight_byte_encoding {
-bool serialize_preamble(
-        string_view timestamp_pattern,
-        string_view timestamp_pattern_syntax,
-        string_view time_zone_id,
-        vector<int8_t>& ir_buf
-) {
+bool serialize_preamble(string_view timestamp_pattern,
+                        string_view timestamp_pattern_syntax,
+                        string_view time_zone_id,
+                        vector<int8_t>& ir_buf) {
     // Write magic number
     for (auto b : cProtocol::EightByteEncodingMagicNumber) {
         ir_buf.push_back(b);
@@ -121,22 +115,18 @@ bool serialize_preamble(
 
     // Assemble metadata
     nlohmann::json metadata_json;
-    add_base_metadata_fields(
-            timestamp_pattern,
-            timestamp_pattern_syntax,
-            time_zone_id,
-            metadata_json
-    );
+    add_base_metadata_fields(timestamp_pattern,
+                             timestamp_pattern_syntax,
+                             time_zone_id,
+                             metadata_json);
 
     return serialize_metadata(metadata_json, ir_buf);
 }
 
-bool serialize_log_event(
-        epoch_time_ms_t timestamp,
-        string_view message,
-        string& logtype,
-        vector<int8_t>& ir_buf
-) {
+bool serialize_log_event(epoch_time_ms_t timestamp,
+                         string_view message,
+                         string& logtype,
+                         vector<int8_t>& ir_buf) {
     if (false == serialize_message(message, logtype, ir_buf)) {
         return false;
     }
@@ -148,8 +138,9 @@ bool serialize_log_event(
     return true;
 }
 
-bool
-serialize_message(std::string_view message, std::string& logtype, std::vector<int8_t>& ir_buf) {
+bool serialize_message(std::string_view message,
+                       std::string& logtype,
+                       std::vector<int8_t>& ir_buf) {
     auto encoded_var_handler = [&ir_buf](eight_byte_encoded_variable_t encoded_var) {
         ir_buf.push_back(cProtocol::Payload::VarEightByteEncoding);
         serialize_int(encoded_var, ir_buf);
@@ -161,8 +152,7 @@ serialize_message(std::string_view message, std::string& logtype, std::vector<in
                 logtype,
                 ir::escape_and_append_const_to_logtype,
                 encoded_var_handler,
-                DictionaryVariableHandler(ir_buf)
-        ))
+                DictionaryVariableHandler(ir_buf)))
     {
         return false;
     }
@@ -172,13 +162,11 @@ serialize_message(std::string_view message, std::string& logtype, std::vector<in
 }  // namespace eight_byte_encoding
 
 namespace four_byte_encoding {
-bool serialize_preamble(
-        string_view timestamp_pattern,
-        string_view timestamp_pattern_syntax,
-        string_view time_zone_id,
-        epoch_time_ms_t reference_timestamp,
-        vector<int8_t>& ir_buf
-) {
+bool serialize_preamble(string_view timestamp_pattern,
+                        string_view timestamp_pattern_syntax,
+                        string_view time_zone_id,
+                        epoch_time_ms_t reference_timestamp,
+                        vector<int8_t>& ir_buf) {
     // Write magic number
     for (auto b : cProtocol::FourByteEncodingMagicNumber) {
         ir_buf.push_back(b);
@@ -186,23 +174,19 @@ bool serialize_preamble(
 
     // Assemble metadata
     nlohmann::json metadata_json;
-    add_base_metadata_fields(
-            timestamp_pattern,
-            timestamp_pattern_syntax,
-            time_zone_id,
-            metadata_json
-    );
+    add_base_metadata_fields(timestamp_pattern,
+                             timestamp_pattern_syntax,
+                             time_zone_id,
+                             metadata_json);
     metadata_json[cProtocol::Metadata::ReferenceTimestampKey] = std::to_string(reference_timestamp);
 
     return serialize_metadata(metadata_json, ir_buf);
 }
 
-bool serialize_log_event(
-        epoch_time_ms_t timestamp_delta,
-        string_view message,
-        string& logtype,
-        vector<int8_t>& ir_buf
-) {
+bool serialize_log_event(epoch_time_ms_t timestamp_delta,
+                         string_view message,
+                         string& logtype,
+                         vector<int8_t>& ir_buf) {
     if (false == serialize_message(message, logtype, ir_buf)) {
         return false;
     }
@@ -226,8 +210,7 @@ bool serialize_message(string_view message, string& logtype, vector<int8_t>& ir_
                 logtype,
                 ir::escape_and_append_const_to_logtype,
                 encoded_var_handler,
-                DictionaryVariableHandler(ir_buf)
-        ))
+                DictionaryVariableHandler(ir_buf)))
     {
         return false;
     }

@@ -29,20 +29,16 @@ using std::vector;
  * @param strings
  * @param string_views
  */
-static void
-string_views_from_strings(vector<string> const& strings, vector<string_view>& string_views);
+static void string_views_from_strings(vector<string> const& strings,
+                                      vector<string_view>& string_views);
 
-TEMPLATE_TEST_CASE(
-        "Encoding integers",
-        "[ffi][encode-integer]",
-        eight_byte_encoded_variable_t,
-        four_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("Encoding integers",
+                   "[ffi][encode-integer]",
+                   eight_byte_encoded_variable_t,
+                   four_byte_encoded_variable_t) {
     // Code below only supports these two types right now
-    static_assert(
-            std::is_same_v<TestType, eight_byte_encoded_variable_t>
-            || std::is_same_v<TestType, four_byte_encoded_variable_t>
-    );
+    static_assert(std::is_same_v<TestType, eight_byte_encoded_variable_t>
+                  || std::is_same_v<TestType, four_byte_encoded_variable_t>);
 
     string value;
     string decoded_value;
@@ -164,12 +160,10 @@ TEMPLATE_TEST_CASE(
     REQUIRE(!encode_integer_string(value, encoded_var));
 }
 
-TEMPLATE_TEST_CASE(
-        "Encoding floats",
-        "[ffi][encode-float]",
-        eight_byte_encoded_variable_t,
-        four_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("Encoding floats",
+                   "[ffi][encode-float]",
+                   eight_byte_encoded_variable_t,
+                   four_byte_encoded_variable_t) {
     string value;
     string decoded_value;
     TestType encoded_var;
@@ -239,50 +233,44 @@ TEMPLATE_TEST_CASE(
 
     SECTION("Test unrepresentable floats") {
         if constexpr (std::is_same_v<TestType, four_byte_encoded_variable_t>) {
-            string const unrepresentable_values = GENERATE(
-                    "0.33554431",
-                    "-0.33554431",
-                    "3.3554432",
-                    "-3.3554432",
-                    "60.000004",
-                    "-60.000004"
-            );
+            string const unrepresentable_values = GENERATE("0.33554431",
+                                                           "-0.33554431",
+                                                           "3.3554432",
+                                                           "-3.3554432",
+                                                           "60.000004",
+                                                           "-60.000004");
             REQUIRE(false == encode_float_string(unrepresentable_values, encoded_var));
         }
     }
 
     SECTION("Test non-floats") {
-        string const non_floating_values = GENERATE(
-                "",
-                "a",
-                "-",
-                "+",
-                "-a",
-                "+a",
-                "--",
-                "++",
-                ".",
-                "1.",
-                " 1.0",
-                "1.0 ",
-                "- 1.0",
-                "+1.0",
-                "1.0f"
-                "1.0F",
-                "1.0l",
-                "1.0L",
-                "1.0.0"
-        );
+        string const non_floating_values = GENERATE("",
+                                                    "a",
+                                                    "-",
+                                                    "+",
+                                                    "-a",
+                                                    "+a",
+                                                    "--",
+                                                    "++",
+                                                    ".",
+                                                    "1.",
+                                                    " 1.0",
+                                                    "1.0 ",
+                                                    "- 1.0",
+                                                    "+1.0",
+                                                    "1.0f"
+                                                    "1.0F",
+                                                    "1.0l",
+                                                    "1.0L",
+                                                    "1.0.0");
         REQUIRE(false == encode_float_string(non_floating_values, encoded_var));
     }
 }
 
-TEMPLATE_TEST_CASE(
-        "encode_float_properties",
-        "[ffi][encode-float]",
-        eight_byte_encoded_variable_t,
-        four_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("encode_float_properties",
+                   "[ffi][encode-float]",
+                   eight_byte_encoded_variable_t,
+                   four_byte_encoded_variable_t) {
     // Test all possible combinations of the properties of the encoded float, except for individual
     // values of the 'digits' field, since that takes too long.
     constexpr size_t cMaxDigitsInRepresentableFloatVar
@@ -302,20 +290,16 @@ TEMPLATE_TEST_CASE(
                  ++decimal_point_pos)
             {
                 // Create a value for the `digits` property that has a certain number of digits
-                std::conditional_t<
-                        std::is_same_v<TestType, four_byte_encoded_variable_t>,
-                        uint32_t,
-                        uint64_t
-                >
+                std::conditional_t<std::is_same_v<TestType, four_byte_encoded_variable_t>,
+                                   uint32_t,
+                                   uint64_t>
                         digits = 0;
                 for (size_t i = 0; i < num_digits_in_digits_property; ++i) {
                     digits = digits * 10 + 9;
                 }
-                std::conditional_t<
-                        std::is_same_v<TestType, four_byte_encoded_variable_t>,
-                        uint32_t,
-                        uint64_t
-                >
+                std::conditional_t<std::is_same_v<TestType, four_byte_encoded_variable_t>,
+                                   uint32_t,
+                                   uint64_t>
                         cEncodedFloatDigitsBitMask
                         = std::is_same_v<TestType, four_byte_encoded_variable_t>
                                   ? clp::ffi::cFourByteEncodedFloatDigitsBitMask
@@ -332,23 +316,19 @@ TEMPLATE_TEST_CASE(
                 for (size_t high_bits = 0; high_bits < num_high_bits; ++high_bits) {
                     TestType test_encoded_var;
                     if (std::is_same_v<TestType, eight_byte_encoded_variable_t>) {
-                        test_encoded_var = encode_float_properties<TestType>(
-                                high_bits & 0x2,
-                                digits,
-                                num_digits,
-                                decimal_point_pos
-                        );
+                        test_encoded_var = encode_float_properties<TestType>(high_bits & 0x2,
+                                                                             digits,
+                                                                             num_digits,
+                                                                             decimal_point_pos);
                         // Since encode_float_properties erases the low bit of high_bits, we need to
                         // add it again manually
                         test_encoded_var
                                 = (high_bits << 62) | (((1ULL << 62) - 1) & test_encoded_var);
                     } else {
-                        test_encoded_var = encode_float_properties<TestType>(
-                                high_bits,
-                                digits,
-                                num_digits,
-                                decimal_point_pos
-                        );
+                        test_encoded_var = encode_float_properties<TestType>(high_bits,
+                                                                             digits,
+                                                                             num_digits,
+                                                                             decimal_point_pos);
                     }
 
                     INFO("high_bits: " << high_bits);
@@ -361,10 +341,8 @@ TEMPLATE_TEST_CASE(
                     {
                         REQUIRE_NOTHROW(decode_float_var(test_encoded_var));
                     } else {
-                        REQUIRE_THROWS_AS(
-                                decode_float_var(test_encoded_var),
-                                clp::ffi::EncodingException
-                        );
+                        REQUIRE_THROWS_AS(decode_float_var(test_encoded_var),
+                                          clp::ffi::EncodingException);
                     }
                 }
             }
@@ -372,28 +350,25 @@ TEMPLATE_TEST_CASE(
     }
 }
 
-TEMPLATE_TEST_CASE(
-        "Encoding messages",
-        "[ffi][encode-message]",
-        eight_byte_encoded_variable_t,
-        four_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("Encoding messages",
+                   "[ffi][encode-message]",
+                   eight_byte_encoded_variable_t,
+                   four_byte_encoded_variable_t) {
     string message;
 
     // Test encoding
     string logtype;
     vector<TestType> encoded_vars;
     vector<int32_t> dictionary_var_bounds;
-    vector<string> var_strs
-            = {"4938",
-               std::to_string(INT32_MAX),
-               std::to_string(INT64_MAX),
-               "0.1",
-               "-25.519686",
-               "-25.5196868642755",
-               "-00.00",
-               "bin/python2.7.3",
-               "abc123"};
+    vector<string> var_strs = {"4938",
+                               std::to_string(INT32_MAX),
+                               std::to_string(INT64_MAX),
+                               "0.1",
+                               "-25.519686",
+                               "-25.5196868642755",
+                               "-00.00",
+                               "bin/python2.7.3",
+                               "abc123"};
     size_t var_ix = 0;
     message = "here is a string with a small int " + var_strs[var_ix++];
     message += " and a medium int " + var_strs[var_ix++];
@@ -430,14 +405,12 @@ TEMPLATE_TEST_CASE(
     }
 
     // Test decoding
-    auto decoded_message = decode_message(
-            logtype,
-            encoded_vars.data(),
-            encoded_vars.size(),
-            all_dictionary_vars,
-            dictionary_var_end_offsets.data(),
-            dictionary_var_end_offsets.size()
-    );
+    auto decoded_message = decode_message(logtype,
+                                          encoded_vars.data(),
+                                          encoded_vars.size(),
+                                          all_dictionary_vars,
+                                          dictionary_var_end_offsets.data(),
+                                          dictionary_var_end_offsets.size());
     REQUIRE(decoded_message == message);
 
     // Test encoding a message with a variable placeholder after the variables
@@ -450,12 +423,10 @@ TEMPLATE_TEST_CASE(
     REQUIRE(encode_message(message, logtype, encoded_vars, dictionary_var_bounds));
 }
 
-TEMPLATE_TEST_CASE(
-        "wildcard_query_matches_any_encoded_var",
-        "[ffi][wildcard_query_matches_any_encoded_var]",
-        eight_byte_encoded_variable_t,
-        four_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("wildcard_query_matches_any_encoded_var",
+                   "[ffi][wildcard_query_matches_any_encoded_var]",
+                   eight_byte_encoded_variable_t,
+                   four_byte_encoded_variable_t) {
     string message = "Static text, dictVar1, 123, 456.7, dictVar2, 987, 654.3";
 
     // Encode
@@ -469,36 +440,30 @@ TEMPLATE_TEST_CASE(
             "1*3",
             logtype,
             encoded_vars.data(),
-            encoded_vars.size()
-    ));
+            encoded_vars.size()));
     REQUIRE(false
             == wildcard_query_matches_any_encoded_var<VariablePlaceholder::Integer>(
                     "4*7",
                     logtype,
                     encoded_vars.data(),
-                    encoded_vars.size()
-            ));
+                    encoded_vars.size()));
     REQUIRE(wildcard_query_matches_any_encoded_var<VariablePlaceholder::Float>(
             "4*7",
             logtype,
             encoded_vars.data(),
-            encoded_vars.size()
-    ));
+            encoded_vars.size()));
     REQUIRE(false
             == wildcard_query_matches_any_encoded_var<VariablePlaceholder::Float>(
                     "1*3",
                     logtype,
                     encoded_vars.data(),
-                    encoded_vars.size()
-            ));
+                    encoded_vars.size()));
 }
 
-TEMPLATE_TEST_CASE(
-        "wildcard_match_encoded_vars",
-        "[ffi][wildcard_match_encoded_vars]",
-        eight_byte_encoded_variable_t,
-        four_byte_encoded_variable_t
-) {
+TEMPLATE_TEST_CASE("wildcard_match_encoded_vars",
+                   "[ffi][wildcard_match_encoded_vars]",
+                   eight_byte_encoded_variable_t,
+                   four_byte_encoded_variable_t) {
     string message = "Static text, dictVar1, 123, 456.7, dictVar2, 987, 654.3";
 
     // Encode a message
@@ -519,13 +484,11 @@ TEMPLATE_TEST_CASE(
 
         string_views_from_strings(wildcard_var_queries, wildcard_var_query_views);
 
-        REQUIRE(wildcard_match_encoded_vars(
-                logtype,
-                encoded_vars.data(),
-                encoded_vars.size(),
-                wildcard_var_types,
-                wildcard_var_query_views
-        ));
+        REQUIRE(wildcard_match_encoded_vars(logtype,
+                                            encoded_vars.data(),
+                                            encoded_vars.size(),
+                                            wildcard_var_types,
+                                            wildcard_var_query_views));
     }
 
     SECTION("Same number of wildcard variables and encoded variables") {
@@ -540,13 +503,11 @@ TEMPLATE_TEST_CASE(
 
         string_views_from_strings(wildcard_var_queries, wildcard_var_query_views);
 
-        REQUIRE(wildcard_match_encoded_vars(
-                logtype,
-                encoded_vars.data(),
-                encoded_vars.size(),
-                wildcard_var_types,
-                wildcard_var_query_views
-        ));
+        REQUIRE(wildcard_match_encoded_vars(logtype,
+                                            encoded_vars.data(),
+                                            encoded_vars.size(),
+                                            wildcard_var_types,
+                                            wildcard_var_query_views));
     }
 
     SECTION("More wildcard variables than encoded variables") {
@@ -564,18 +525,16 @@ TEMPLATE_TEST_CASE(
         string_views_from_strings(wildcard_var_queries, wildcard_var_query_views);
 
         REQUIRE(false
-                == wildcard_match_encoded_vars(
-                        logtype,
-                        encoded_vars.data(),
-                        encoded_vars.size(),
-                        wildcard_var_types,
-                        wildcard_var_query_views
-                ));
+                == wildcard_match_encoded_vars(logtype,
+                                               encoded_vars.data(),
+                                               encoded_vars.size(),
+                                               wildcard_var_types,
+                                               wildcard_var_query_views));
     }
 }
 
-static void
-string_views_from_strings(vector<string> const& strings, vector<string_view>& string_views) {
+static void string_views_from_strings(vector<string> const& strings,
+                                      vector<string_view>& string_views) {
     string_views.reserve(strings.size());
     for (auto const& s : strings) {
         string_views.emplace_back(s);

@@ -15,11 +15,9 @@ namespace clp_s::search::ast {
  * @param child
  * @param location
  */
-void splice_into(
-        std::shared_ptr<Expression> const& parent,
-        std::shared_ptr<Expression> const& child,
-        OpList::iterator location
-);
+void splice_into(std::shared_ptr<Expression> const& parent,
+                 std::shared_ptr<Expression> const& child,
+                 OpList::iterator location);
 
 /**
  * Casts a double to an int64_t, rounding up or down depending on the filter operation
@@ -39,11 +37,9 @@ bool double_as_int(double in, FilterOperation op, int64_t& out);
  * @param descriptor_namespace
  * @return true if the descriptor was tokenized successfully, false otherwise
  */
-[[nodiscard]] auto tokenize_column_descriptor(
-        std::string const& descriptor,
-        std::vector<std::string>& tokens,
-        std::string& descriptor_namespace
-) -> bool;
+[[nodiscard]] auto tokenize_column_descriptor(std::string const& descriptor,
+                                              std::vector<std::string>& tokens,
+                                              std::string& descriptor_namespace) -> bool;
 
 /**
  * Unescapes a KQL value string according to the escaping rules for KQL value strings and

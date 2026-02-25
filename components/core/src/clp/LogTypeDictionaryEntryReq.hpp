@@ -15,18 +15,16 @@ namespace clp {
  * @tparam LogTypeDictionaryEntryType The type of the logtype dictionary entry.
  */
 template <typename LogTypeDictionaryEntryType>
-concept LogTypeDictionaryEntryReq = requires(
-        LogTypeDictionaryEntryType entry,
-        size_t length,
-        std::string_view msg,
-        size_t& begin_pos_ref,
-        size_t& end_pos_ref,
-        std::string_view& parsed_var_ref,
-        size_t begin_pos,
-        size_t placeholder_idx,
-        ir::VariablePlaceholder& placeholder_ref,
-        std::string_view static_text
-) {
+concept LogTypeDictionaryEntryReq = requires(LogTypeDictionaryEntryType entry,
+                                             size_t length,
+                                             std::string_view msg,
+                                             size_t& begin_pos_ref,
+                                             size_t& end_pos_ref,
+                                             std::string_view& parsed_var_ref,
+                                             size_t begin_pos,
+                                             size_t placeholder_idx,
+                                             ir::VariablePlaceholder& placeholder_ref,
+                                             std::string_view static_text) {
     /**
      * Clears all internal state.
      */

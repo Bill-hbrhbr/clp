@@ -251,10 +251,9 @@ void PageAllocatedVector<ValueType>::increase_capacity(size_t required_capacity)
     if (required_capacity <= m_capacity) {
         return;
     }
-    size_t new_size = int_round_up_to_multiple(
-            std::max(2 * m_capacity, required_capacity) * sizeof(ValueType),
-            static_cast<size_t>(m_page_size)
-    );
+    size_t new_size = int_round_up_to_multiple(std::max(2 * m_capacity, required_capacity)
+                                                       * sizeof(ValueType),
+                                               static_cast<size_t>(m_page_size));
 
     void* new_region;
     if (nullptr == m_values) {

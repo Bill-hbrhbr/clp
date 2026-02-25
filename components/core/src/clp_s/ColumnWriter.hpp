@@ -163,11 +163,9 @@ public:
     using encoded_log_dict_id_t = uint64_t;
 
     // Constructor
-    ClpStringColumnWriter(
-            int32_t id,
-            std::shared_ptr<VariableDictionaryWriter> var_dict,
-            std::shared_ptr<LogTypeDictionaryWriter> log_dict
-    )
+    ClpStringColumnWriter(int32_t id,
+                          std::shared_ptr<VariableDictionaryWriter> var_dict,
+                          std::shared_ptr<LogTypeDictionaryWriter> log_dict)
             : BaseColumnWriter(id),
               m_var_dict(std::move(var_dict)),
               m_log_dict(std::move(log_dict)) {}
@@ -205,8 +203,8 @@ private:
      * @param offset
      * @return The encoded log dict id
      */
-    static encoded_log_dict_id_t
-    encode_log_dict_id(clp::logtype_dictionary_id_t id, uint64_t offset) {
+    static encoded_log_dict_id_t encode_log_dict_id(clp::logtype_dictionary_id_t id,
+                                                    uint64_t offset) {
         return static_cast<encoded_log_dict_id_t>(id) | (offset << cOffsetBitPosition);
     }
 
