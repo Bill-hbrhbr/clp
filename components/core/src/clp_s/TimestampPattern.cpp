@@ -9,7 +9,8 @@
 
 #include <date/date.h>
 #include <spdlog/spdlog.h>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 using clp::string_utils::convert_string_to_int;
 using std::string;

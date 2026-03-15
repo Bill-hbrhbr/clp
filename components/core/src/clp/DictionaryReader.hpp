@@ -8,7 +8,8 @@
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "dictionary_utils.hpp"
 #include "DictionaryEntry.hpp"

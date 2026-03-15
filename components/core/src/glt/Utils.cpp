@@ -11,7 +11,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <spdlog/spdlog.h>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "spdlog_with_specializations.hpp"
 

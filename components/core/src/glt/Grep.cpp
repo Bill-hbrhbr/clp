@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include <string_utils/string_utils.hpp>
+#include <clp/string_utils/string_utils.hpp>
 
 #include "EncodedVariableInterpreter.hpp"
 #include "ir/parsing.hpp"

@@ -7,7 +7,8 @@
 #include <mongocxx/instance.hpp>
 #include <nlohmann/json.hpp>
 #include <spdlog/sinks/stdout_sinks.h>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../../reducer/network_utils.hpp"
 #include "../clp/FileDecompressor.hpp"

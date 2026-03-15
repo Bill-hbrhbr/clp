@@ -8,7 +8,8 @@
 #include <boost/regex.hpp>
 #include <fmt/chrono.h>
 #include <fmt/format.h>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../ErrorCode.hpp"
 #include "../hash_utils.hpp"

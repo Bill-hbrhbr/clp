@@ -1,4 +1,4 @@
-#include "string_utils/string_utils.hpp"
+#include "string_utils.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -7,7 +7,7 @@
 #include <string>
 #include <string_view>
 
-#include "string_utils/constants.hpp"
+#include "constants.hpp"
 
 using std::string;
 using std::string_view;

@@ -10,7 +10,8 @@
 #include <utility>
 
 #include <boost/algorithm/string/case_conv.hpp>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../clp/Defs.h"
 #include "ArchiveReaderAdaptor.hpp"

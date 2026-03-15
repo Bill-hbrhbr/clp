@@ -9,7 +9,8 @@
 #include <boost/url.hpp>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #if CLP_BUILD_CLP_S_ENABLE_CURL
     #include "../clp/NetworkReader.hpp"

@@ -3,7 +3,8 @@
 
 #include <boost/filesystem.hpp>
 #include <spdlog/sinks/stdout_sinks.h>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../FileWriter.hpp"
 #include "../ir/types.hpp"

@@ -7,7 +7,8 @@
 #include <vector>
 
 #include <boost/filesystem.hpp>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../../EncodedVariableInterpreter.hpp"
 #include "../../spdlog_with_specializations.hpp"

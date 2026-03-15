@@ -6,7 +6,8 @@
 
 #include <log_surgeon/Lexer.hpp>
 #include <spdlog/sinks/stdout_sinks.h>
-#include <string_utils/string_utils.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../Defs.h"
 #include "../global_metadata_db_utils.hpp"

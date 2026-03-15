@@ -3,8 +3,9 @@
 #include <vector>
 
 #include <nlohmann/json.hpp>
-#include <string_utils/string_utils.hpp>
 #include <ystdlib/error_handling/Result.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../ffi/ir_stream/decoding_methods.hpp"
 #include "../ffi/ir_stream/protocol_constants.hpp"

@@ -6,8 +6,8 @@
 
 #include <antlr4-runtime.h>
 #include <spdlog/spdlog.h>
-#include <string_utils/string_utils.hpp>
 
+#include <clp/string_utils/string_utils.hpp>
 #include <clp_s/timestamp_parser/TimestampParser.hpp>
 
 #include "../../archive_constants.hpp"

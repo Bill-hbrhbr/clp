@@ -16,7 +16,6 @@
 #include "EncodedTextAstError.hpp"
 #include "encoding_methods.hpp"
 #include "StringBlob.hpp"
-#include "type_utils.hpp"
 
 namespace clp::ffi {
 /**

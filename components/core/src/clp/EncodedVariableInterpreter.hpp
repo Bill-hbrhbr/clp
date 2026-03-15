@@ -7,7 +7,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <string_utils/string_utils.hpp>
 #include <ystdlib/error_handling/Result.hpp>
 
 #include <clp/Defs.h>
@@ -20,6 +19,7 @@
 #include <clp/LogTypeDictionaryEntryReq.hpp>
 #include <clp/Query.hpp>
 #include <clp/spdlog_with_specializations.hpp>
+#include <clp/string_utils/string_utils.hpp>
 #include <clp/TraceableException.hpp>
 #include <clp/type_utils.hpp>
 #include <clp/VariableDictionaryReaderReq.hpp>

@@ -6,8 +6,9 @@
 #include <string>
 #include <string_view>
 
-#include <string_utils/string_utils.hpp>
 #include <ystdlib/error_handling/Result.hpp>
+
+#include <clp/string_utils/string_utils.hpp>
 
 #include "../../../../clp_s/search/ast/FilterExpr.hpp"
 #include "../../../../clp_s/search/ast/FilterOperation.hpp"

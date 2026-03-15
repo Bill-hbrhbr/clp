@@ -10,8 +10,6 @@
 #include <vector>
 
 #include <log_surgeon/Lexer.hpp>
-#include <string_utils/constants.hpp>
-#include <string_utils/string_utils.hpp>
 
 #include <clp/Defs.h>
 #include <clp/EncodedVariableInterpreter.hpp>
@@ -21,6 +19,8 @@
 #include <clp/Query.hpp>
 #include <clp/QueryToken.hpp>
 #include <clp/SchemaSearcher.hpp>
+#include <clp/string_utils/constants.hpp>
+#include <clp/string_utils/string_utils.hpp>
 #include <clp/VariableDictionaryReaderReq.hpp>
 
 namespace clp {
