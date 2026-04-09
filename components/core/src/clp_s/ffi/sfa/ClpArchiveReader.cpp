@@ -1,7 +1,10 @@
 #include "ClpArchiveReader.hpp"
 
+#include <algorithm>
+#include <cstring>
 #include <cstdint>
 #include <exception>
+#include <iterator>
 #include <memory>
 #include <new>
 #include <string>
@@ -81,9 +84,11 @@ ClpArchiveReader::ClpArchiveReader(
         std::shared_ptr<std::vector<char>> archive_data
 )
         : m_archive_reader{std::move(reader)},
-          m_archive_data{std::move(archive_data)} {}
+          m_archive_data{std::move(archive_data)},
+          m_decoded_text_buffers(cChunkBufferSize * cNumChunkBuffers) {}
 
-ClpArchiveReader::ClpArchiveReader(ClpArchiveReader&& rhs) noexcept {
+ClpArchiveReader::ClpArchiveReader(ClpArchiveReader&& rhs) noexcept
+        : m_decoded_text_buffers(cChunkBufferSize * cNumChunkBuffers) {
     move_from(rhs);
 }
 
@@ -117,7 +122,13 @@ auto ClpArchiveReader::close() noexcept -> void {
     m_file_names.clear();
     m_file_infos.clear();
     m_tables.clear();
+    m_pending_text_tables = decltype(m_pending_text_tables){};
     m_log_events.clear();
+    m_active_decoded_text_buffer_idx = 1;
+    m_pending_text_message.clear();
+    m_pending_text_message_offset = 0;
+    m_log_event_text_idx = 0;
+    m_text_decode_done = false;
 }
 
 auto ClpArchiveReader::move_from(ClpArchiveReader& rhs) noexcept -> void {
@@ -127,7 +138,23 @@ auto ClpArchiveReader::move_from(ClpArchiveReader& rhs) noexcept -> void {
     m_file_names = std::move(rhs.m_file_names);
     m_file_infos = std::move(rhs.m_file_infos);
     m_tables = std::move(rhs.m_tables);
+    m_pending_text_tables = std::move(rhs.m_pending_text_tables);
     m_log_events = std::move(rhs.m_log_events);
+    m_decoded_text_buffers = std::move(rhs.m_decoded_text_buffers);
+    m_active_decoded_text_buffer_idx = std::exchange(rhs.m_active_decoded_text_buffer_idx, 1);
+    m_pending_text_message = std::move(rhs.m_pending_text_message);
+    m_pending_text_message_offset = std::exchange(rhs.m_pending_text_message_offset, 0);
+    m_log_event_text_idx = std::exchange(rhs.m_log_event_text_idx, 0);
+    m_text_decode_done = std::exchange(rhs.m_text_decode_done, false);
+}
+
+auto ClpArchiveReader::get_num_log_events_per_schema() const -> std::vector<uint64_t> {
+    std::vector<uint64_t> num_log_events_per_schema;
+    num_log_events_per_schema.reserve(m_tables.size());
+    for (auto const& table : m_tables) {
+        num_log_events_per_schema.push_back(nullptr == table ? 0 : table->get_num_messages());
+    }
+    return num_log_events_per_schema;
 }
 
 auto ClpArchiveReader::decode_all() -> Result<std::vector<LogEvent>> {
@@ -183,6 +210,79 @@ auto ClpArchiveReader::decode_all() -> Result<std::vector<LogEvent>> {
     }
 }
 
+auto ClpArchiveReader::decode_next_text_chunk() -> Result<uint64_t> {
+    if (m_text_decode_done) {
+        return 0;
+    }
+
+    if (nullptr == m_archive_reader) {
+        return SfaErrorCode{SfaErrorCodeEnum::NotInit};
+    }
+
+    if (m_pending_text_tables.empty() && false == m_text_decode_done) {
+        for (auto const& table : m_tables) {
+            if (false == table->done()) {
+                m_pending_text_tables.push(table);
+            }
+        }
+    }
+
+    m_active_decoded_text_buffer_idx = (m_active_decoded_text_buffer_idx + 1) % cNumChunkBuffers;
+    auto* const buffer_start{
+            m_decoded_text_buffers.data() + m_active_decoded_text_buffer_idx * cChunkBufferSize
+    };
+    size_t decoded_text_size{0};
+
+    try {
+        while (decoded_text_size < cChunkBufferSize) {
+            if (m_pending_text_message.empty()) {
+                if (m_pending_text_tables.empty()) {
+                    m_text_decode_done = true;
+                    break;
+                }
+
+                auto next_table = m_pending_text_tables.top();
+                m_pending_text_tables.pop();
+
+                if (false == next_table->get_next_message(m_pending_text_message)) {
+                    return SfaErrorCode{SfaErrorCodeEnum::IoFailure};
+                }
+                if (false == next_table->done()) {
+                    m_pending_text_tables.push(next_table);
+                }
+                m_pending_text_message_offset = 0;
+            }
+
+            auto const remaining_message_size{
+                    m_pending_text_message.size() - m_pending_text_message_offset
+            };
+            auto const remaining_chunk_capacity{cChunkBufferSize - decoded_text_size};
+            auto const bytes_to_copy{
+                    std::min(remaining_message_size, remaining_chunk_capacity)
+            };
+            std::memcpy(
+                    buffer_start + decoded_text_size,
+                    m_pending_text_message.data() + m_pending_text_message_offset,
+                    bytes_to_copy
+            );
+            decoded_text_size += bytes_to_copy;
+            m_pending_text_message_offset += bytes_to_copy;
+
+            if (m_pending_text_message_offset == m_pending_text_message.size()) {
+                m_pending_text_message.clear();
+            }
+        }
+
+        return static_cast<uint64_t>(decoded_text_size);
+    } catch (std::bad_alloc const&) {
+        SPDLOG_ERROR("Failed to decode archive text: out of memory.");
+        return SfaErrorCode{SfaErrorCodeEnum::NoMemory};
+    } catch (std::exception const& ex) {
+        SPDLOG_ERROR("Exception while decoding archive text: {}", ex.what());
+        return SfaErrorCode{SfaErrorCodeEnum::IoFailure};
+    }
+}
+
 auto ClpArchiveReader::precompute_archive_metadata() -> Result<void> {
     auto const& range_index{m_archive_reader->get_range_index()};
     m_file_names.reserve(range_index.size());
@@ -205,6 +305,7 @@ auto ClpArchiveReader::precompute_archive_metadata() -> Result<void> {
     m_archive_reader->read_dictionaries_and_metadata();
     m_archive_reader->open_packed_streams();
     m_tables = m_archive_reader->read_all_tables();
+    std::erase(m_tables, nullptr);
 
     return ystdlib::error_handling::success();
 }

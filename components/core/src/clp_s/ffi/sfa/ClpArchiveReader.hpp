@@ -3,18 +3,22 @@
 
 #include <cstdint>
 #include <memory>
+#include <queue>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <ystdlib/error_handling/Result.hpp>
+#include <ystdlib/containers/Array.hpp>
+
+#include <clp_s/SchemaReader.hpp>
 
 #include "LogEvent.hpp"
 
 namespace clp_s {
 // Forward include
 class ArchiveReader;
-class SchemaReader;
+//class SchemaReader;
 }  // namespace clp_s
 
 namespace clp_s::ffi::sfa {
@@ -105,6 +109,16 @@ public:
     [[nodiscard]] auto get_file_infos() const -> std::vector<FileInfo> { return m_file_infos; }
 
     /**
+     * @return The number of schema readers loaded from the archive.
+     */
+    [[nodiscard]] auto get_num_schemas() const -> size_t { return m_tables.size(); }
+
+    /**
+     * @return The number of log events in each schema table, in schema-reader order.
+     */
+    [[nodiscard]] auto get_num_log_events_per_schema() const -> std::vector<uint64_t>;
+
+    /**
      * Decodes all log events in global log-event-index order.
      *
      * Results are cached after the first successful decode. Subsequent calls return the cached
@@ -118,7 +132,39 @@ public:
      */
     [[nodiscard]] auto decode_all() -> ystdlib::error_handling::Result<std::vector<LogEvent>>;
 
+    /**
+     * Decodes all log messages in global log-event-index order into a cached newline-delimited
+     * text chunk buffer.
+     *
+     * Each call refreshes one of two internal chunk buffers and returns the number of bytes
+     * written into the refreshed buffer. A return value of 0 indicates EOF.
+     *
+     * @return The number of bytes written to the refreshed chunk buffer.
+     */
+    [[nodiscard]] auto decode_next_text_chunk() -> ystdlib::error_handling::Result<uint64_t>;
+
+    /**
+     * @return Pointer to the currently active decoded text chunk buffer.
+     */
+    [[nodiscard]] auto get_decoded_text_ptr() const -> uintptr_t {
+        return reinterpret_cast<uintptr_t>(
+                m_decoded_text_buffers.data() + m_active_decoded_text_buffer_idx * cChunkBufferSize
+        );
+    }
+
 private:
+    struct SchemaReaderGreater {
+        auto operator()(
+                std::shared_ptr<clp_s::SchemaReader> const& lhs,
+                std::shared_ptr<clp_s::SchemaReader> const& rhs
+        ) const -> bool {
+            return lhs->get_next_log_event_idx() > rhs->get_next_log_event_idx();
+        }
+    };
+
+    static constexpr size_t cChunkBufferSize = 8 * 1024 * 1024;
+    static constexpr size_t cNumChunkBuffers = 2;
+
     // Constructors
     explicit ClpArchiveReader(
             std::unique_ptr<clp_s::ArchiveReader> reader,
@@ -155,7 +201,18 @@ private:
     std::vector<std::string> m_file_names;
     std::vector<FileInfo> m_file_infos;
     std::vector<std::shared_ptr<clp_s::SchemaReader>> m_tables;
+    std::priority_queue<
+            std::shared_ptr<clp_s::SchemaReader>,
+            std::vector<std::shared_ptr<clp_s::SchemaReader>>,
+            SchemaReaderGreater>
+            m_pending_text_tables;
     std::vector<LogEvent> m_log_events;
+    ystdlib::containers::Array<char> m_decoded_text_buffers;
+    size_t m_active_decoded_text_buffer_idx{1};
+    std::string m_pending_text_message;
+    size_t m_pending_text_message_offset{0};
+    size_t m_log_event_text_idx{0};
+    bool m_text_decode_done{false};
 };
 }  // namespace clp_s::ffi::sfa
 
