@@ -74,9 +74,6 @@ class PackagePathConfig:
     #: Root directory containing all CLP package contents.
     clp_package_dir: Path
 
-    #: Root directory where all package test scripts and data are stored.
-    package_test_scripts_dir: Path
-
     #: Root directory for package tests output.
     test_root_dir: InitVar[Path]
 
@@ -103,9 +100,6 @@ class PackagePathConfig:
                 f" Missing directories: {', '.join(missing_dirs)}"
             )
             raise RuntimeError(err_msg)
-
-        # Validate directory for package test scripts.
-        validate_dir_exists(self.package_test_scripts_dir)
 
         # Initialize directory for package test output.
         validate_dir_exists(test_root_dir)
@@ -144,16 +138,6 @@ class PackagePathConfig:
     def decompress_script_path(self) -> Path:
         """:return: The absolute path to the package decompress script."""
         return self.clp_package_dir / "sbin" / "decompress.sh"
-
-    @property
-    def clp_json_test_data_path(self) -> Path:
-        """:return: The absolute path to the data for clp-json tests."""
-        return self.package_test_scripts_dir / "clp_json" / "data"
-
-    @property
-    def clp_text_test_data_path(self) -> Path:
-        """:return: The absolute path to the data for clp-text tests."""
-        return self.package_test_scripts_dir / "clp_text" / "data"
 
     def clear_package_archives(self) -> None:
         """Removes the contents of `clp-package/var/data/archives`."""
@@ -285,6 +269,9 @@ class IntegrationTestPathConfig:
     #: Default directory for integration test output.
     test_root_dir: Path
 
+    #: Default integration test project root directory.
+    integration_tests_project_root: Path
+
     #: Directory to store the downloaded logs.
     logs_download_dir: Path = field(init=False, repr=True)
 
@@ -300,6 +287,11 @@ class IntegrationTestPathConfig:
 
         self.test_root_dir.mkdir(parents=True, exist_ok=True)
         self.logs_download_dir.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def test_data_dir(self) -> Path:
+        """:return: The absolute path to the sample dataset directory."""
+        return self.integration_tests_project_root / "tests" / "data"
 
 
 @dataclass(frozen=True)

@@ -20,7 +20,8 @@ def clp_core_path_config() -> ClpCorePathConfig:
 def integration_test_path_config() -> IntegrationTestPathConfig:
     """Provides paths for the integration-test directory and its contents."""
     return IntegrationTestPathConfig(
-        test_root_dir=resolve_path_env_var("CLP_BUILD_DIR") / "integration-tests"
+        test_root_dir=resolve_path_env_var("CLP_BUILD_DIR") / "integration-tests",
+        integration_tests_project_root=resolve_path_env_var("INTEGRATION_TESTS_PROJECT_ROOT"),
     )
 
 
@@ -31,8 +32,5 @@ def fixt_package_path_config(
     """Provides paths for the clp-package directory and its contents."""
     return PackagePathConfig(
         clp_package_dir=resolve_path_env_var("CLP_PACKAGE_DIR"),
-        package_test_scripts_dir=(
-            resolve_path_env_var("INTEGRATION_TESTS_PROJECT_ROOT") / "tests" / "package_tests"
-        ),
         test_root_dir=integration_test_path_config.test_root_dir,
     )

@@ -14,6 +14,7 @@ from tests.utils.asserting_utils import (
     validate_package_instance,
     verify_package_compression,
 )
+from tests.utils.classes import IntegrationTestDataset
 from tests.utils.clp_mode_utils import CLP_API_SERVER_COMPONENT, CLP_BASE_COMPONENTS
 from tests.utils.config import PackageCompressionJob, PackageInstance, PackageModeConfig
 from tests.utils.package_utils import run_package_compression_script
@@ -57,7 +58,10 @@ def test_clp_json_startup(fixt_package_instance: PackageInstance) -> None:
 
 
 @pytest.mark.compression
-def test_clp_json_compression_json_multifile(fixt_package_instance: PackageInstance) -> None:
+def test_clp_json_compression_json_multifile(
+    fixt_package_instance: PackageInstance,
+    json_multifile: IntegrationTestDataset,
+) -> None:
     """
     Validate that the `clp-json` package successfully compresses the `json-multifile` dataset.
 
@@ -73,15 +77,17 @@ def test_clp_json_compression_json_multifile(fixt_package_instance: PackageInsta
     package_path_config.clear_package_archives()
 
     # Compress a dataset.
+    timestamp_key = json_multifile.metadata.timestamp_key
+    if timestamp_key is None:
+        pytest.fail(f"Dataset '{json_multifile.dataset_name}' is missing a timestamp key.")
+
     compression_job = PackageCompressionJob(
-        path_to_original_dataset=(
-            package_path_config.clp_json_test_data_path / "json-multifile" / "logs"
-        ),
+        path_to_original_dataset=json_multifile.logs_path,
         options=[
             "--timestamp-key",
-            "timestamp",
+            timestamp_key,
             "--dataset",
-            "json_multifile",
+            json_multifile.dataset_name,
         ],
         positional_args=None,
     )

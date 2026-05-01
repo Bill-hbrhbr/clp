@@ -4,8 +4,8 @@ import pytest
 
 from tests.utils.classes import (
     IntegrationTestDataset,
-    IntegrationTestPathConfig,
 )
+from tests.utils.config import IntegrationTestPathConfig
 
 
 @pytest.fixture(scope="session")
