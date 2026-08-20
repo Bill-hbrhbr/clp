@@ -94,7 +94,6 @@ clients read.
 | **api-server** | Rust | **search only** (`QueryConfig` has no `aggregation_config` field) | `client.submit_query` (sqlx) |
 | **package `search.py`** | Python | search, **optionally with aggregation** (`aggregation_config` set when `--count` / `--count-by-time` passed) — **one job row** | `submit_query_job` |
 | **package `decompress.py`** | Python | decompression only (`EXTRACT_IR` / `EXTRACT_JSON`) — not search | `submit_query_job` |
-| **mcp-server** | Python | **search only** | `clp_connector.py` |
 
 - **Search vs. aggregation**: both use `SEARCH_OR_AGGREGATION`. A job with
   `aggregation_config` set is an aggregation job; otherwise it is a plain search
@@ -109,8 +108,8 @@ clients read.
 - **Shared package helper**: `submit_query_job` in
   `clp_package_utils/scripts/native/utils.py` is shared by the package's
   `search.py` and `decompress.py`.
-- **Cancellation**: the package and mcp-server only submit jobs and observe their
-  status; cancellation is supported only by the webui server and the api-server.
+- **Cancellation**: the package only submits jobs and observes their status;
+  cancellation is supported only by the webui server and the api-server.
 
 ### 1.3 clp-s search output handlers
 
@@ -132,6 +131,53 @@ command), in priority order:
 2. else `network_address` set → **network**.
 3. else `write_to_file` → **file**.
 4. else → **results-cache**.
+
+### 1.4 Source-to-output-handler mapping
+
+Which handler a job selects follows from the fields each source sets on
+`SearchJobConfig` (per the selection priority above).
+
+| Source | stdout | file | network | results-cache | reducer |
+|---|---|---|---|---|---|
+| package `search.py` | — ¹ | — ² | ✓ | ✓ | ✓ |
+| webui server | — | — | — | ✓ (search job) | ✓ (aggregation job) |
+| api-server | — | ✓ ³ | — | ✓ ³ | — |
+
+package `decompress.py` is not listed — decompression uses `clp-s x` (extract),
+not a search output handler.
+
+Footnotes:
+
+1. package `search.py` stdout: terminal output is produced via the **network**
+   handler — clp-s streams to a TCP server that `search.py` runs, which prints to
+   its own stdout. The `stdout` handler is only reached when `clp-s search` is run
+   directly from a terminal; no job-submitting source selects it.
+2. package `search.py` file: `search.py` never sets `write_to_file`, so the `file`
+   handler is never selected.
+3. api-server: `file` vs `results-cache` is toggled by `buffer_results_in_mongodb`
+   — `false` → `file`, `true` → `results-cache`.
+
+### 1.5 Reducer (high-level)
+
+The reducer is a standalone C++ process (`reducer-server`) that performs the
+cross-archive **reduce** for aggregation jobs. clp-s search workers (one per
+archive) do the **map** locally — bucketing matches (`CountByTimeOutputHandler`)
+or counting (`CountReducerOutputHandler`) — and stream their per-archive partial
+results to the reducer over a TCP socket. The reducer accumulates the sum in
+memory (`CountOperator`) and upserts the combined `{timestamp, count}` timeline
+to the per-job results-cache collection every `upsert_interval` (default 100 ms),
+so the timeline fills in live as the job runs. On completion it does a final
+publish and acknowledges the query scheduler.
+
+- **Streaming reduce** — results are upserted incrementally, not summed in a
+  batch at the end.
+- **In-memory accumulator** — the hot working set stays off the results cache;
+  only the compact combined timeline is written.
+- **Completion handshake** — the reducer knows when all workers have flushed and
+  signals the scheduler.
+
+The reducer is spawned by a Python runner (`reducer.py`) with a configurable
+concurrency of N `reducer-server` processes.
 
 ### _1.1 `QUERY_JOBS_TABLE_NAME` is a message bus, not just a table
 
