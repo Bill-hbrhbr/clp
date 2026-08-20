@@ -1,14 +1,16 @@
 # Search Coordinator (Rust) — Design
 
-Porting the Python **query scheduler**
+Rewriting the Python **query scheduler**
 (`components/job-orchestration/job_orchestration/scheduler/query/query_scheduler.py`)
-to a Rust **search coordinator** modeled on `components/compression-coordinator`.
+as a Rust **search coordinator**. An existing framework can be referenced at
+`components/compression-coordinator`, though search has more complexities (job
+categorization, aggregation, decompression, cancellation).
 
 Scope: the full orchestration lifecycle — concurrency/pool, poll loop, job
 retirement/updates, sleep/wake cadence, query-table row reading, job
 categorization, cancellation, aggregation (timeline + other), and
 decompression. The current celery **reducer subsystem is deleted entirely** and
-must not be ported (see §7).
+must not be carried over (see §7).
 
 ---
 
@@ -194,7 +196,8 @@ buckets matches per archive (`m_bucket_counts[bucket] += 1`) and flushes them to
 the reducer over the socket. The reducer process (`CountOperator`) does the
 **cross-archive sum** and writes the combined `{timestamp, count}` timeline to
 Mongo. Deleting the reducer (§6) keeps the clp-s per-archive map; the
-cross-archive reduce moves into the coordinator (MVP+2).
+cross-archive reduce is done internally by MongoDB in the results cache (MVP+2)
+— never by the coordinator.
 
 ---
 
@@ -204,17 +207,17 @@ cross-archive reduce moves into the coordinator (MVP+2).
 |---|---|---|
 | **MVP** | Plain **search** jobs only. No aggregation, no cancellation, no decompression. | Get search dispatch + result retirement + DB updates working end-to-end through clp-s. |
 | **MVP+1** | **Cancellation** | Background coroutine scanning `QUERY_JOBS_TABLE_NAME` for `status=CANCELLING`; per-job `CancellationToken` aborts the in-flight search. Consumes the same CANCELLING rows the api-server/webui already write — no coordination needed. |
-| **MVP+2** | **Timeline aggregation** only | clp-s `--count-by-time` does per-archive bucketing (map); the coordinator does the cross-archive sum (reduce) the reducer used to do. No separate reducer process. |
+| **MVP+2** | **Timeline aggregation** only | clp-s `--count-by-time` does per-archive bucketing (map); workers write the per-archive buckets to the results cache; the cross-archive sum (reduce) is done internally by MongoDB. No reducer process, and no aggregation logic in the coordinator. |
 | **MVP+3** | **Decompression** (EXTRACT_IR / EXTRACT_JSON) | Decide celery-handoff vs Spider submission; resolve resource-group sharing. |
 | **MVP+N** | **Other aggregations** | Require new Spider functionality (not ready). Blocked on Spider. |
 
-Guiding rule: the celery reducer (`reducer_connection_queue`, `acquire_reducer_for_job`, `ReducerHandlerMessage*`, the reducer TCP server, `release_reducer_for_job`, the `reducer` subcommand in `fs_search_task`) is **deleted, not ported**. Timeline aggregation goes through clp-s natively; other aggregations go through Spider later.
+Guiding rule: the celery reducer (`reducer_connection_queue`, `acquire_reducer_for_job`, `ReducerHandlerMessage*`, the reducer TCP server, `release_reducer_for_job`, the `reducer` subcommand in `fs_search_task`) is **deleted, with no replacement in the coordinator**. Timeline aggregation goes through clp-s natively with the reduce done by MongoDB in the results cache; other aggregations go through Spider later.
 
 ---
 
 ## 4. Translation table (old → new)
 
-The port is a three-part project:
+The rewrite is a three-part project:
 
 1. **search-coordinator** — polling, job categorization, and status-update logic. This is the focus of this section. A naive baseline exists on branch `search-coordinator/init` (`components/search-coordinator`).
 2. **clp-tdl-package** — search task signatures, mirroring the existing compression tasks (out of scope for this doc).
@@ -222,11 +225,11 @@ The port is a three-part project:
 
 ### Part 1 baseline — branch `search-coordinator/init`
 
-The branch is a structural port of the **compression-coordinator**, already
+The branch reuses the structure of the **compression-coordinator**, already
 Spider-based (this settles the old "Celery vs Rust worker" question: tasks go to
 Spider). What it already has:
 
-| Area | On the branch | Ported from (compression-coordinator) |
+| Area | On the branch | Reference in compression-coordinator |
 |---|---|---|
 | Poll loop | `SearchCoordinator::run`: `select!` on `CancellationToken`; `saturating_sub` sleep; deferred `mark_jobs_dispatched` | `Coordinator::run` |
 | Two-phase fetch | `fetch_new_job_rows`: first fetch = PENDING + `dispatch_time IS NOT NULL` (re-dispatch, no LIMIT); subsequent = PENDING + `dispatch_time IS NULL` `LIMIT available_permits()` | same function, same queries |
@@ -248,9 +251,9 @@ never needed to categorize:
 
 - `fetch_new_job_rows` projects only `id` — it never reads `type`, `job_config`, or `creation_time`.
 - `QueryJobHandle::new` is a stub: no msgpack deserialization of `job_config`, no `SearchJobConfig` / `ExtractIrJobConfig` / `ExtractJsonJobConfig` variants, no `aggregation_config` branch. Contrast with compression's `S3CompressionJobHandle::new`, which deserializes `ClpIoConfig`, rejects non-S3 inputs with `Error::UnsupportedInputConfig`, and derives the clp-s options — the same shape search needs, plus the `type` dispatch in front.
-- The `UnsupportedInputConfig` skip path is ported into `create_job_handle` (warn + leave the row for another handler) but nothing produces the error yet. It is the right hook for the phased rollout: aggregation (until MVP+2) and `EXTRACT_*` (until MVP+3) rows return it and stay with the legacy scheduler.
+- The `UnsupportedInputConfig` skip path is carried over into `create_job_handle` (warn + leave the row for another handler) but nothing produces the error yet. It is the right hook for the phased rollout: aggregation (until MVP+2) and `EXTRACT_*` (until MVP+3) rows return it and stay with the legacy scheduler.
 - `num_tasks` is a placeholder constant; no `QUERY_TASKS_TABLE_NAME` rows are written; `num_tasks_completed` and `duration` are never set.
-- `update_job_status` has no previous-status CAS guard. Python guards with `set_job_or_task_status(prev_status=...)` (cancel-during-finish races), and compression's commit path CASes on `status = Running`; port the guard.
+- `update_job_status` has no previous-status CAS guard. Python guards with `set_job_or_task_status(prev_status=...)` (cancel-during-finish races), and compression's commit path CASes on `status = Running`; add the same guard.
 - No CANCELLING scan, no per-job cancellation wiring (MVP+1).
 
 Part-1 work on top of the baseline, in order: widen the fetch projection
@@ -405,16 +408,28 @@ has no `type` column — categorization is net-new for search.
 
 ## 6. Reducer deletion (explicit)
 
-Do **not** port any of:
-`reducer_connection_queue`, `asyncio.start_server` reducer handler, `handle_reducer_connection`, `ReducerHandlerMessage` / `ReducerHandlerMessageQueues` / `ReducerHandlerMessageType`, `acquire_reducer_for_job`, `release_reducer_for_job`, the reducer branches of `cancel_job_except_reducer`, the `WAITING_FOR_REDUCER` state, the `reducer` subcommand construction in `fs_search_task`, and the reducer handshake in `handle_finished_search_job`.
+Delete (do **not** carry over) all of:
 
-Timeline aggregation is a **map-reduce**: clp-s already does the per-archive map
-(`--count-by-time` emits per-archive bucket counts); the cross-archive reduce
-(summing buckets across all archives into one `{timestamp, count}` timeline) is
-currently the reducer's job and **moves into the coordinator** — no separate
-reducer process. Other aggregations are a future Spider-backed path (MVP+N), not
-a port of the reducer. The webui's separate `aggregationJobId` (§2.2) is part of
-this reducer-era design and is dropped alongside it.
+- `reducer_connection_queue` and the `asyncio.start_server` reducer TCP server
+- `handle_reducer_connection`
+- `ReducerHandlerMessage` / `ReducerHandlerMessageQueues` / `ReducerHandlerMessageType`
+- `acquire_reducer_for_job` / `release_reducer_for_job`
+- the reducer branches of `cancel_job_except_reducer`
+- the `WAITING_FOR_REDUCER` job state
+- the `reducer` subcommand construction in `fs_search_task`
+- the reducer handshake in `handle_finished_search_job`
+- the reducer process itself (`CountOperator` and friends)
+
+The reducer's role is **not** absorbed by the coordinator. The coordinator never
+executes search or aggregation logic — it only manages jobs and connects CLP
+services with Spider. Timeline aggregation instead works as: clp-s does the
+per-archive map (`--count-by-time` bucket counts), workers write those
+per-archive buckets to the **results cache**, and the cross-archive reduce
+(summing buckets into one `{timestamp, count}` timeline) is done **internally by
+MongoDB** over those documents. Other aggregations are a future Spider-backed
+path (MVP+N), not a reimplementation of the reducer. The webui's separate
+`aggregationJobId` (§2.2) is part of the reducer-era design and is dropped
+alongside it.
 
 ---
 
