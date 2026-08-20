@@ -17,7 +17,7 @@ must not be carried over (see §7).
 ## Catalog
 
 - [1. Background](#1-background)
-    - [1.1 Tables involved (MySQL control plane, MongoDB data plane)](#11-tables-involved-mysql-control-plane-mongodb-data-plane)
+    - [1.1 Tables and collections involved](#11-tables-and-collections-involved)
     - [1.2 Search query sources and the query jobs table](#12-search-query-sources-and-the-query-jobs-table)
     - [1.3 clp-s search output handlers](#13-clp-s-search-output-handlers)
     - [1.4 Source-to-output-handler mapping](#14-source-to-output-handler-mapping)
@@ -51,50 +51,40 @@ must not be carried over (see §7).
 
 ## 1. Background
 
-### 1.1 Tables involved (MySQL control plane, MongoDB data plane)
+### 1.1 Tables and collections involved
 
-Search orchestration splits across two storage tiers: a **MySQL control plane**
-that the coordinator reads and writes, and a **MongoDB data plane** (the "results
-cache") that clp-s workers write and clients (webui / api-server) read. The
-coordinator only touches the control plane — it never reads or writes the
-results cache (the coordinator manages jobs and connects CLP services with
-Spider; it does not execute search/aggregation logic).
+Two storage tiers: a **control plane** (MySQL) the coordinator reads and writes,
+and a **data plane** (MongoDB, the results cache) that clp-s workers write and
+clients read.
 
-**MySQL control plane — orchestration metadata.** Tables are created by
-`initialize-orchestration-db.py`; table-name constants `QUERY_JOBS_TABLE_NAME` /
-`QUERY_TASKS_TABLE_NAME` live in `clp_py_utils/clp_config.py` (Python) and
-`clp-rust-utils/src/job_config/search.rs` (Rust).
+**Control plane** (MySQL; created by `initialize-orchestration-db.py`):
 
-- `QUERY_JOBS_TABLE_NAME` — one row per query job. Columns: `id` (PK), `type`
-  (`QueryJobType`: `SEARCH_OR_AGGREGATION` / `EXTRACT_IR` / `EXTRACT_JSON`),
-  `status` (`QueryJobStatus`), `creation_time`, `start_time`, `duration`,
-  `num_tasks`, `num_tasks_completed`, `job_config` (`MEDIUMBLOB`,
-  msgpack-serialized `SearchJobConfig`). Indexed on `creation_time` and `status`.
-  The `search-coordinator/init` branch adds `status_msg`, `update_time`,
-  `spider_id`, `dispatch_time`, and a `JOB_SPIDER_ID` index — mirroring
-  `COMPRESSION_JOBS_TABLE_NAME`.
-- `QUERY_TASKS_TABLE_NAME` — one row per archive-level task within a job.
-  Columns: `id` (PK), `job_id` (FK → `QUERY_JOBS_TABLE_NAME.id`), `status`
-  (`QueryTaskStatus`), `archive_id`, `creation_time`, `start_time`, `duration`.
-  Indexed on `job_id`, `status`, `start_time`.
+- `QUERY_JOBS_TABLE_NAME` — one row per query job. Columns:
+    - `id`
+    - `type` (`QueryJobType`)
+    - `status` (`QueryJobStatus`)
+    - `creation_time`
+    - `start_time`
+    - `duration`
+    - `num_tasks`
+    - `num_tasks_completed`
+    - `job_config` (`MEDIUMBLOB`, msgpack `SearchJobConfig`)
+- `QUERY_TASKS_TABLE_NAME` — one row per archive-level task. Columns:
+    - `id`
+    - `job_id` (FK → `QUERY_JOBS_TABLE_NAME.id`)
+    - `status` (`QueryTaskStatus`)
+    - `archive_id`
+    - `start_time`
+    - `duration`
 
-For reference, the compression side uses the same shape (`COMPRESSION_JOBS_TABLE_NAME`
-/ `COMPRESSION_TASKS_TABLE_NAME`, with `spider_id` / `dispatch_time` / `clp_config`
-`MEDIUMBLOB`) — the structure the search-coordinator branch reuses.
+**Data plane** (MongoDB; `clp_config.results_cache`):
 
-**MongoDB data plane — the results cache** (`clp_config.results_cache`). clp-s
-output handlers write here; the coordinator does not.
-
-- One collection per query job, named by the job id (string). The submitting
-  client creates it up front (`createCollection(<jobId>.toString())`).
-- Plain-search jobs → the collection holds the matching log records.
-- Timeline-aggregation jobs → the collection holds `{timestamp, count}` timeline
-  documents. Legacy: the reducer process upserts the combined timeline here.
-  MVP+2: clp-s workers write per-archive bucket documents here and MongoDB
-  performs the cross-archive reduce internally.
-- A webui metadata collection (`searchResultsMetadataCollection`, keyed by
-  `searchJobId`) tracks per-search signal state (`lastSignal`, `errorMsg`,
-  `queryEngine`) — webui-specific, not coordinator-managed.
+- One collection per query job, named by the job id. Contents:
+    - matching records (plain search)
+    - `{timestamp, count}` timeline documents (aggregation)
+- `results_metadata_collection_name` (`clp_config.webui`) — per-search signal
+  state, keyed by `searchJobId`.
+- `stream_collection_name` — used by decompression jobs.
 
 ### _1.1 `QUERY_JOBS_TABLE_NAME` is a message bus, not just a table
 
