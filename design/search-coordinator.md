@@ -30,7 +30,7 @@ must not be carried over (see §7).
 - [3. Phased roadmap](#3-phased-roadmap)
 - [4. MVP](#4-mvp)
     - [4.1 Features to support](#41-features-to-support)
-    - [4.2 Support plan](#42-support-plan)
+    - [4.2 Limitations](#42-limitations)
     - [4.3 Features removed vs. the Python scheduler](#43-features-removed-vs-the-python-scheduler)
 - [5. MVP+1 — Cancellation](#5-mvp1-cancellation)
     - [5.1 Features to support](#51-features-to-support)
@@ -239,7 +239,7 @@ Cancellation is a DB write of `status=CANCELLING`; the coordinator polls it (tod
 
 | Phase | Scope | Notes |
 |---|---|---|
-| **MVP** | Plain **search** jobs only. No aggregation, no cancellation, no decompression. | Get search dispatch + result retirement + DB updates working end-to-end through clp-s. |
+| **MVP** | Plain **search** jobs only. No aggregation, no cancellation, no decompression. | Get search dispatch + job completion + DB updates working end-to-end through clp-s. |
 | **MVP+1** | **Cancellation** | Dedicated background coroutine scanning `QUERY_JOBS_TABLE_NAME` for `status=CANCELLING` and submitting the cancellation to Spider; the job handle terminates when Spider reports the job cancelled. The api-server/webui already write these CANCELLING rows (§2.2), so the coordinator just polls the table — no new producer-facing API. |
 | **MVP+2** | **Timeline aggregation** only | clp-s `--count-by-time` does per-archive bucketing (map); workers write the per-archive buckets to the results cache; the cross-archive sum (reduce) is done internally by MongoDB. No reducer process, and no aggregation logic in the coordinator. |
 | **MVP+3** | **Decompression** (EXTRACT_IR / EXTRACT_JSON) | Decide celery-handoff vs Spider submission; resolve resource-group sharing. |
@@ -251,7 +251,33 @@ Cancellation is a DB write of `status=CANCELLING`; the coordinator polls it (tod
 
 ### 4.1 Features to support
 
-### 4.2 Support plan
+The structure mirrors the compression-coordinator (poll loop, two-phase fetch, semaphore-bounded concurrency, job-handle lifecycle, status updates, startup recovery).
+
+**Query job status** transitions (the §2.1 state diagram) are **atomic, idempotent, and fault-tolerant**: the coordinator polls each job's current state (from `QUERY_JOBS_TABLE_NAME` and Spider), decides the next state, and writes it. Re-running the poll→decide→update cycle yields the same result, so a crash and restart is safe. This replaces the Python `prev_status` CAS (`UPDATE … WHERE status=<prev>`) — there is no guarded conditional write; the poll reads the prev state and the update writes the next state, giving cleaner state transitions.
+
+MVP features:
+
+- **Poll loop** — a `run` loop that sleeps on a configurable cadence and re-fetches jobs each tick, shutting down on a cancellation token.
+- **Two-phase fetch** — re-dispatch `PENDING` rows already marked for dispatch, then fetch new `PENDING` rows up to the available concurrency permits.
+- **Job categorization** — deserialize msgpack `job_config` and branch on `type` + `aggregation_config`; MVP accepts only `SEARCH_OR_AGGREGATION` with `aggregation_config = None` and leaves the rest for later phases (returned as unsupported).
+- **Concurrency control** — a semaphore bounding in-flight jobs, with a permit owned by each job handle.
+- **Dispatch** — submit the job to Spider, persist the Spider job id, and mark the row `RUNNING` with `start_time`/`num_tasks`.
+- **In-flight tracking** — poll Spider job state (idempotent start, exponential backoff) until terminal.
+- **Job completion** — on terminal Spider state, update the row to `SUCCEEDED`/`FAILED` with `duration`/`status_msg`; results already sit in the results cache (per-job collection) written by clp-s — the coordinator does not touch them.
+- **Startup recovery** — re-attach to `RUNNING` rows that already have a Spider job id, so a coordinator restart doesn't drop in-flight jobs.
+- **Schema additions** — `QUERY_JOBS_TABLE_NAME` gains `status_msg`, `update_time`, `spider_id`, `dispatch_time` + indices, aligned with the compression jobs table.
+
+### 4.2 Limitations
+
+What MVP definitely does **not** support:
+
+- **No aggregation** — `aggregation_config` must be absent; aggregation jobs are not handled (deferred to MVP+2 / Spider).
+- **No cancellation** — `status=CANCELLING` rows are not scanned or acted on (deferred to MVP+1).
+- **No decompression** — `EXTRACT_IR`/`EXTRACT_JSON` jobs are not handled (deferred to MVP+3).
+- **No `QUERY_TASKS_TABLE_NAME` writes** — MVP does not write per-archive task rows; `num_tasks` is a placeholder and per-task progress (`num_tasks_completed`) is not tracked.
+- **No reducer** — the reducer is not started, neither as a standalone service nor as part of the coordinator; aggregation is not handled in MVP (deferred to MVP+2, where the reduce is done by the results cache).
+- **Results only to the results cache** — only the per-job results-cache collection is produced; the `network`, `file`, and `stdout` output handlers are not wired through the coordinator.
+- **No `KILLED` state / `kill_hanging_jobs`** — orphaned jobs are recovered (re-attached) on restart, not killed.
 
 ### 4.3 Features removed vs. the Python scheduler
 
@@ -279,6 +305,12 @@ Cancellation is a DB write of `status=CANCELLING`; the coordinator polls it (tod
 ### 6.2 Support plan
 
 ### 6.3 Features removed vs. the Python scheduler
+
+---
+
+> **Legacy reference material below** — sections prefixed with `_` (`_2.3`, `_2.4`, `_4` Translation table, `_5`–`_7`) are retained from earlier drafts as context, not part of the new design.
+
+---
 
 ### _2.3 Scheduler-side handling (Python, today)
 
