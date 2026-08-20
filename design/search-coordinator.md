@@ -112,6 +112,27 @@ clients read.
 - **Cancellation**: the package and mcp-server only submit jobs and observe their
   status; cancellation is supported only by the webui server and the api-server.
 
+### 1.3 clp-s search output handlers
+
+A clp-s search worker (one per archive) writes its matches through one of five
+**output handlers**, selected by the search config.
+
+| Handler | subcommand | Class | What it does |
+|---|---|---|---|
+| **stdout** | `stdout` | `StandardOutputHandler` | writes `archive_id: log_event_idx: timestamp message` to stdout |
+| **file** | `file` | `FileOutputHandler` | writes results to a file path; the worker then optionally uploads to S3 |
+| **network** | `network` | `NetworkOutputHandler` | streams results over a TCP socket to `host:port` (`search_config.network_address`) |
+| **results-cache** | `results-cache` | `ResultsCacheOutputHandler` | writes results as documents into a results-cache collection (`--uri`, `--collection <job_id>`) |
+| **reducer** | `reducer` | `CountReducerOutputHandler` / `CountByTimeReducerOutputHandler` / `AggregationOutputHandler` | aggregation: streams **per-archive** aggregated results to the reducer process over a socket; sub-selected by `--count` / `--count-by-time` |
+
+Selection logic in `fs_search_task` (the celery worker building the clp-s
+command), in priority order:
+
+1. `aggregation_config` set → **reducer** (with `--count` / `--count-by-time`).
+2. else `network_address` set → **network**.
+3. else `write_to_file` → **file**.
+4. else → **results-cache**.
+
 ### _1.1 `QUERY_JOBS_TABLE_NAME` is a message bus, not just a table
 
 The scheduler is fully decoupled from job producers. There is no RPC between
