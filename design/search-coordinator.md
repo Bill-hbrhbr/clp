@@ -86,6 +86,32 @@ clients read.
   state, keyed by `searchJobId`.
 - `stream_collection_name` — used by decompression jobs.
 
+### 1.2 Search query sources and the query jobs table
+
+| Source | Language | Submits | Mechanism |
+|---|---|---|---|
+| **webui server** | TS/Fastify | search **and** aggregation, as **two separate job rows** (`searchJobId` + `aggregationJobId`) | `QueryJobDbManager.submitJob` (msgpack via `@msgpack/msgpack`) |
+| **api-server** | Rust | **search only** (`QueryConfig` has no `aggregation_config` field) | `client.submit_query` (sqlx) |
+| **package `search.py`** | Python | search, **optionally with aggregation** (`aggregation_config` set when `--count` / `--count-by-time` passed) — **one job row** | `submit_query_job` |
+| **package `decompress.py`** | Python | decompression only (`EXTRACT_IR` / `EXTRACT_JSON`) — not search | `submit_query_job` |
+| **mcp-server** | Python | **search only** | `clp_connector.py` |
+
+- **Search vs. aggregation**: both use `SEARCH_OR_AGGREGATION`. A job with
+  `aggregation_config` set is an aggregation job; otherwise it is a plain search
+  job.
+- **Common job format**: all sources ultimately write the same row format to
+  `QUERY_JOBS_TABLE_NAME`, with a msgpacked `SearchJobConfig`. The coordinator
+  therefore processes jobs based on `type` and `aggregation_config`, regardless
+  of source.
+- **Different aggregation styles**: the webui submits search and aggregation as
+  two separate job rows, while the package combines them into one row using
+  `aggregation_config`. Aggregation goes through the reducer in either case.
+- **Shared package helper**: `submit_query_job` in
+  `clp_package_utils/scripts/native/utils.py` is shared by the package's
+  `search.py` and `decompress.py`.
+- **Cancellation**: the package and mcp-server only submit jobs and observe their
+  status; cancellation is supported only by the webui server and the api-server.
+
 ### _1.1 `QUERY_JOBS_TABLE_NAME` is a message bus, not just a table
 
 The scheduler is fully decoupled from job producers. There is no RPC between
@@ -154,8 +180,8 @@ set (routes through the reducer today). "Search" means the same `type` with
 |---|---|---|---|
 | **webui server** | TS/Fastify | search **and** aggregation, as **two separate job rows** (`searchJobId` + `aggregationJobId`) | `QueryJobDbManager.submitJob` → `INSERT INTO QUERY_JOBS_TABLE_NAME (job_config, type)` (msgpack via `@msgpack/msgpack`) |
 | **api-server** | Rust | **search only** (`QueryConfig` has no `aggregation_config` field) | `client.submit_query` → same INSERT (sqlx) |
-| **CLI `search.py`** | Python | search, **optionally with aggregation** (`aggregation_config` set when `--count` / `--count-by-time` passed) — **one job row** | shared `submit_query_job` → same INSERT |
-| **CLI `decompress.py`** | Python | decompression only (`EXTRACT_IR` / `EXTRACT_JSON`) — not search | same shared `submit_query_job` |
+| **package `search.py`** | Python | search, **optionally with aggregation** (`aggregation_config` set when `--count` / `--count-by-time` passed) — **one job row** | shared `submit_query_job` → same INSERT |
+| **package `decompress.py`** | Python | decompression only (`EXTRACT_IR` / `EXTRACT_JSON`) — not search | same shared `submit_query_job` |
 | **mcp-server** | Python | **search only** | `clp_connector.py` → same INSERT |
 
 All producers write the same row shape; the scheduler does not distinguish them.
