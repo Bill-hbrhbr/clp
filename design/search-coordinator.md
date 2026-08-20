@@ -204,6 +204,36 @@ stateDiagram-v2
 - Terminal states: `SUCCEEDED`, `FAILED`, `CANCELLED`, `KILLED`.
 - The compression coordinator has no cancel action of its own — it is submit-and-poll-only, so `Killed` there is just a relabel of Spider's observed `Cancelled` terminal state ([job_handle.rs#L533](https://github.com/y-scope/clp/blob/fcfe3aee252fc8ac0ad5a0942ea029e65ac17f1d/components/compression-coordinator/src/job_handle.rs#L533)). The search side's `KILLED` is the `kill_hanging_jobs` startup-cleanup path — different semantics, same name. The `CANCELLED` state stays (it may remain useful once a real cancel path exists), but the `KILLED` renaming is unnecessary and will be removed from both coordinators.
 
+### 2.2 Cancellation sources
+
+Cancellation is a DB write of `status=CANCELLING`; the coordinator polls it (today `fetch_cancelling_search_jobs`, filtered to `type=SEARCH_OR_AGGREGATION` — the cancel machinery is not wired for `EXTRACT_*`).
+
+| Source | Route | Job id conveyed | What it cancels |
+|---|---|---|---|
+| **api-server** | `POST /query/{search_job_id}` | id in the **URL path** | one search job → `client.cancel_search_job(id)` |
+| **webui server** | `POST /api/search/cancel` | ids in the **JSON body** `{searchJobId, aggregationJobId}` | both the search and aggregation job rows → `QueryJobDbManager.cancelJob` each |
+
+- Both guard `status IN (PENDING, RUNNING)` — a terminal job cannot be cancelled.
+- The webui additionally flips `results_metadata_collection_name` `lastSignal` to `RESP_DONE` so the client UI stops streaming.
+- The package and mcp-server are submit-only; they do not cancel.
+- Context only — the coordinator is source-agnostic: it just polls `status=CANCELLING` rows and acts, regardless of which source wrote the cancel.
+
+### 2.3 Webui's paired search + aggregation jobs over the same archives
+
+- The webui submits **two** `QUERY_JOBS_TABLE_NAME` rows per search: `searchJobId` (plain search → results) and `aggregationJobId` (timeline aggregation, `count_by_time_bucket_size` set).
+- Both rows run over the **same set of archives**; the split is a webui UX concern (separate result streams for results vs. timeline), not a coordinator concept.
+- The two are coupled client-side via `results_metadata_collection_name` (`searchResultsMetadataCollection`) and `updateSearchWhenJobsFinish` — the webui joins their completion to render the search page.
+- To the coordinator these are two independent `SEARCH_OR_AGGREGATION` rows (one with `aggregation_config = None`, one with it set); it does not know they are paired.
+- Once the reducer is deleted and timeline aggregation is done natively in clp-s, the separate aggregation-job row goes away and the webui submits a single row — a webui-side change to track, not a coordinator concern.
+
+### 2.4 Reducer wiring
+
+- The reducer is a standalone C++ `reducer-server` process, spawned by a Python runner (`reducer.py`) with a configurable concurrency of N processes.
+- Each clp-s search worker (one per archive) is the **map** side: it streams per-archive aggregated buckets to the reducer over a socket (`--host --port --job-id`).
+- The reducer holds an in-memory `CountOperator` accumulator and upserts partial results to `results_metadata_collection_name` on a `PeriodicUpsertTask` cadence (`upsert_interval`, ~100ms).
+- On completion, workers signal done; the reducer finalizes (`try_finalize_results`) and handshakes back via `ack_query_scheduler`; the combined `{timestamp, count}` timeline is written to the results cache.
+- The coordinator does **not** run reduce logic — it only launches/wires the reducer (today via `reducer.py`). In the rewrite the reducer is deleted; the clp-s per-archive map stays, and the cross-archive reduce is done internally by the results cache (MongoDB), never by the coordinator.
+
 ### _1.2 Job types and lifecycle
 
 - `QueryJobType`: `SEARCH_OR_AGGREGATION`, `EXTRACT_IR`, `EXTRACT_JSON` (defined in `job_orchestration/scheduler/constants.py`).
