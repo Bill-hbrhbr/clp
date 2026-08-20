@@ -179,20 +179,30 @@ publish and acknowledges the query scheduler.
 The reducer is spawned by a Python runner (`reducer.py`) with a configurable
 concurrency of N `reducer-server` processes.
 
-### _1.1 `QUERY_JOBS_TABLE_NAME` is a message bus, not just a table
+## 2. Current state
 
-The scheduler is fully decoupled from job producers. There is no RPC between
-clients and the scheduler — everything flows through the `QUERY_JOBS_TABLE_NAME` table:
+### 2.1 Job types and lifecycle
 
-- **Submit a job** = `INSERT INTO QUERY_JOBS_TABLE_NAME (job_config, type) VALUES (?, ?)` with `status` defaulting to `PENDING`.
-- **Cancel a job** = `UPDATE QUERY_JOBS_TABLE_NAME SET status=CANCELLING WHERE id=? AND status IN (PENDING, RUNNING)`.
-- **Run a job** = the scheduler polls `status=PENDING`, dispatches, retires.
-- **Act on a cancel** = the scheduler polls `status=CANCELLING`, aborts.
+- `QueryJobType`: `SEARCH_OR_AGGREGATION`, `EXTRACT_IR`, `EXTRACT_JSON` (`job_orchestration/scheduler/constants.py`).
+- `QueryJobStatus`: `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLING`, `CANCELLED`, `KILLED`.
 
-Because the protocol is the DB, any component with write access can submit or
-cancel, in any language, with no scheduler-side coordination. This is why the
-scheduler (and the new coordinator) is poll-driven, and why cancellation is a
-scan rather than a push.
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> RUNNING: dispatch
+    RUNNING --> SUCCEEDED: finish OK
+    PENDING --> FAILED: bad config / dispatch failure
+    RUNNING --> FAILED: finish w/ errors
+    PENDING --> CANCELLING: producer cancel
+    RUNNING --> CANCELLING: producer cancel
+    CANCELLING --> CANCELLED: scheduler acts on cancel
+    PENDING --> KILLED: kill_hanging_jobs (startup)
+    RUNNING --> KILLED: kill_hanging_jobs (startup)
+```
+
+- `CANCELLING` is written by producers (api-server/webui); every other transition is scheduler-written.
+- Terminal states: `SUCCEEDED`, `FAILED`, `CANCELLED`, `KILLED`.
+- The compression coordinator has no cancel action of its own — it is submit-and-poll-only, so `Killed` there is just a relabel of Spider's observed `Cancelled` terminal state ([job_handle.rs#L533](https://github.com/y-scope/clp/blob/fcfe3aee252fc8ac0ad5a0942ea029e65ac17f1d/components/compression-coordinator/src/job_handle.rs#L533)). The search side's `KILLED` is the `kill_hanging_jobs` startup-cleanup path — different semantics, same name. The `CANCELLED` state stays (it may remain useful once a real cancel path exists), but the `KILLED` renaming is unnecessary and will be removed from both coordinators.
 
 ### _1.2 Job types and lifecycle
 
@@ -234,8 +244,6 @@ or other aggregation). `EXTRACT_IR`/`EXTRACT_JSON` are the decompression paths.
 The scheduler routes rows by `type` and then by config content.
 
 ---
-
-## 2. Current state
 
 ### _2.1 Search query sources (who submits query jobs)
 
