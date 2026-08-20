@@ -14,9 +14,89 @@ must not be carried over (see §7).
 
 ---
 
+## Catalog
+
+- [1. Background](#1-background)
+    - [1.1 Tables involved (MySQL control plane, MongoDB data plane)](#11-tables-involved-mysql-control-plane-mongodb-data-plane)
+    - [1.2 Search query sources and the query jobs table](#12-search-query-sources-and-the-query-jobs-table)
+    - [1.3 clp-s search output handlers](#13-clp-s-search-output-handlers)
+    - [1.4 Source-to-output-handler mapping](#14-source-to-output-handler-mapping)
+    - [1.5 Reducer (high-level)](#15-reducer-high-level)
+- [2. Current state](#2-current-state)
+    - [2.1 Job types and lifecycle](#21-job-types-and-lifecycle)
+    - [2.2 Cancellation sources](#22-cancellation-sources)
+    - [2.3 Webui's paired search + aggregation jobs over the same archives](#23-webuis-paired-search-aggregation-jobs-over-the-same-archives)
+    - [2.4 Reducer wiring](#24-reducer-wiring)
+- [3. Phased roadmap](#3-phased-roadmap)
+- [4. MVP](#4-mvp)
+    - [4.1 Features to support](#41-features-to-support)
+    - [4.2 Support plan](#42-support-plan)
+    - [4.3 Features removed vs. the Python scheduler](#43-features-removed-vs-the-python-scheduler)
+- [5. MVP+1 — Cancellation](#5-mvp1-cancellation)
+    - [5.1 Features to support](#51-features-to-support)
+    - [5.2 Support plan](#52-support-plan)
+    - [5.3 Features removed vs. the Python scheduler](#53-features-removed-vs-the-python-scheduler)
+- [6. MVP+2 — Timeline aggregation](#6-mvp2-timeline-aggregation)
+    - [6.1 Features to support](#61-features-to-support)
+    - [6.2 Support plan](#62-support-plan)
+    - [6.3 Features removed vs. the Python scheduler](#63-features-removed-vs-the-python-scheduler)
+- [7. MVP+3 — Decompression](#7-mvp3-decompression)
+    - [7.1 Features to support](#71-features-to-support)
+    - [7.2 Support plan](#72-support-plan)
+    - [7.3 Features removed vs. the Python scheduler](#73-features-removed-vs-the-python-scheduler)
+- [8. Misc](#8-misc)
+- [9. Open questions](#9-open-questions)
+
+---
+
 ## 1. Background
 
-### 1.1 `QUERY_JOBS_TABLE_NAME` is a message bus, not just a table
+### 1.1 Tables involved (MySQL control plane, MongoDB data plane)
+
+Search orchestration splits across two storage tiers: a **MySQL control plane**
+that the coordinator reads and writes, and a **MongoDB data plane** (the "results
+cache") that clp-s workers write and clients (webui / api-server) read. The
+coordinator only touches the control plane — it never reads or writes the
+results cache (the coordinator manages jobs and connects CLP services with
+Spider; it does not execute search/aggregation logic).
+
+**MySQL control plane — orchestration metadata.** Tables are created by
+`initialize-orchestration-db.py`; table-name constants `QUERY_JOBS_TABLE_NAME` /
+`QUERY_TASKS_TABLE_NAME` live in `clp_py_utils/clp_config.py` (Python) and
+`clp-rust-utils/src/job_config/search.rs` (Rust).
+
+- `QUERY_JOBS_TABLE_NAME` — one row per query job. Columns: `id` (PK), `type`
+  (`QueryJobType`: `SEARCH_OR_AGGREGATION` / `EXTRACT_IR` / `EXTRACT_JSON`),
+  `status` (`QueryJobStatus`), `creation_time`, `start_time`, `duration`,
+  `num_tasks`, `num_tasks_completed`, `job_config` (`MEDIUMBLOB`,
+  msgpack-serialized `SearchJobConfig`). Indexed on `creation_time` and `status`.
+  The `search-coordinator/init` branch adds `status_msg`, `update_time`,
+  `spider_id`, `dispatch_time`, and a `JOB_SPIDER_ID` index — mirroring
+  `COMPRESSION_JOBS_TABLE_NAME`.
+- `QUERY_TASKS_TABLE_NAME` — one row per archive-level task within a job.
+  Columns: `id` (PK), `job_id` (FK → `QUERY_JOBS_TABLE_NAME.id`), `status`
+  (`QueryTaskStatus`), `archive_id`, `creation_time`, `start_time`, `duration`.
+  Indexed on `job_id`, `status`, `start_time`.
+
+For reference, the compression side uses the same shape (`COMPRESSION_JOBS_TABLE_NAME`
+/ `COMPRESSION_TASKS_TABLE_NAME`, with `spider_id` / `dispatch_time` / `clp_config`
+`MEDIUMBLOB`) — the structure the search-coordinator branch reuses.
+
+**MongoDB data plane — the results cache** (`clp_config.results_cache`). clp-s
+output handlers write here; the coordinator does not.
+
+- One collection per query job, named by the job id (string). The submitting
+  client creates it up front (`createCollection(<jobId>.toString())`).
+- Plain-search jobs → the collection holds the matching log records.
+- Timeline-aggregation jobs → the collection holds `{timestamp, count}` timeline
+  documents. Legacy: the reducer process upserts the combined timeline here.
+  MVP+2: clp-s workers write per-archive bucket documents here and MongoDB
+  performs the cross-archive reduce internally.
+- A webui metadata collection (`searchResultsMetadataCollection`, keyed by
+  `searchJobId`) tracks per-search signal state (`lastSignal`, `errorMsg`,
+  `queryEngine`) — webui-specific, not coordinator-managed.
+
+### _1.1 `QUERY_JOBS_TABLE_NAME` is a message bus, not just a table
 
 The scheduler is fully decoupled from job producers. There is no RPC between
 clients and the scheduler — everything flows through the `QUERY_JOBS_TABLE_NAME` table:
@@ -31,7 +111,7 @@ cancel, in any language, with no scheduler-side coordination. This is why the
 scheduler (and the new coordinator) is poll-driven, and why cancellation is a
 scan rather than a push.
 
-### 1.2 Job types and lifecycle
+### _1.2 Job types and lifecycle
 
 - `QueryJobType`: `SEARCH_OR_AGGREGATION`, `EXTRACT_IR`, `EXTRACT_JSON` (defined in `job_orchestration/scheduler/constants.py`).
 - `QueryJobStatus`: `PENDING → RUNNING → SUCCEEDED | FAILED | CANCELLING → CANCELLED | KILLED`.
@@ -63,7 +143,7 @@ non-terminal state; every other transition is scheduler-written. Terminal states
 - `QUERY_TASKS_TABLE_NAME` columns: `id, status, creation_time, start_time, duration, job_id, archive_id`. One row per archive searched.
 - The `prev_status` guard on status updates avoids clobbering concurrent transitions (e.g. cancel-during-finish).
 
-### 1.3 Three execution paths share one table
+### _1.3 Three execution paths share one table
 
 `SEARCH_OR_AGGREGATION` is one `type` but splits at the config level:
 `SearchJobConfig.aggregation_config` is `None` (plain search) vs set (timeline
@@ -74,7 +154,7 @@ The scheduler routes rows by `type` and then by config content.
 
 ## 2. Current state
 
-### 2.1 Search query sources (who submits query jobs)
+### _2.1 Search query sources (who submits query jobs)
 
 "Aggregation" below means a `SEARCH_OR_AGGREGATION` job with `aggregation_config`
 set (routes through the reducer today). "Search" means the same `type` with
@@ -96,7 +176,7 @@ the aggregation job goes through the reducer today. The CLI and mcp-server are
 submit-only (they wait synchronously / observe status); only the two HTTP
 services also cancel.
 
-### 2.2 Cancellation sources (who issues cancellations)
+### _2.2 Cancellation sources (who issues cancellations)
 
 Cancellation is a DB write of `status=CANCELLING`; the scheduler polls it via
 `fetch_cancelling_search_jobs` (filtered to `type=SEARCH_OR_AGGREGATION`, since
@@ -119,13 +199,13 @@ With the reducer deleted (§7) and timeline aggregation done natively in clp-s
 request will collapse to a single search-job id. That is a webui-side change to
 track, not a coordinator concern.
 
-### 2.3 Scheduler-side handling (Python, today)
+### _2.3 Scheduler-side handling (Python, today)
 
 - Poll loop: `handle_job_updates` calls `handle_cancelling_search_jobs` then `check_job_status_and_update_db` every `jobs_poll_delay`.
 - Cancel: `cancel_job_except_reducer` (synchronous, atomic) revokes the celery `GroupResult`; `release_reducer_for_job` (async, called last) releases the reducer; then `QUERY_TASKS_TABLE_NAME` → `CANCELLED` and `QUERY_JOBS_TABLE_NAME` → `CANCELLED` (guarded by `prev_status=CANCELLING`).
 - Retire: `check_job_status_and_update_db` polls each `RUNNING` job's rehydrated `GroupResult` and routes to `handle_finished_search_job` / `handle_finished_stream_extraction_job`.
 
-### 2.4 clp-s search output handlers
+### _2.4 clp-s search output handlers
 
 **Scope:** everything in this subsection concerns the **clp-s binary's `search`
 command** — its five output handlers (the *complete* set of user-facing output
@@ -215,7 +295,7 @@ Guiding rule: the celery reducer (`reducer_connection_queue`, `acquire_reducer_f
 
 ---
 
-## 4. Translation table (old → new)
+## _4. Translation table (old → new)
 
 The rewrite is a three-part project:
 
@@ -396,7 +476,7 @@ has no `type` column — categorization is net-new for search.
 
 ---
 
-## 5. Cancellation design (MVP+1)
+## _5. Cancellation design (MVP+1)
 
 - One background coroutine (or a phase of the outer poll loop) scans `QUERY_JOBS_TABLE_NAME WHERE status=CANCELLING` at a fixed cadence.
 - For each, look up the in-flight job handle; trigger its `CancellationToken`.
@@ -406,7 +486,7 @@ has no `type` column — categorization is net-new for search.
 
 ---
 
-## 6. Reducer deletion (explicit)
+## _6. Reducer deletion (explicit)
 
 Delete (do **not** carry over) all of:
 
@@ -433,7 +513,7 @@ alongside it.
 
 ---
 
-## 7. Open questions
+## _7. Open questions
 
 - **Retire model** *(settled on branch `search-coordinator/init`)*: per-handle self-retirement — `QueryJobHandle::to_completion` polls Spider job state inside the spawned task.
 - **Result backend** *(settled)*: tasks are submitted to **Spider**, not Celery — `QueryJobSubmitter` polls Spider job state; no `GroupResult`-style handles.
