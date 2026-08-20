@@ -224,7 +224,6 @@ Cancellation is a DB write of `status=CANCELLING`; the coordinator polls it (tod
 - Both rows run over the **same set of archives**; the split is a webui UX concern (separate result streams for results vs. timeline), not a coordinator concept.
 - The two are coupled client-side via `results_metadata_collection_name` (`searchResultsMetadataCollection`) and `updateSearchWhenJobsFinish` — the webui joins their completion to render the search page.
 - To the coordinator these are two independent `SEARCH_OR_AGGREGATION` rows (one with `aggregation_config = None`, one with it set); it does not know they are paired.
-- Once the reducer is deleted and timeline aggregation is done natively in clp-s, the separate aggregation-job row goes away and the webui submits a single row — a webui-side change to track, not a coordinator concern.
 
 ### 2.4 Reducer wiring
 
@@ -234,91 +233,52 @@ Cancellation is a DB write of `status=CANCELLING`; the coordinator polls it (tod
 - On completion, workers signal done; the reducer finalizes (`try_finalize_results`) and handshakes back via `ack_query_scheduler`; the combined `{timestamp, count}` timeline is written to the results cache.
 - The coordinator does **not** run reduce logic — it only launches/wires the reducer (today via `reducer.py`). In the rewrite the reducer is deleted; the clp-s per-archive map stays, and the cross-archive reduce is done internally by the results cache (MongoDB), never by the coordinator.
 
-### _1.2 Job types and lifecycle
+---
 
-- `QueryJobType`: `SEARCH_OR_AGGREGATION`, `EXTRACT_IR`, `EXTRACT_JSON` (defined in `job_orchestration/scheduler/constants.py`).
-- `QueryJobStatus`: `PENDING → RUNNING → SUCCEEDED | FAILED | CANCELLING → CANCELLED | KILLED`.
+## 3. Phased roadmap
 
-```
-              dispatch             finish OK
-  PENDING ───────────────► RUNNING ──────────────► SUCCEEDED
-     │  │                     │
-     │  │ bad config /        │ finish w/ errors
-     │  │ dispatch failure    │
-     │  └─────────────────────┴──────────────────► FAILED
-     │
-     │  producer cancel           scheduler acts on the cancel
-     └───────────────► CANCELLING ───────────────► CANCELLED
-        (from PENDING
-         or RUNNING)
-
-  PENDING | RUNNING ─────────────────────────────► KILLED
-              startup kill_hanging_jobs
-              (previous scheduler died mid-job)
-```
-
-Edge notes: `CANCELLING` is written by producers (api-server/webui `UPDATE ...
-WHERE status IN (PENDING, RUNNING)` — §2.2), so it can be entered from either
-non-terminal state; every other transition is scheduler-written. Terminal states:
-`SUCCEEDED`, `FAILED`, `CANCELLED`, `KILLED`.
-
-- `QUERY_JOBS_TABLE_NAME` columns: `id, type, status, creation_time, num_tasks, num_tasks_completed, start_time, duration, job_config` (**msgpack** MEDIUMBLOB).
-- `QUERY_TASKS_TABLE_NAME` columns: `id, status, creation_time, start_time, duration, job_id, archive_id`. One row per archive searched.
-- The `prev_status` guard on status updates avoids clobbering concurrent transitions (e.g. cancel-during-finish).
-
-### _1.3 Three execution paths share one table
-
-`SEARCH_OR_AGGREGATION` is one `type` but splits at the config level:
-`SearchJobConfig.aggregation_config` is `None` (plain search) vs set (timeline
-or other aggregation). `EXTRACT_IR`/`EXTRACT_JSON` are the decompression paths.
-The scheduler routes rows by `type` and then by config content.
+| Phase | Scope | Notes |
+|---|---|---|
+| **MVP** | Plain **search** jobs only. No aggregation, no cancellation, no decompression. | Get search dispatch + result retirement + DB updates working end-to-end through clp-s. |
+| **MVP+1** | **Cancellation** | Dedicated background coroutine scanning `QUERY_JOBS_TABLE_NAME` for `status=CANCELLING` and submitting the cancellation to Spider; the job handle terminates when Spider reports the job cancelled. The api-server/webui already write these CANCELLING rows (§2.2), so the coordinator just polls the table — no new producer-facing API. |
+| **MVP+2** | **Timeline aggregation** only | clp-s `--count-by-time` does per-archive bucketing (map); workers write the per-archive buckets to the results cache; the cross-archive sum (reduce) is done internally by MongoDB. No reducer process, and no aggregation logic in the coordinator. |
+| **MVP+3** | **Decompression** (EXTRACT_IR / EXTRACT_JSON) | Decide celery-handoff vs Spider submission; resolve resource-group sharing. |
+| **MVP+N** | **Other aggregations** | Require new Spider functionality (not ready). Blocked on Spider. |
 
 ---
 
-### _2.1 Search query sources (who submits query jobs)
+## 4. MVP
 
-"Aggregation" below means a `SEARCH_OR_AGGREGATION` job with `aggregation_config`
-set (routes through the reducer today). "Search" means the same `type` with
-`aggregation_config = None` (plain search).
+### 4.1 Features to support
 
-| Source | Language | Submits | Mechanism |
-|---|---|---|---|
-| **webui server** | TS/Fastify | search **and** aggregation, as **two separate job rows** (`searchJobId` + `aggregationJobId`) | `QueryJobDbManager.submitJob` → `INSERT INTO QUERY_JOBS_TABLE_NAME (job_config, type)` (msgpack via `@msgpack/msgpack`) |
-| **api-server** | Rust | **search only** (`QueryConfig` has no `aggregation_config` field) | `client.submit_query` → same INSERT (sqlx) |
-| **package `search.py`** | Python | search, **optionally with aggregation** (`aggregation_config` set when `--count` / `--count-by-time` passed) — **one job row** | shared `submit_query_job` → same INSERT |
-| **package `decompress.py`** | Python | decompression only (`EXTRACT_IR` / `EXTRACT_JSON`) — not search | same shared `submit_query_job` |
-| **mcp-server** | Python | **search only** | `clp_connector.py` → same INSERT |
+### 4.2 Support plan
 
-All producers write the same row shape; the scheduler does not distinguish them.
-Note the two different aggregation styles: the **webui splits** search and
-aggregation into two rows (separate result streams for UX — see §2.2), while the
-**CLI folds** aggregation into a single row via `aggregation_config`. Either way
-the aggregation job goes through the reducer today. The CLI and mcp-server are
-submit-only (they wait synchronously / observe status); only the two HTTP
-services also cancel.
+### 4.3 Features removed vs. the Python scheduler
 
-### _2.2 Cancellation sources (who issues cancellations)
+## 5. MVP+1 — Cancellation
 
-Cancellation is a DB write of `status=CANCELLING`; the scheduler polls it via
-`fetch_cancelling_search_jobs` (filtered to `type=SEARCH_OR_AGGREGATION`, since
-the cancel machinery — `cancel_job_except_reducer`, GroupResult revoke, reducer
-release — is search-specific and not wired for `EXTRACT_*`).
+- The actual search runs in Spider, not in the coordinator. The compression-coordinator's `CancellationToken` only cancels the **local job handle** (its poll loop), not the Spider job itself — so it is not sufficient for cancellation.
+- A dedicated background coroutine scans `QUERY_JOBS_TABLE_NAME` for `status=CANCELLING` rows and submits a cancellation request to Spider for the corresponding Spider job.
+- Once Spider cancels the job, the job handle's state polling observes the terminal `Cancelled` status and the handle terminates; the coordinator then records the job as `CANCELLED`.
+- Cancel requests are already expressed as `status=CANCELLING` rows that the api-server/webui write to `QUERY_JOBS_TABLE_NAME` (§2.2); the coordinator only polls those rows, so it needs no new API or RPC with the producers.
 
-| Source | Route | How the job id is conveyed | What it cancels |
-|---|---|---|---|
-| **api-server** | `POST /query/{search_job_id}` | id in the **URL path** | one search job → `client.cancel_search_job(id)` → `UPDATE ... SET status=CANCELLING WHERE id=? AND status IN (PENDING, RUNNING)` |
-| **webui server** | `POST /api/search/cancel` | ids in the **JSON body** `{searchJobId, aggregationJobId}` | **both** the search job and the (reducer-era) aggregation job in one request → `QueryJobDbManager.cancelJob(id)` each → same UPDATE |
+### 5.1 Features to support
 
-Both guard `status IN (PENDING, RUNNING)` — a terminal job cannot be cancelled.
-The webui additionally flips the Mongo results-metadata `lastSignal` to
-`RESP_DONE` so the client UI stops streaming.
+### 5.2 Support plan
 
-**Note on the webui's `aggregationJobId`**: the current webui flow submits a
-**separate** `QUERY_JOBS_TABLE_NAME` row for the aggregation (the reducer-era design).
-With the reducer deleted (§7) and timeline aggregation done natively in clp-s
-(§6), this separate aggregation-job row goes away — the webui cancellation
-request will collapse to a single search-job id. That is a webui-side change to
-track, not a coordinator concern.
+### 5.3 Features removed vs. the Python scheduler
+
+## 6. MVP+2 — Timeline aggregation
+
+- The cross-archive reduce for timeline aggregation is done **internally inside the results cache (by MongoDB)**; clp-s only does the per-archive map (`--count-by-time` bucketing) and writes the per-archive buckets to the results cache. Aggregation is not done "natively in clp-s" — clp-s maps, the results cache reduces. Other aggregations go through Spider later and are not part of MVP+2.
+- The celery reducer — `reducer_connection_queue`, `acquire_reducer_for_job`, `ReducerHandlerMessage*`, the reducer TCP server, `release_reducer_for_job`, the `reducer` subcommand in `fs_search_task` — is **not needed for the rewrite**, with no replacement in the coordinator. The reducer is never part of the coordinator, and the coordinator does not execute any search or aggregation logic — it only manages jobs and connects CLP services with Spider.
+- The webui's separate aggregation-job row goes away: the webui submits a single row instead of the paired `searchJobId` + `aggregationJobId`. This is a webui-side change to track, not a coordinator concern.
+
+### 6.1 Features to support
+
+### 6.2 Support plan
+
+### 6.3 Features removed vs. the Python scheduler
 
 ### _2.3 Scheduler-side handling (Python, today)
 
@@ -399,20 +359,6 @@ the reducer over the socket. The reducer process (`CountOperator`) does the
 Mongo. Deleting the reducer (§6) keeps the clp-s per-archive map; the
 cross-archive reduce is done internally by MongoDB in the results cache (MVP+2)
 — never by the coordinator.
-
----
-
-## 3. Phased roadmap
-
-| Phase | Scope | Notes |
-|---|---|---|
-| **MVP** | Plain **search** jobs only. No aggregation, no cancellation, no decompression. | Get search dispatch + result retirement + DB updates working end-to-end through clp-s. |
-| **MVP+1** | **Cancellation** | Background coroutine scanning `QUERY_JOBS_TABLE_NAME` for `status=CANCELLING`; per-job `CancellationToken` aborts the in-flight search. Consumes the same CANCELLING rows the api-server/webui already write — no coordination needed. |
-| **MVP+2** | **Timeline aggregation** only | clp-s `--count-by-time` does per-archive bucketing (map); workers write the per-archive buckets to the results cache; the cross-archive sum (reduce) is done internally by MongoDB. No reducer process, and no aggregation logic in the coordinator. |
-| **MVP+3** | **Decompression** (EXTRACT_IR / EXTRACT_JSON) | Decide celery-handoff vs Spider submission; resolve resource-group sharing. |
-| **MVP+N** | **Other aggregations** | Require new Spider functionality (not ready). Blocked on Spider. |
-
-Guiding rule: the celery reducer (`reducer_connection_queue`, `acquire_reducer_for_job`, `ReducerHandlerMessage*`, the reducer TCP server, `release_reducer_for_job`, the `reducer` subcommand in `fs_search_task`) is **deleted, with no replacement in the coordinator**. Timeline aggregation goes through clp-s natively with the reduce done by MongoDB in the results cache; other aggregations go through Spider later.
 
 ---
 
