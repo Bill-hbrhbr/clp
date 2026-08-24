@@ -2,313 +2,325 @@
 
 This plan splits the search-coordinator MVP into reviewable PRs. It uses the
 `search-coordinator/init` branch as a prototype, but does not assume that the
-prototype's commits are the right merge boundaries. Each PR below should leave
-the repository buildable and include tests for the behavior it introduces.
+prototype's commits are the right merge boundaries. Each PR should leave the
+repository buildable and include tests for the behavior it introduces.
 
-The MVP handles plain `SEARCH_OR_AGGREGATION` jobs whose
-`aggregation_config` is absent. Aggregation, cancellation, and extraction remain
-on the legacy path until their later phases.
+The authoritative scope is Section 4 of `search-coordinator.md`. The
+underscore-prefixed legacy appendix in that document is reference material and
+must not expand the MVP accidentally.
+
+## MVP contract and ownership
+
+The MVP handles only `SEARCH_OR_AGGREGATION` jobs whose `aggregation_config` is
+absent. The coordinator owns orchestration, Spider owns task execution, and
+clp-s writes search results directly to the per-job results-cache collection.
+
+```text
+SQL query job
+  -> search coordinator: categorize, enumerate archives, submit, and poll
+  -> Spider graph: one clp-s search task per planned archive
+  -> clp-s: write results directly to results-cache collection <job_id>
+  -> search coordinator: observe terminal Spider state and update SQL job
+```
+
+There is no search commit/termination task in this graph. Compression needs one
+to publish archive metadata transactionally; MVP search results are already
+published by clp-s, so the coordinator finalizes the SQL job after Spider
+becomes terminal.
+
+The following constraints are deliberate:
+
+- No aggregation, cancellation, decompression, reducer, or `KILLED` handling.
+- No `query_tasks` writes or per-task progress. `num_tasks` remains the MVP
+  placeholder described by the design.
+- No network, file, or stdout result handlers; results-cache output only.
+- Status handling uses the design's poll-current-state, decide, then write-next
+  model. It does **not** use the Python scheduler's previous-status CAS.
+- A single coordinator deployment and an explicit legacy-scheduler cutover are
+  required so two unguarded writers cannot own the same plain-search row.
 
 ## Starting point: `search-coordinator/init`
 
 The prototype already contains:
 
 - A `search-coordinator` workspace crate, binary entry point, configuration
-  loading, database connection setup, signal handling, and image packaging.
+  loading, database setup, signal handling, and package-image wiring.
 - Matching Python and Rust `SearchCoordinator` configuration models and a
   validator requiring Spider when the coordinator is enabled.
 - Query-job schema additions (`status_msg`, `update_time`, `spider_id`, and
   `dispatch_time`) and typed Rust query-job IDs, statuses, types, and search
   configuration.
 - A coordinator poll loop, two-phase pending-job fetch, deferred
-  `dispatch_time` updates, a `Semaphore(max_concurrent_jobs)`, resource-group
-  setup, and initial recovery of running Spider jobs.
-- `QueryJobHandle` lifecycle and SQL helpers.
-- A `QueryJobSubmitter` abstraction and an implemented
-  `run_query_job_to_completion` path that idempotently starts a Spider job and
-  polls it with exponential backoff.
-- Helm defaults and ConfigMap rendering for `search_coordinator`.
+  `dispatch_time` updates, a concurrency semaphore, resource-group setup, and
+  initial recovery of running Spider jobs.
+- `QueryJobHandle`, SQL helpers, a submitter abstraction, idempotent Spider
+  start, and terminal-state polling with exponential backoff.
+- Helm values and ConfigMap rendering for `search_coordinator`.
 
-These pieces are scaffolding, not a working search path. The important known
-gaps are:
+These pieces are scaffolding, not a working search path. Known gaps are:
 
-- `fetch_new_job_rows` selects only `id`; it cannot categorize or plan a job.
-- `QueryJobHandle::new` does not read the job row or deserialize its plain
-  MessagePack `job_config`; `dataset` is hardcoded to `None`.
+- Pending-job fetching selects only `id`, so it cannot categorize or plan a
+  job.
+- Handle construction does not read/deserialise the plain MessagePack
+  `job_config`; its dataset is hardcoded to `None`.
 - `SpiderClient::submit_query_job` is still `todo!()`.
-- `num_tasks` is hardcoded to one. No per-archive `query_tasks` rows are created,
-  and `num_tasks_completed` and task durations/statuses are not maintained.
-- No search termination/commit task exists. The handle copies the compression
-  coordinator's assumption that a successful Spider graph has already committed
-  `SUCCEEDED` transactionally, so today a hypothetical successful search graph
-  would leave the SQL query job `RUNNING`.
-- Terminal status writes do not use a previous-status compare-and-set guard, so
-  they can overwrite a concurrent transition.
-- `schedule_new_jobs` builds its `dispatched_job_ids` list before handle
-  construction. A rejected/unsupported row can therefore receive a
-  `dispatch_time` even though this coordinator did not dispatch it.
-- Recovery does not consume semaphore permits, and spawned job handles are
-  detached rather than tracked for orderly shutdown.
-- The schema edit affects newly created tables only. `CREATE TABLE IF NOT
-  EXISTS` does not add the new columns to an existing deployment.
-- The crate has no coordinator, job-handle, or submitter tests.
-- Deployment is incomplete: Helm renders the configuration but has no
-  search-coordinator Deployment or scheduling/resource settings; Compose and
-  the package config template do not expose or start the service.
+- `num_tasks` is hardcoded. This is an accepted MVP placeholder, but it should
+  be named/documented rather than mistaken for real progress accounting.
+- Successful Spider completion does not update the SQL job to `SUCCEEDED` with
+  duration; the compression coordinator's commit-task assumption was copied
+  into a flow that intentionally has no commit task.
+- Terminal handling does not yet implement the complete idempotent
+  poll/decide/write lifecycle required by the design.
+- `schedule_new_jobs` builds `dispatched_job_ids` before handle construction,
+  so a rejected row can receive `dispatch_time` without being dispatched.
+- Recovered jobs do not consume semaphore permits, and spawned handles are not
+  tracked for orderly shutdown.
+- The schema edit affects newly created tables only; `CREATE TABLE IF NOT
+  EXISTS` does not add columns to existing deployments.
+- Coordinator, handle, and submitter tests are missing.
+- Deployment is incomplete: Helm renders configuration but has no Deployment
+  or scheduling/resources; Compose and package configuration do not expose or
+  start the service.
 
-## Phase 1: land the reusable coordinator skeleton
+## Phase 1: reusable coordinator skeleton
 
 ### PR 1.1 — Query schema and shared Rust types
 
-Add the query-job columns and indices required for Spider coordination, plus the
+Add the query-job columns and indices required for Spider coordination, plus
 typed `QueryJobId`, `QueryJobStatus`, `QueryJobType`, `SearchJobConfig`, and
 `AggregationConfig` definitions.
 
-This PR must explicitly choose and test an upgrade strategy:
+Explicitly choose and test an upgrade strategy:
 
 - Add an idempotent migration for existing `query_jobs` tables; or
-- State that the MVP supports fresh databases only and add a follow-up issue
-  before any upgrade-capable release.
+- State that MVP supports fresh databases only and track the migration before
+  an upgrade-capable release.
 
 Updating only the `CREATE TABLE IF NOT EXISTS` body is not a migration.
 
 ### PR 1.2 — Crate, configuration, and binary scaffold
 
-Add the workspace crate and binary, Python/Rust `SearchCoordinator` config
-models, Spider-required validation, database credential loading, and
-signal-driven startup/shutdown. Include the binary in the package image.
+Add the workspace crate and binary, Python/Rust configuration models,
+Spider-required validation, database credential loading, and signal-driven
+startup/shutdown. Include the binary in the package image.
 
-Test configuration defaults, Python/Rust field parity, invalid zero values, and
-the requirement that `search_coordinator` cannot be enabled without `spider`.
-
-Keep task-execution-policy wiring provisional until PR 3 defines the task graph.
-The prototype currently exposes `commit_task_*` fields but incorrectly builds a
-`search_task_execution_policy` from the commit timeouts, while
-`commit_task_max_retry` is unused. Following the compression pattern, the
-coordinator should carry `search_task_max_retry` plus a distinct
-`commit_task_execution_policy`; search-task timeouts should be separately named
-or derived per archive.
+Test default and invalid values, Python/Rust field parity, and the requirement
+that `search_coordinator` cannot be enabled without Spider. Keep only settings
+needed by the MVP coordinator and map task. Remove or defer the prototype's
+`commit_task_*` settings because MVP has no search commit task; give search-task
+retry and timeout settings unambiguous names.
 
 ### PR 1.3 — Job handle and SQL lifecycle helpers
 
-Introduce `QueryJobHandle` and the database helpers:
+Introduce `QueryJobHandle` and database helpers to:
 
-- `persist_spider_job_id` — transition an owned job to `RUNNING`, set
-  `start_time`, record the real task count, and fill `dispatch_time` only if it
-  is absent.
-- `get_job_status`, `update_job_status`, `mark_job_failed`, and
-  `report_failure`.
+- Persist the Spider job ID and set `RUNNING`, `start_time`, the documented MVP
+  `num_tasks` placeholder, and `dispatch_time` if absent.
+- Read the current SQL state before deciding the next transition.
+- On terminal Spider success/failure, idempotently write
+  `SUCCEEDED`/`FAILED`, `duration`, and `status_msg`.
+- Report setup and polling failures without overwriting an already-terminal
+  state.
 
-Status transitions should be typed and guarded by their expected previous
-status. Tests should cover successful transitions, lost compare-and-set races,
-oversized task counts, and best-effort failure reporting against a test DB.
-
-Do not mark a successful job from the handle: PR 3's commit task owns the
-transactional `RUNNING` → `SUCCEEDED` transition. As in the compression handle,
-the failed/cancelled Spider branches must first check whether the commit task
-already recorded `SUCCEEDED` and avoid overwriting it if Spider failed only
-while reporting the commit result.
+These writes intentionally do not use a previous-status CAS. Tests should
+exercise repeated poll/decide/write cycles, already-terminal jobs, oversized
+task counts, duration/status messages, and best-effort failure reporting.
+Unexpected Spider cancellation is a failure for MVP; it does not introduce
+`KILLED` or coordinator-driven cancellation semantics.
 
 ### PR 1.4 — Submitter abstraction and Spider completion polling
 
 Add `QueryJobSubmitter`, `QueryJobOutcome`, and
-`run_query_job_to_completion`. Keep task-graph construction out of this PR.
+`run_query_job_to_completion`, keeping graph construction out of this PR.
 
-Unit-test:
-
-- Starting a new job.
-- Treating `InvalidJobState` as an idempotent already-started case.
-- Exponential backoff and its maximum.
-- Successful, failed, and cancelled terminal states.
-- Failure to fetch Spider state or the Spider error message.
+Unit-test new and idempotently already-started jobs, exponential-backoff limits,
+successful/failed/unexpected-cancelled terminal states, and failures to fetch
+Spider state or its error message.
 
 ### PR 1.5 — Coordinator core and entry point
 
-Wire `SearchCoordinator::{new, run}`, resource-group setup, two-phase fetching,
-semaphore permit ownership, deferred dispatch marking, handle spawning, and the
-binary entry point.
+Wire the poll loop, configurable cadence, cancellation-token shutdown,
+resource-group setup, two-phase fetch, semaphore permit ownership, deferred
+dispatch marking, handle spawning, and binary entry point.
 
-The prototype behavior needs two corrections in this PR:
+Correct the prototype by adding a job to `dispatched_job_ids` only after it is
+accepted and can be dispatched, and by tracking handles for defined graceful
+shutdown. Test fetch limits, first-phase rows, permit release, rejected jobs,
+dispatch marking, and shutdown with an injected submitter and test database.
 
-- Add a job to `dispatched_job_ids` only after this coordinator has accepted it
-  and acquired permission to dispatch it.
-- Track spawned handles so graceful shutdown has defined behavior instead of
-  dropping detached tasks when the Tokio runtime exits.
+**Phase 1 merge order:** `1.1` and `1.2` can begin in parallel; `1.3` depends
+on `1.1`; `1.4` is independent; `1.5` combines them.
 
-Use an injected/mock submitter and a test database to exercise fetch limits,
-first-fetch recovery rows, dispatch marking, permit release, rejected jobs, and
-shutdown. End-to-end execution remains blocked on categorization and the real
-Spider task graph.
-
-**Phase 1 merge order:** `1.1` and `1.2` can begin in parallel;
-`1.3` depends on `1.1`; `1.4` is independent; `1.5` combines them.
-
-## Phase 2: build the plain-search data path
+## Phase 2: plain-search data path
 
 ### PR 2 — Job categorization and archive planning
 
 Widen the pending-row projection to include `type`, `job_config`, and
-`creation_time`. Decode query configs as **plain MessagePack** and categorize
-them before claiming the row:
+`creation_time`. Decode `job_config` as plain MessagePack before claiming it:
 
-- Accept `SEARCH_OR_AGGREGATION` with no `aggregation_config` for the MVP.
-- Leave aggregation, `EXTRACT_IR`, and `EXTRACT_JSON` for the legacy scheduler.
-- Mark malformed configs and invalid supported jobs `FAILED` with a useful
-  status message.
+- Accept only `SEARCH_OR_AGGREGATION` without `aggregation_config`.
+- Return aggregation, `EXTRACT_IR`, and `EXTRACT_JSON` as unsupported so later
+  phases or the legacy scheduler retain ownership.
+- Mark malformed configs and invalid otherwise-supported jobs `FAILED` with a
+  useful status message.
 
-Port archive selection, dataset handling, time-range filtering, retention
-cutoff, newest-first ordering, and archive batching. Produce an explicit
-per-archive task plan and insert the corresponding `query_tasks` rows so the
-real task count and task IDs are known before Spider submission.
+Port the minimum archive selection needed by plain search: dataset selection,
+time-range filtering, retention cutoff, deterministic/newest-first ordering,
+and any required archive batching. Produce an in-memory per-archive Spider plan
+but do **not** create `query_tasks` rows or track `num_tasks_completed`.
 
-The coordinator and legacy scheduler must have non-overlapping ownership rules.
-Unsupported rows must not be marked dispatched by the coordinator, while
-accepted plain searches must not also be consumed by the legacy scheduler.
-Cover mixed job types and malformed configs in tests.
+Specify non-overlapping ownership with the legacy scheduler. Unsupported rows
+must not be claimed, while accepted plain-search rows must not also be consumed
+by the legacy path. Test mixed types, malformed configs, filters, and empty
+archive sets.
 
 ### PR 3 — `clp-tdl-package` per-archive search task
 
-Follow the existing compression-task organization rather than introducing a
-second package/runtime pattern:
+Follow the existing compression task's package/runtime structure without
+copying its commit task:
 
-- Add serializable search protocol types under
-  `clp-rust-utils::task_io::search`, including the per-archive input/options and
-  a `SearchTaskOutput` carrying the query-task identity and completion metadata
-  needed by the commit task.
-- Add `task/search/{mod.rs,search.rs,commit.rs}`. Keep the `#[task]` wrappers in
-  `mod.rs` thin and put testable implementations in `search.rs` and `commit.rs`.
-- Register the search and search-commit functions in `clp-tdl-package/src/lib.rs`
-  and document them in the package README.
+- Add serializable per-archive search inputs/options under
+  `clp-rust-utils::task_io::search`.
+- Add `task/search/{mod.rs,search.rs}`: keep the `#[task]` wrapper thin and put
+  testable implementation in `search.rs`.
+- Register the search function in `clp-tdl-package/src/lib.rs` and document it
+  in the package README.
 - Reuse `common.rs` for the process-global Tokio runtime, executor config,
   `CLP_HOME`, and JSON stderr tracing.
 
-The map task runs one clp-s archive search and uses the MVP results-cache output
-path. It must build arguments without a shell, drain stderr while consuming any
-stdout protocol, terminate/reap clp-s on protocol or callback errors, and clean
-temporary files. It updates its `query_tasks` row to `RUNNING` and ensures a
-failed invocation does not strand that row in `RUNNING`.
+The task runs one clp-s archive search using only the results-cache output path.
+It must build arguments without a shell, drain stderr while consuming any
+stdout protocol, terminate/reap clp-s after protocol or callback errors, and
+clean temporary files. It must not update `query_tasks` or finalize the SQL job.
 
-Add a Spider termination task analogous to `compression::commit`. It reads and
-deserializes all map-task outputs through `TaskContext::get_task_graph_outputs`,
-looks up the CLP query job by `spider_id`, locks it, and in one transaction:
-
-- Treats an already-`SUCCEEDED` job as an idempotent no-op.
-- Refuses to commit a job not in `RUNNING`.
-- Finalizes the per-archive `query_tasks` rows.
-- CAS-transitions the query job from `RUNNING` to `SUCCEEDED`.
-- Records `num_tasks_completed` and a DB-clock-derived duration.
-
-Define error behavior for an empty output set and mismatched/duplicate task IDs.
-Model tests on the existing compression TDL tests: argument construction,
-stdout parsing, malformed output, subprocess failure, cleanup, idempotent
-commit, and transaction rollback.
-
-Decide whether archive batching is represented by one Spider graph or by
-repeated submissions from the job handle; do not leave this as an implicit
-coordinator/TDL responsibility split.
-
-Finalize execution policies here: use `search_task_max_retry` for map tasks and
-apply `commit_task_max_retry` plus the commit soft/hard timeouts only to the
-termination task. Add separately named search-task timeouts or document a
-per-archive derivation; do not reuse commit timeouts for map tasks.
+Test argument construction, plain search options, malformed output, subprocess
+failure, process cleanup, and results-cache configuration. Validate that the
+release build places the registered TDL library in the Spider worker image at
+the path Spider loads.
 
 ### PR 4 — Implement `submit_query_job`
 
-Replace the Spider submitter's `todo!()` with task-graph construction and job
-registration. Mirror `submit_s3_compression_job`: use constants kept in sync
-with the TDL package names, declare typed inputs/outputs, serialize value inputs
-with MessagePack, insert one map task per planned archive, and attach the search
-commit task as the graph's termination task. Feed it the per-archive plan from
-PR 2 and return the registered Spider job ID.
+Replace the submitter's `todo!()` with Spider graph construction and job
+registration. Mirror the useful portions of `submit_s3_compression_job`: keep
+task-name constants synchronized with the TDL package, use typed inputs,
+serialize value inputs with MessagePack, and create one search task per planned
+archive. Do not attach a commit/termination task.
 
 Persist the Spider ID and transition the query job to `RUNNING` only after
-registration succeeds. Define retry/idempotency behavior for the failure window
-between Spider registration and SQL persistence so a retry cannot silently
-create duplicate work.
+registration succeeds. Define retry/recovery behavior for the window between
+Spider registration and SQL persistence so retries do not silently create
+duplicate work. Explicitly define zero-archive behavior.
 
 ### PR 5 — End-to-end MVP lifecycle
 
-Complete and test the plain-search path:
+Complete and test the exact MVP path:
 
 ```text
-pending SQL job
-  → categorize and enumerate archives
-  → insert per-archive SQL task rows
-  → register and start the Spider map + termination-task graph
-  → clp-s workers write results to MongoDB collection <job_id>
-  → the termination task finalizes task rows and atomically commits SUCCEEDED
-  → the handle records FAILED/KILLED only when no successful commit won the race
+PENDING SQL job
+  -> coordinator categorizes and enumerates archives
+  -> coordinator registers/starts the Spider map-task graph
+  -> clp-s tasks write results to MongoDB collection <job_id>
+  -> coordinator observes terminal Spider state
+  -> coordinator writes SUCCEEDED or FAILED, duration, and status_msg
 ```
 
-Port max-results short-circuiting and archive-batch continuation if they remain
-part of the MVP contract. Exercise zero-archive searches, partial task failure,
-Spider failure/cancellation, SQL-write failure, and duplicate/retried submission
-in integration tests.
+Exercise empty searches, partial task failure, unexpected Spider cancellation,
+SQL-write failure, duplicate/retried submission, max-results behavior, and
+restart at each persistence boundary. Assert that no `query_tasks` rows or
+non-results-cache output paths are used.
 
-Keep the MVP scope explicit: the results-cache-backed plain-search path is
-required. File, network, aggregation, and extraction output paths should either
-be supported deliberately or remain owned by the legacy scheduler; they must
-not be accidentally accepted and then mishandled.
+### PR 6 — Startup recovery and shutdown hardening
 
-### PR 6 — Package and deployment wiring *(later step)*
+Complete the MVP recovery contract before deployment:
 
-Make the working coordinator deployable without changing the chart version on
-the MVP branch.
-
-- Keep the search-coordinator defaults in
-  `tools/deployment/package-helm/values.yaml`.
-- Render the complete `search_coordinator` block from
-  `tools/deployment/package-helm/templates/configmap.yaml` when Spider is
-  enabled. The prototype already contains these two Helm changes.
-- Add a Helm search-coordinator Deployment modeled on the compression
-  coordinator, including database credentials, Spider/db readiness,
-  `RUST_LOG`, termination grace, scheduling, and resource settings.
-- Add `searchCoordinator` entries under Helm `scheduling` and `resources`, plus
-  a Helm-only logging-level value if the Deployment reads one.
-- Add the service to the Spider Compose deployment and the package controller,
-  and expose the config in the package config template.
-- Verify the release build produces the binary copied by the package Dockerfile.
-- Define the cutover from the legacy query scheduler so two schedulers cannot
-  race for the same plain-search rows.
-
-Validate with `helm lint`, a rendered-config assertion for every coordinator
-field, Compose config validation, and a container startup smoke test.
-
-### PR 7 — Recovery and shutdown hardening
-
-Turn the prototype recovery path into tested MVP behavior:
-
-- Recover `RUNNING` rows with a persisted Spider ID without resubmitting them.
-- Re-dispatch accepted `PENDING` rows with `dispatch_time` set but no Spider ID.
-- Decide whether recovered running jobs count against `max_concurrent_jobs` and
-  enforce the documented choice.
-- Make result writes and finalization safe when a recovered task may have
-  partially completed before the restart.
-- Preserve a successful commit if Spider reports the graph failed or cancelled
-  after the termination task committed but before its result reached Spider.
+- Reattach to `RUNNING` rows with a Spider ID without resubmitting.
+- Re-dispatch accepted `PENDING` rows with `dispatch_time` but no Spider ID.
+- Make recovered running jobs consume semaphore capacity, or document and test
+  another bounded policy.
+- Make terminal handling idempotent if clp-s wrote results before restart.
 - Track in-flight handles and define graceful-stop versus forced-abort behavior
   within `termination_timeout_secs`.
+
+Recovery never kills orphaned work and does not add cancellation support.
+
+### PR 7 — Helm, Kubernetes, Docker, and package integration *(later step)*
+
+Make the completed coordinator deployable without changing the chart version
+on the MVP branch.
+
+Helm/Kubernetes:
+
+- Keep MVP-only `search_coordinator` defaults in
+  `tools/deployment/package-helm/values.yaml` and render the full block from
+  `templates/configmap.yaml` only when Spider is enabled. Remove/defer obsolete
+  commit-task fields rather than exposing dead configuration.
+- Add a search-coordinator Deployment modeled on the compression coordinator,
+  including DB credentials, DB/Spider-storage readiness init containers,
+  ConfigMap mount, `RUST_LOG`, telemetry environment, termination grace,
+  scheduling, and resources.
+- Fix replicas at one and use a rollout strategy that prevents overlap (for
+  example `Recreate` or `maxSurge: 0`) because MVP deliberately has no CAS or
+  leader election.
+- Add `searchCoordinator` values under Helm `scheduling` and `resources`, plus
+  a Helm-only log-level value if used by the Deployment.
+- Do not increment the Helm chart version on this MVP branch.
+
+Docker/package integration:
+
+- Verify the package image contains `/opt/clp/bin/search-coordinator` and the
+  generated config contains the matching section.
+- Add the service to the Spider Compose deployment(s), with the package config
+  mount, DB credentials, Spider settings/readiness, telemetry environment, and
+  shutdown grace consistent with Helm.
+- Ensure the Spider-worker image build depends on `clp-tdl-package` and copies
+  the library containing the registered search task to Spider's configured TDL
+  package directory.
+- Wire package-controller/config-template enablement so the coordinator is
+  started only with Spider and the legacy scheduler no longer claims supported
+  plain-search jobs.
+
+Validate with `helm lint`, rendered-manifest/config assertions, a single-writer
+rollout assertion, `docker compose config`, release binary/TDL-library checks,
+and container/Kubernetes startup smoke tests.
+
+## MVP requirement-to-PR check
+
+| Section 4 requirement | Planned PR |
+|---|---|
+| Schema additions | 1.1 |
+| Configurable poll loop and shutdown | 1.2, 1.5 |
+| Two-phase fetch and bounded concurrency | 1.5 |
+| Categorization and MessagePack config | 2 |
+| Archive planning and results-cache-only task | 2, 3 |
+| Spider graph submission and ID persistence | 4 |
+| Poll/decide/write status lifecycle | 1.3, 4, 5 |
+| Terminal `SUCCEEDED`/`FAILED`, duration, status message | 1.3, 5 |
+| Startup recovery | 6 |
+| Helm/Kubernetes and Docker/package integration | 7 |
 
 ## Dependency graph
 
 ```text
-1.1 ── 1.3 ──┐
-1.2 ──────────┼── 1.5 ── 2 ──┐
-1.4 ──────────┘              ├── 4 ── 5 ── 6 ── 7
-1.2 ── 3 ────────────────────┘
+1.1 -> 1.3 --+
+1.2 ---------+-> 1.5 -> 2 --+
+1.4 ---------+              +-> 4 -> 5 -> 6 -> 7
+1.2 -> 3 -------------------+
 ```
 
-PR 3 can proceed in parallel with PR 2 once the per-archive task contract is
-agreed; PR 4 is the bridge that requires both.
+PR 3 can proceed beside PR 2 after agreeing on the per-archive input contract;
+PR 4 is their integration point. Recovery is an MVP requirement, and deployment
+is intentionally last so its smoke tests exercise the complete lifecycle.
 
 ## Deferred phases
 
-- **MVP+1 — cancellation:** poll `CANCELLING`, maintain per-job cancellation
-  tokens, cancel Spider work, and transition query/task rows with guarded SQL
-  updates.
-- **MVP+2 — timeline aggregation:** retain clp-s per-archive bucketing but move
-  the cross-archive reduction into the coordinator; do not port the reducer.
-- **MVP+3 — extraction:** design Spider tasks and resource-group isolation for
-  `EXTRACT_IR` and `EXTRACT_JSON`.
-- **MVP+N — other aggregations:** depends on the future Spider API and remains
-  outside this plan.
+- **MVP+1 — cancellation:** poll `CANCELLING`, request Spider cancellation,
+  and define `CANCELLED` lifecycle semantics.
+- **MVP+2 — timeline aggregation:** retain clp-s per-archive bucketing and use
+  the results cache for the cross-archive reduction; do not port the reducer.
+- **MVP+3 — decompression:** design Spider tasks and resource-group isolation
+  for `EXTRACT_IR` and `EXTRACT_JSON`.
+- **Post-MVP observability:** add `query_tasks` bookkeeping and accurate
+  `num_tasks`/`num_tasks_completed` only after its schema and ownership model
+  are deliberately designed.
+- **MVP+N — other aggregations:** depend on future Spider functionality and
+  remain outside this plan.
