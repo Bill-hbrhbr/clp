@@ -4,105 +4,247 @@ A summary of the Celery worker tasks executed from
 `components/job-orchestration/job_orchestration/executor/query/` — the per-archive
 query workhorses launched by the Python query scheduler.
 
-## Celery app and config
+## Architecture at a glance
 
-`celery.py` creates `Celery("query")` with config from `celeryconfig.py`:
+```text
+Python query scheduler
+  └─ submits a Celery group (one task message per archive)
+       └─ query queue / Celery worker
+            ├─ search                         registered Celery task
+            │    └─ search_entry_point          task-specific Python logic
+            │         ├─ run_query_task          shared Python helper
+            │         │    └─ clo s / clp-s s   native subprocess
+            │         └─ optional S3 upload      task-specific post-processing
+            └─ extract_stream                 registered Celery task
+                 └─ extract_stream_entry_point  task-specific Python logic
+                      ├─ run_query_task          shared Python helper
+                      │    └─ clo i / clp-s x   native subprocess
+                      └─ optional S3 upload      task-specific post-processing
+```
 
-- **Imports** (i.e. the registered task modules): `fs_search_task` and `extract_stream_task`.
-- **Task routes**: both `fs_search_task.search` and `extract_stream_task.extract_stream` route to the `SchedulerType.QUERY` queue (`task_create_missing_queues = True`).
-- **Broker / result backend**: from `BROKER_URL` / `RESULT_BACKEND` env vars.
-- **Results**: `result_persistent = True`, `result_expires = 7200`, `task_track_started = True` (distinguishes started vs queued).
-- **Time limits**: `task_soft_time_limit` / `task_time_limit` from `query_worker` config.
-- **Serialization**: accepts json + pickle; results serialized as json (with a TODO to revisit).
-- **Logging**: `after_setup_logger` / `after_setup_task_logger` signals install CLP's JSON formatter.
+Celery directly invokes only the two registered tasks, `search` and
+`extract_stream`. Their entry-point functions prepare the command, call the
+shared `run_query_task` helper, and perform any task-specific post-processing.
+`run_query_task` is a normal Python function, not another Celery task.
 
-## Dispatch model (one task per archive, grouped in batches)
+## 1. Scheduler: select and dispatch work
 
-The scheduler builds Celery **`group`** objects containing **one task per
-archive**:
+The Python query scheduler owns job-level orchestration. It selects the target
+archives, inserts one SQL task row per archive, creates the corresponding Celery
+signatures, and determines the final job status from their returned results.
 
-- `QueryJobType.SEARCH_OR_AGGREGATION` → one `search.s(...)` per archive.
-- `QueryJobType.EXTRACT_JSON` / `QueryJobType.EXTRACT_IR` → one `extract_stream.s(...)` per archive.
+- `SEARCH_OR_AGGREGATION` creates one `search.s(...)` per archive.
+- `EXTRACT_JSON` and `EXTRACT_IR` create one `extract_stream.s(...)` per archive.
 
-A search job's archives are not necessarily placed in one group. The scheduler
-dispatches at most `query_scheduler.num_archives_to_search_per_sub_job` archives
-at a time and, if the job should continue, creates another group after the
-current one finishes. An extraction job resolves to exactly one archive and is
-therefore dispatched as a one-task group.
+Search jobs may cover many archives, so the scheduler dispatches at most
+`query_scheduler.num_archives_to_search_per_sub_job` in each Celery group. If
+the job should continue, it creates another group after the current group
+finishes. An extraction job resolves to one archive and therefore uses a
+one-task group.
 
-Each task is given `job_id`, `archive_id`, a per-archive `task_id`, the job
-config, the CLP metadata DB connection params, the results-cache URI, and an
-optional `dataset`.
+Every task receives a `job_id`, an `archive_id`, a per-archive `task_id`, the job
+configuration, CLP metadata database connection parameters, the results-cache
+URI, and an optional `dataset`.
 
-## Task: `search` (`fs_search_task.search`)
+## 2. Celery: deliver work to a registered task
 
-Runs one `SEARCH_OR_AGGREGATION` query against **one archive**.
+`celery.py` creates the `Celery("query")` application and loads
+`celeryconfig.py`. The configuration:
 
-**Signature:** `search(job_id, task_id, job_config_blob, archive_id, clp_metadata_db_conn_params, results_cache_uri, dataset=None)` — `job_config_blob` is msgpack; decoded into `SearchJobConfig`.
+- Registers the `fs_search_task` and `extract_stream_task` modules.
+- Routes both registered tasks to the `SchedulerType.QUERY` queue and permits
+  Celery to create the queue if it is missing.
+- Reads the broker and result-backend URLs from `BROKER_URL` and
+  `RESULT_BACKEND`.
+- Persists results, expires them after 7200 seconds, and enables
+  `task_track_started` to distinguish queued tasks from started tasks.
+- Reads the soft and hard task time limits from the `query_worker`
+  configuration.
+- Accepts JSON and pickle content and serializes results as JSON.
+- Installs CLP's JSON log formatter on Celery and task loggers.
 
-**What it does:**
+When a worker consumes a message, Celery invokes the registered `search` or
+`extract_stream` wrapper. The wrapper adds structured log context, calls its
+task-specific entry point, and logs and re-raises unexpected exceptions and
+`SoftTimeLimitExceeded`.
 
-1. Loads worker config (`CLP_CONFIG_PATH`), decodes `SearchJobConfig`.
-2. Builds the clp search command for one archive:
-   - **CLP storage engine** → `clo s <archive_dir>/<archive_id>` (no S3, no `write_to_file`).
-   - **CLP_S storage engine** → `clp-s s <archive_dir|s3_url> --archive-id <archive_id>` (S3 input supported via `--auth s3`).
-   - Common flags: the query string, `--tge`/`--tle` (begin/end timestamp), `--ignore-case`, `--file-path` (path filter); telemetry (`--enable-telemetry`) is sampled per `query_trace_sampling_probability`.
-3. Selects the **output handler** by priority:
-   1. `aggregation_config` set → **`reducer`** (`--host --port --job-id`; `--count` is added when `do_count_aggregation` is non-null, including when it is explicitly `False`, and `--count-by-time <size>` is added when configured).
-   2. else `network_address` set → **`network`** (`--host --port`).
-   3. else `write_to_file` → **`file`** (`--path <stream_output>/<job_id>/<archive_id>`).
-   4. else → **`results-cache`** (`--uri <results_cache_uri> --collection <job_id> --max-num-results <n>`, optional `--dataset`).
-4. Runs the subprocess via `run_query_task` (sets `QUERY_TASKS_TABLE_NAME` `RUNNING` → `SUCCEEDED`/`FAILED` + `duration`).
-5. **S3 upload**: if `stream_output.storage` is S3 **and** `write_to_file` **and** the subprocess succeeded, uploads the result file to `{job_id}/{archive_id}` relative to the configured S3 key prefix (`upload_results_to_s3`); empty files are skipped. The local file is deleted whether the upload succeeds or fails.
-6. Returns a `QueryTaskResult` dump (`status`, `task_id`, `duration`).
+## 3. Registered task: `search`
 
-An S3 upload failure changes the returned `QueryTaskResult` to `FAILED`, so the
-scheduler will fail the job. However, `run_query_task` has already persisted
-`SUCCEEDED` to the SQL task row by this point, and the upload path does not
-update that row again. The returned result and `QUERY_TASKS_TABLE_NAME` can
-therefore disagree.
+`fs_search_task.search` runs one `SEARCH_OR_AGGREGATION` query against one
+archive.
 
-## Task: `extract_stream` (`extract_stream_task.extract_stream`)
+```text
+search (Celery wrapper)
+  └─ search_entry_point
+       ├─ load and validate configuration
+       ├─ build one archive-search command
+       ├─ run_query_task
+       └─ optionally upload file output to S3
+```
 
-Runs **IR or JSON stream extraction** for one archive (`EXTRACT_IR` / `EXTRACT_JSON`).
+Its signature is:
 
-**Signature:** `extract_stream(job_id, task_id, query_job_type, job_config, archive_id, clp_metadata_db_conn_params, results_cache_uri, dataset=None)` — `job_config` is a dict (`ExtractIrJobConfig` / `ExtractJsonJobConfig`).
+```text
+search(job_id, task_id, job_config_blob, archive_id,
+       clp_metadata_db_conn_params, results_cache_uri, dataset=None)
+```
 
-> **IR vs JSON is selected by the package storage engine, not by `query_job_type`.** `query_job_type` (`EXTRACT_IR` / `EXTRACT_JSON`) is received by the Celery task but used **only for log context** — it is not passed to `extract_stream_entry_point`. The command builder (`_make_command_and_env_vars`) branches on `worker_config.package.storage_engine`: `CLP` → IR extraction (`clo i` + `ExtractIrJobConfig`); `CLP_S` → JSON extraction (`clp-s x` + `ExtractJsonJobConfig`). The implicit assumption is that `EXTRACT_IR` jobs run against CLP-engine archives and `EXTRACT_JSON` against CLP_S-engine archives.
+`job_config_blob` is msgpack decoded into `SearchJobConfig`.
 
-**What it does:**
+### Command selection
 
-1. Loads worker config; if `stream_output.storage` is S3, sets `enable_s3_upload = True` (this also enables `print_stream_stats`, see below). Validated configuration permits S3 stream output only with the CLP_S storage engine, so the S3-upload path is reachable for JSON extraction but not IR extraction.
-2. Builds the extraction command by storage engine:
-   - **CLP storage engine → IR** (`clo i`): `clo i <archive_dir>/<archive_id> <file_split_id> <stream_output_dir> <results_cache_uri> <stream_collection_name>`, plus `--target-size <n>` (from `ExtractIrJobConfig.target_uncompressed_size`) and `--print-ir-stats` (iff S3 upload enabled). **S3 input not supported** for IR/CLP; `file_split_id` is required (missing → command build fails).
-   - **CLP_S storage engine → JSON** (`clp-s x`): `clp-s x <archive_dir|s3_url> <stream_output_dir>` then `--archive-id <archive_id>` (filesystem) or `--auth s3` (S3 input, with AWS credential env vars), then **always** `--ordered --mongodb-uri <results_cache_uri> --mongodb-collection <stream_collection_name>`, plus `--target-ordered-chunk-size <n>` (from `ExtractJsonJobConfig.target_chunk_size`) and `--print-ordered-chunk-stats` (iff S3 upload enabled). Stream metadata is written to the results cache via `--mongodb-collection stream_collection_name`.
-3. Runs the subprocess via `run_query_task` (sets `QUERY_TASKS_TABLE_NAME` `RUNNING` → `SUCCEEDED`/`FAILED` + `duration`); returns `(QueryTaskResult, stdout_str)`.
-4. **S3 upload** (iff `enable_s3_upload` **and** the subprocess succeeded): the clp process emitted one JSON stream-stats object per line on stdout (`{"path": "<local stream file>", ...}`) — that's why `--print-*-stats` was passed. The task parses each stdout line as JSON, reads its `path`, `s3_put`s that local stream file to S3 under its basename relative to the configured S3 key prefix, and `unlink`s the local copy. On the **first** parse or upload error it sets `upload_error = True`. It continues parsing later lines but makes no more upload attempts; every subsequently reported valid path is still unlinked. A malformed line or a line without `path` cannot identify a local file to remove. If `upload_error` is set at the end, the returned task status is flipped to `FAILED`.
-5. Returns a `QueryTaskResult` dump.
+- With the **CLP** storage engine, it runs
+  `clo s <archive_dir>/<archive_id>`. CLP search does not support S3 archive
+  input or `write_to_file` here.
+- With the **CLP_S** storage engine, it runs `clp-s s` against a filesystem
+  archive directory or an S3 URL. S3 input uses `--auth s3` and credential
+  environment variables.
 
-The `--print-ir-stats` / `--print-ordered-chunk-stats` flags and the S3-upload loop are coupled: the stats lines on stdout are the only signal the task has of which stream files were produced and where they live, so the upload path is gated on S3 stream output and the stats flags are set exactly when the upload will run.
+Both variants add the query string and any configured timestamp bounds
+(`--tge`/`--tle`), case-insensitive matching (`--ignore-case`), and path filter
+(`--file-path`). CLP_S telemetry is sampled using
+`query_trace_sampling_probability`; sampled commands receive
+`--enable-telemetry` plus `CLP_QUERY_ID` and `CLP_TASK_ID` environment variables.
 
-As with search-result uploads, an extraction upload failure is reflected in the
-returned result and therefore the job status, but not in the SQL task row,
-which was already marked `SUCCEEDED`. Local files are removed even when their
-upload fails or when uploads have been suppressed by an earlier error.
+### Output selection
 
-## Shared runtime: `run_query_task` (`utils.py`)
+The first matching output mode wins:
 
-Both tasks shell out through `run_query_task`, which is the actual per-archive execution + `QUERY_TASKS_TABLE_NAME` bookkeeping:
+1. `aggregation_config` selects `reducer` with `--host`, `--port`, and
+   `--job-id`. `--count` is currently added whenever
+   `do_count_aggregation` is non-null, including when explicitly `False`;
+   `--count-by-time` is added when configured.
+2. `network_address` selects `network` with `--host` and `--port`.
+3. `write_to_file` selects `file` with
+   `--path <stream_output>/<job_id>/<archive_id>`.
+4. Otherwise, `results-cache` receives the results-cache URI, job ID as the
+   collection, maximum result count, and optional dataset.
 
-- Writes the task row to `RUNNING` with `start_time` (`update_query_task_metadata`).
-- `subprocess.Popen`s the clp command in its **own process group** (`preexec_fn=os.setpgrp`), capturing stdout and redirecting stderr to a per-task log file (`<clp_logs_dir>/<job_id>/<task_id>-clo.log`). After the subprocess exits, the file's contents are replayed through the task logger.
-- Registers a **SIGTERM handler** that kills the child process group (`os.killpg`) — this is how Celery revocation with termination cancels the in-flight clp process. The scheduler separately changes `PENDING` and `RUNNING` SQL task rows to `CANCELLED` when cancelling a job.
-- `communicate()`s for stdout, then maps `returncode` → `SUCCEEDED` (0) / `FAILED` (nonzero); writes `duration`.
-- Returns `(QueryTaskResult, stdout_str)`.
+### Search-specific post-processing
 
-The task wrappers log and re-raise `SoftTimeLimitExceeded`, but that exception
-path does not call `report_task_failure` or explicitly terminate the subprocess
-group. It should not be conflated with the SIGTERM cancellation path above.
+After `run_query_task` reports subprocess success, file output configured with
+S3 stream storage is uploaded to `{job_id}/{archive_id}` relative to the S3 key
+prefix. Missing or empty output is skipped. The local file is removed whether
+the upload succeeds or fails. The task then returns a serialized
+`QueryTaskResult` containing `status`, `task_id`, and `duration`.
 
-Helpers:
+## 4. Registered task: `extract_stream`
 
-- `report_task_failure` — writes `FAILED` (duration 0) when worker-config loading returns `None` or command construction explicitly returns no command, and returns a `QueryTaskResult`. Exceptions such as malformed msgpack, Pydantic validation failures, missing environment variables, or subprocess-launch failures bypass this helper and are re-raised by the Celery task wrapper. Depending on where such an exception occurs, the SQL task row can remain `PENDING` or `RUNNING`; the scheduler fails the overall job when it observes the exceptional Celery result.
-- `update_query_task_metadata` — the `UPDATE {QUERY_TASKS_TABLE_NAME} SET ... WHERE id = <task_id>` (built via f-string; note the `f'{k}="{v}"'` quoting).
-- `get_query_hash` — SHA-256 of the query string, used only for log context.
+`extract_stream_task.extract_stream` extracts an IR or JSON stream from one
+archive.
+
+```text
+extract_stream (Celery wrapper)
+  └─ extract_stream_entry_point
+       ├─ load and validate configuration
+       ├─ build one archive-extraction command
+       ├─ run_query_task
+       └─ optionally upload produced streams to S3
+```
+
+Its signature is:
+
+```text
+extract_stream(job_id, task_id, query_job_type, job_config, archive_id,
+               clp_metadata_db_conn_params, results_cache_uri, dataset=None)
+```
+
+`job_config` is a dictionary validated as `ExtractIrJobConfig` or
+`ExtractJsonJobConfig`.
+
+### IR versus JSON selection
+
+The package storage engine, not `query_job_type`, selects the extraction mode:
+
+- **CLP** builds an IR extraction command using `clo i` and
+  `ExtractIrJobConfig`.
+- **CLP_S** builds a JSON extraction command using `clp-s x` and
+  `ExtractJsonJobConfig`.
+
+The Celery task receives `query_job_type`, but uses it only as log context; it
+does not pass it to `extract_stream_entry_point`. The scheduler therefore
+implicitly relies on `EXTRACT_IR` jobs running with CLP and `EXTRACT_JSON` jobs
+running with CLP_S.
+
+### Command selection
+
+- **CLP / IR:** Runs `clo i` with the archive path, file-split ID, stream-output
+  directory, results-cache URI, and stream collection as positional arguments.
+  `file_split_id` is required, `--target-size` is added when configured, and S3
+  archive input is unsupported.
+- **CLP_S / JSON:** Runs `clp-s x <archive_dir|s3_url> <stream_output_dir>`.
+  Filesystem input adds `--archive-id`; S3 input adds `--auth s3` and credential
+  environment variables. It always adds `--ordered`, the results-cache URI and
+  stream collection, and optionally `--target-ordered-chunk-size`.
+
+The extraction process writes stream metadata to `stream_collection_name` in
+the results cache.
+
+### Extraction-specific post-processing
+
+S3 stream output enables `--print-ir-stats` or
+`--print-ordered-chunk-stats`. Each stdout line then identifies a generated
+local stream as JSON: `{"path": "<local stream file>", ...}`. Validated worker
+configuration allows S3 stream output only with CLP_S, so in practice this path
+is reachable for JSON extraction, not IR extraction.
+
+After subprocess success, the task parses the lines and uploads each file under
+its basename relative to the configured S3 key prefix. The first parse or
+upload error disables further upload attempts, although later lines are still
+parsed. Every path obtained from a valid line is unlinked, including the file
+whose upload failed and files skipped after an earlier error. A malformed line
+or one without `path` cannot identify a local file to remove.
+
+Any such error changes the returned `QueryTaskResult` to `FAILED`; otherwise the
+task returns the result produced by `run_query_task`.
+
+## 5. Shared helper: `run_query_task`
+
+Both task-specific entry points call `utils.py:run_query_task` with a fully
+constructed command. The helper owns native-process execution and the normal
+SQL task-status lifecycle:
+
+1. Updates the SQL task row to `RUNNING` with its `start_time`.
+2. Opens `<clp_logs_dir>/<job_id>/<task_id>-clo.log` and launches the command in
+   its own process group using `subprocess.Popen` and `os.setpgrp`.
+3. Captures stdout and redirects stderr to the log file.
+4. Installs a SIGTERM handler that terminates the entire child process group.
+5. Waits for completion, maps exit code zero to `SUCCEEDED` and any other exit
+   code to `FAILED`, calculates the duration, and updates the SQL task row.
+6. Replays the subprocess's stderr file through the task logger and returns
+   `(QueryTaskResult, stdout_str)` to the task-specific entry point.
+
+`run_query_task` does not know whether its caller will subsequently upload
+files. Uploading therefore remains task-specific post-processing outside the
+shared helper.
+
+### Related helpers
+
+- `report_task_failure` writes `FAILED` with duration zero when worker-config
+  loading returns `None` or command construction explicitly returns no command.
+- `update_query_task_metadata` updates fields in `QUERY_TASKS_TABLE_NAME` for a
+  task ID. It constructs the `SET` expressions using
+  `f'{k}="{v}"'` string interpolation.
+- `get_query_hash` computes a SHA-256 hash of a search query for log context.
+
+## Status and failure caveats
+
+The Celery result, SQL task row, and overall SQL job row are related but are not
+the same source of state:
+
+- The scheduler derives the overall job result from the values returned by the
+  Celery tasks.
+- `run_query_task` updates the SQL task row before task-specific S3 upload.
+  Consequently, an upload failure returns `FAILED` and fails the job, but the
+  task row remains `SUCCEEDED`.
+- Exceptions such as malformed msgpack, Pydantic validation failures, missing
+  environment variables, or subprocess-launch failures bypass
+  `report_task_failure`. Depending on when the exception occurs, the SQL task
+  row can remain `PENDING` or `RUNNING`, while the scheduler still marks the job
+  failed after observing the exceptional Celery result.
+- Celery revocation with termination sends SIGTERM; `run_query_task` terminates
+  the native process group, while the scheduler separately changes pending and
+  running task rows to `CANCELLED`.
+- `SoftTimeLimitExceeded` is logged and re-raised by the registered task wrapper,
+  but that path does not call `report_task_failure` or explicitly terminate the
+  native subprocess group.
