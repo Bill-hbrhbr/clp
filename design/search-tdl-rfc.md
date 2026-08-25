@@ -13,7 +13,10 @@ Python implementation.
 
 The MVP covers only plain search using the results-cache output path:
 
-- **Result-cache only.** The native search binary writes search results directly
+- **CLP-S only.** The MVP supports archives produced by the CLP-S storage
+  engine and invokes `clp-s` for search. All other storage engines are outside
+  the MVP scope.
+- **Result-cache only.** clp-s writes search results directly
   to MongoDB through its `results-cache` output handler. The `network` and
   `file` output handlers are outside the MVP scope.
 - **No aggregation.** The MVP does not support a reducer or any
@@ -33,8 +36,7 @@ archive-level execution:
 - Spider owns distributed scheduling and execution of the submitted task graph.
 - The CLP TDL package supplies the search functions that Spider workers can
   execute.
-- The selected native search binary writes results directly to the per-job
-  results-cache collection.
+- clp-s writes results directly to the per-job results-cache collection.
 - A `search::commit` termination function finalizes successful CLP query jobs in
   MySQL.
 
@@ -93,7 +95,8 @@ functions.
 Spider owns distributed graph execution:
 
 - Schedule graph nodes on available workers.
-- Run one engine-appropriate archive-search task for each planned archive.
+- Run one `search::clp_s_search_to_results_cache` task for each planned
+  archive.
 - Apply each node's retry, concurrency, and timeout policy.
 - Run `search::commit` as the termination task.
 - Expose the Spider job's state and error to the submitter.
@@ -102,12 +105,10 @@ Spider owns distributed graph execution:
 
 The TDL package defines how each graph node executes:
 
-- `search::clo_search_to_results_cache` interprets one CLP archive input and
-  launches CLO.
 - `search::clp_s_search_to_results_cache` interprets one CLP-S
   dataset/archive input and launches clp-s.
-- The native binary writes matches directly to MongoDB collection
-  `<query_job_id>`; both archive tasks return only success or failure.
+- clp-s writes matches directly to MongoDB collection
+  `<query_job_id>`; the archive task returns only success or failure.
 - `search::commit` marks `query_jobs` `SUCCEEDED` after Spider confirms that
   every archive task succeeded.
 
@@ -201,10 +202,9 @@ Given the baseline architecture, the search TDL package must provide:
 
 ## 6. Proposed design
 
-The MVP defines three Spider-visible task functions:
+The MVP defines two Spider-visible task functions:
 
 ```text
-search::clo_search_to_results_cache
 search::clp_s_search_to_results_cache
 search::commit
 ```
@@ -214,8 +214,7 @@ policy is not a TDL argument. The initial MVP policies are:
 
 | Task | `max_num_instances` | `max_num_retry` | Soft / hard timeout | Rationale |
 | --- | ---: | ---: | ---: | --- |
-| `search::clo_search_to_results_cache` | 1 | 0 | 600 s / 1,200 s | Preserves the legacy search time limits. Automatic retry is disabled because another invocation can insert duplicate MongoDB documents with new `_id` values. |
-| `search::clp_s_search_to_results_cache` | 1 | 0 | 600 s / 1,200 s | Same result-writing and retry semantics as the CLO task. |
+| `search::clp_s_search_to_results_cache` | 1 | 0 | 600 s / 1,200 s | Preserves the legacy search time limits. Automatic retry is disabled because another invocation can insert duplicate MongoDB documents with new `_id` values. |
 | `search::commit` | 1 | 1 | 45 s / 60 s | Matches the compression commit policy. One retry is safe because the MySQL transaction is idempotent for an already-`SUCCEEDED` row. |
 
 The timeout and retry values MUST be coordinator configuration rendered into
@@ -223,7 +222,7 @@ the deployment configuration rather than constants in the TDL functions.
 `max_num_instances = 1` applies to each graph node; different archive nodes may
 still run concurrently subject to the Spider resource group.
 
-The archive-search functions return no value payload. Their search results are
+The archive-search function returns no value payload. Its search results are
 written directly to MongoDB by the native binary. Returning `Ok(())` tells
 Spider only that the native process completed successfully; returning
 `Err(TdlError)` fails that graph node. `search::commit` also returns no value
@@ -233,30 +232,25 @@ update.
 **Archive and dataset preprocessing.** This happens before any TDL function is
 invoked:
 
-1. `SearchCoordinator` deserializes and validates `SearchJobConfig` and selects
-   the configured storage engine.
-2. For the CLP engine, the job has no dataset list. The coordinator queries the
-   non-dataset archive table and produces one `CloSearchTaskInput` per matching
-   archive.
-3. For the CLP-S engine, the coordinator resolves a missing dataset selection
+1. `SearchCoordinator` deserializes and validates `SearchJobConfig` and accepts
+   only jobs for the CLP-S storage engine.
+2. The coordinator resolves a missing dataset selection
    to `default`, deduplicates and validates the selected datasets, and queries
    their archive-metadata tables. When more than one dataset is selected, it
    combines the per-dataset `SELECT` statements with `UNION ALL`, includes the
    dataset name with every selected row, and globally orders the rows by
    `end_timestamp DESC`.
-4. The coordinator applies the query time range and archive-retention cutoff
+3. The coordinator applies the query time range and archive-retention cutoff
    while selecting archives. The resulting in-memory mapping has one
-   `(dataset, archive_id)` entry per CLP-S archive; the CLP mapping contains only
-   `archive_id`.
-5. `SearchCoordinator` gives the prepared inputs to `QueryJobHandle`, which
+   `(dataset, archive_id)` entry per matching archive.
+4. `SearchCoordinator` gives the prepared inputs to `QueryJobHandle`, which
    asks `QueryJobSubmitter` to submit them. The `SpiderClient` implementation
    creates one graph node per input and serializes that input as the node's
    MessagePack payload. The vector itself is not sent to a TDL function.
-6. All archive nodes for the query job are registered in one Spider graph; the
+5. All archive nodes for the query job are registered in one Spider graph; the
    coordinator does not divide them into sequential dispatch batches. A graph
-   uses either the CLO task or the CLP-S task, never both. A CLP-S graph may
-   contain archive tasks for different datasets.
-7. The submitter installs `search::commit` as the graph's termination task, so
+   may contain archive tasks for different datasets.
+6. The submitter installs `search::commit` as the graph's termination task, so
    Spider invokes it only after every archive-search node succeeds.
 
 For example, a CLP-S query over two datasets becomes:
@@ -273,8 +267,8 @@ Spider graph
   clp_s_search(dataset-b, archive-3) --+
 ```
 
-**Shared task input types.** The signatures in Sections 6.1 and 6.2 use the
-following MessagePack-serialized types from
+**Shared task input types.** The signature in Section 6.1 uses the following
+MessagePack-serialized types from
 `clp_rust_utils::task_io::search`:
 
 ```rust
@@ -295,14 +289,6 @@ pub struct SearchQuery {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct CloSearchTaskInput {
-    pub query_job_id: QueryJobId,
-    pub archive_id: String,
-    pub query: SearchQuery,
-    pub path_filter: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ClpSSearchTaskInput {
     pub query_job_id: QueryJobId,
     pub dataset: String,
@@ -312,7 +298,7 @@ pub struct ClpSSearchTaskInput {
 ```
 
 `QueryJobId` mirrors the signed MySQL `INT` type of `query_jobs.id`.
-`max_num_results` is non-zero because both native result-cache handlers reject
+`max_num_results` is non-zero because the clp-s result-cache handler rejects
 zero; the coordinator resolves the API's zero-as-default convention before it
 constructs these inputs. Timestamps are Unix epoch milliseconds.
 
@@ -322,7 +308,6 @@ The relationship to the existing compression wire types is:
 | --- | --- | --- |
 | `QueryJobId` | Identifies the durable CLP query job and its MongoDB collection. | `CompressionJobId` identifies the durable compression job. |
 | `SearchQuery` | Job-wide native search options copied into every archive-task payload. | `ClpSCompressionOption` contains job-wide native compression options copied into every compression-task payload. |
-| `CloSearchTaskInput` | Complete input for one CLO archive-search invocation. | No single direct analogue; it combines the job identity, native options, and one archive identity. |
 | `ClpSSearchTaskInput` | Complete input for one clp-s archive-search invocation, including its single dataset/archive pair. | Together, the compression task's `ClpSCompressionOption`, `dataset`, and `S3InputSource` arguments form the corresponding complete per-task input. |
 
 Search intentionally has no `SearchTaskOutput` equivalent to
@@ -330,83 +315,9 @@ Search intentionally has no `SearchTaskOutput` equivalent to
 metadata for `compression::commit` to publish. Search hits are already written
 to MongoDB, and `search::commit` needs no archive-task values.
 
-### 6.1 `search::clo_search_to_results_cache`
+### 6.1 `search::clp_s_search_to_results_cache`
 
 #### 6.1.1 Signature
-
-```rust
-#[task(name = "search::clo_search_to_results_cache")]
-pub(crate) fn clo_search_to_results_cache_task(
-    ctx: TaskContext,
-    input: CloSearchTaskInput,
-) -> Result<(), TdlError>;
-```
-
-The task executes exactly one CLO search against exactly one filesystem CLP
-archive. It MUST fail if the worker's archive-output storage is S3 because the
-legacy CLO search path does not support S3 archives.
-
-#### 6.1.2 Inputs and exact uses
-
-| Input | Producer | Exact use |
-| --- | --- | --- |
-| `ctx` | Spider | Supplies Spider job, task, and task-instance identities for tracing and error context. `ctx.job_id` is the Spider job ID and MUST NOT be used as the MongoDB collection name. |
-| `input.query_job_id` | `SearchCoordinator`, copied into every archive input for the query job | Converted to its decimal string and passed as `results-cache --collection <query_job_id>`. This preserves the existing per-query result collection and numeric collection-name contract. |
-| `input.archive_id` | `SearchCoordinator`, from the selected CLP archive-metadata row | Appended to the configured filesystem archive root to form the positional archive path passed to CLO. It also identifies the archive in task logs. |
-| `input.query.query_string` | Query-job configuration | Passed as CLO's positional search query without reinterpretation by the TDL task. |
-| `input.query.max_num_results` | Query-job configuration after zero-default normalization | Passed as `results-cache --max-num-results <n>`. The limit applies to this archive invocation, not globally across the query job. |
-| `input.query.begin_timestamp` | Query-job configuration | When present, passed as `--tge <milliseconds>`; omitted otherwise. |
-| `input.query.end_timestamp` | Query-job configuration | When present, passed as `--tle <milliseconds>`; omitted otherwise. |
-| `input.query.ignore_case` | Query-job configuration | Adds `--ignore-case` when true; adds no argument when false. |
-| `input.path_filter` | Query-job configuration | When present, passed as `--file-path <filter>` before the query string; omitted otherwise. This option exists only on the CLO task. |
-
-The results-cache URI and archive root are deployment configuration, not task
-inputs. The task obtains `CLP_HOME`, `archive_output`, and `results_cache` from
-the TDL worker's process-global configuration. `results_cache` therefore must
-be added to `SpiderTaskExecutorConfig`. The task constructs the URI from its
-configured host, port, and database name.
-
-The resulting command is:
-
-```text
-<CLP_HOME>/bin/clo s <archive-root>/<archive-id>
-    [--file-path <path-filter>]
-    <query-string>
-    [--tge <begin-ms>]
-    [--tle <end-ms>]
-    [--ignore-case]
-    results-cache
-    --uri <results-cache-uri>
-    --collection <query-job-id>
-    --max-num-results <n>
-```
-
-The implementation MUST construct the argument vector without a shell, wait
-for the child process, and drain its standard streams. Exit code zero returns
-`Ok(())`; a configuration error, spawn/wait error, or non-zero exit returns
-`TdlError::ExecutionError`. Zero matching log events is successful.
-
-#### 6.1.3 Outputs and their consumers
-
-**Returned task output:** `()`. No search hits, count, duration, archive ID, or
-timestamp range is returned through Spider. `search::commit` depends on
-Spider's prerequisite-success guarantee and does not consume an output value
-from this task.
-
-**Persistent output:** CLO writes one MongoDB document per retained match into
-collection `<query_job_id>`. MongoDB supplies `_id`; CLO supplies
-`orig_file_id`, `orig_file_path`, `log_event_ix`, `timestamp`, and `message`.
-The webui, API server, and other results-cache readers consume these documents.
-Neither `QueryJobHandle`, `SearchCoordinator`, nor `search::commit` reads or
-rewrites them.
-
-**Coordinator-visible outcome:** Spider exposes node failure through the graph
-state. On success, no task value is returned to `QueryJobHandle`; the handle
-observes the terminal graph outcome after `search::commit` runs.
-
-### 6.2 `search::clp_s_search_to_results_cache`
-
-#### 6.2.1 Signature
 
 ```rust
 #[task(name = "search::clp_s_search_to_results_cache")]
@@ -420,7 +331,7 @@ The task executes exactly one clp-s search against exactly one archive in one
 resolved dataset. Different invocations in the same graph may use different
 datasets.
 
-#### 6.2.2 Inputs and exact uses
+#### 6.1.2 Inputs and exact uses
 
 | Input | Producer | Exact use |
 | --- | --- | --- |
@@ -434,12 +345,14 @@ datasets.
 | `input.query.end_timestamp` | Query-job configuration | When present, passed as `--tle <milliseconds>`; omitted otherwise. |
 | `input.query.ignore_case` | Query-job configuration | Adds `--ignore-case` when true; adds no argument when false. |
 
-As in Section 6.1, the task obtains `CLP_HOME`, `archive_output`, and
-`results_cache` from process-global worker configuration. For S3 archive
-storage it also obtains the endpoint, region, bucket, key prefix, and AWS
-authentication configuration from `archive_output`, resolves the credentials,
-and injects them into the clp-s child environment. These deployment-wide
-values are not serialized into every task.
+The task obtains `CLP_HOME`, `archive_output`, and `results_cache` from
+process-global worker configuration. `results_cache` therefore must be added
+to `SpiderTaskExecutorConfig`; the task constructs its URI from the configured
+host, port, and database name. For S3 archive storage it also obtains the
+endpoint, region, bucket, key prefix, and AWS authentication configuration from
+`archive_output`, resolves the credentials, and injects them into the clp-s
+child environment. These deployment-wide values are not serialized into every
+task.
 
 For filesystem archives, the resulting command is:
 
@@ -470,7 +383,7 @@ the child process, and drain its standard streams. Exit code zero returns
 non-zero-exit failure returns `TdlError::ExecutionError`. Zero matching log
 events is successful.
 
-#### 6.2.3 Outputs and their consumers
+#### 6.1.3 Outputs and their consumers
 
 **Returned task output:** `()`. The task returns no hits or result statistics
 through Spider. `search::commit` consumes no archive-task value.
@@ -483,12 +396,12 @@ into collection `<query_job_id>`. MongoDB supplies `_id`; clp-s supplies
 identify the result source. Neither `QueryJobHandle`, `SearchCoordinator`, nor
 `search::commit` reads or rewrites these documents.
 
-**Coordinator-visible outcome:** as with CLO, only Spider's graph state crosses
-back to the job handle. Search hits remain in MongoDB.
+**Coordinator-visible outcome:** only Spider's graph state crosses back to the
+job handle. Search hits remain in MongoDB.
 
-### 6.3 `search::commit`
+### 6.2 `search::commit`
 
-#### 6.3.1 Signature
+#### 6.2.1 Signature
 
 ```rust
 #[task(name = "search::commit")]
@@ -501,7 +414,7 @@ the archive-search tasks deliberately return no value payload. Spider's
 termination-task ordering is the proof that every archive-search task returned
 successfully.
 
-#### 6.3.2 Input and exact use
+#### 6.2.2 Input and exact use
 
 | Input | Producer | Exact use |
 | --- | --- | --- |
@@ -526,11 +439,10 @@ The task performs one transaction:
    it back and return `TdlError::ExecutionError`.
 
 The task does not access MongoDB, inspect result documents, update
-`query_tasks`, or distinguish CLO from CLP-S. It can therefore terminate either
-archive-search graph and can commit a CLP-S graph containing multiple
-datasets.
+`query_tasks`, or inspect dataset identities. It can therefore commit a graph
+containing archives from multiple datasets.
 
-#### 6.3.3 Outputs and their consumers
+#### 6.2.3 Outputs and their consumers
 
 **Returned task output:** `()`. Returning `Ok(())` makes the Spider graph
 successful. A returned `TdlError` makes the graph fail.
