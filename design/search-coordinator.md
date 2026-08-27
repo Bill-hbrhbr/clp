@@ -204,6 +204,21 @@ stateDiagram-v2
 - Terminal states: `SUCCEEDED`, `FAILED`, `CANCELLED`, `KILLED`.
 - The compression coordinator has no cancel action of its own — it is submit-and-poll-only, so `Killed` there is just a relabel of Spider's observed `Cancelled` terminal state ([job_handle.rs#L533](https://github.com/y-scope/clp/blob/fcfe3aee252fc8ac0ad5a0942ea029e65ac17f1d/components/compression-coordinator/src/job_handle.rs#L533)). The search side's `KILLED` is the `kill_hanging_jobs` startup-cleanup path — different semantics, same name. The `CANCELLED` state stays (it may remain useful once a real cancel path exists), but the `KILLED` renaming is unnecessary and will be removed from both coordinators.
 
+The Python scheduler also has an in-memory `InternalJobState` with
+`WAITING_FOR_REDUCER`, `WAITING_FOR_DISPATCH`, and `RUNNING`. These are scheduler execution phases,
+not additional values in the durable `QueryJobStatus` lifecycle. For example, a SQL job can remain
+`RUNNING` while its in-memory object alternates between `WAITING_FOR_DISPATCH` and `RUNNING` for
+successive archive batches.
+
+**Persistence restraint:** store the minimum status and supporting columns needed by external
+consumers or fault-tolerant recovery. For the Spider path this includes durable facts such as the
+CLP job status, `spider_id`, `dispatch_time`, `start_time`, and terminal diagnostics. A transient
+phase such as "building the graph," "polling Spider," or "verifying the commit" should remain in
+the job handle when it can be reconstructed after a restart from those durable facts. This avoids
+unnecessary MySQL updates and row contention without sacrificing recovery. Add a status or column
+when omitting it would make an acknowledged action ambiguous after a crash—for example, persisting
+`spider_id` is necessary to reattach rather than submit duplicate work.
+
 ### 2.2 Cancellation sources
 
 Cancellation is a DB write of `status=CANCELLING`; the coordinator polls it (today `fetch_cancelling_search_jobs`, filtered to `type=SEARCH_OR_AGGREGATION` — the cancel machinery is not wired for `EXTRACT_*`).
@@ -251,9 +266,16 @@ Cancellation is a DB write of `status=CANCELLING`; the coordinator polls it (tod
 
 ### 4.1 Features to support
 
-The structure mirrors the compression-coordinator (poll loop, two-phase fetch, semaphore-bounded concurrency, job-handle lifecycle, status updates, startup recovery).
+The structure mirrors the compression-coordinator (poll loop, two-phase fetch, semaphore-bounded concurrency, job-handle lifecycle, a TDL termination/commit task, status updates, and startup recovery).
 
-**Query job status** transitions (the §2.1 state diagram) are **atomic, idempotent, and fault-tolerant**: the coordinator polls each job's current state (from `QUERY_JOBS_TABLE_NAME` and Spider), decides the next state, and writes it. Re-running the poll→decide→update cycle yields the same result, so a crash and restart is safe. This replaces the Python `prev_status` CAS (`UPDATE … WHERE status=<prev>`) — there is no guarded conditional write; the poll reads the prev state and the update writes the next state, giving cleaner state transitions.
+**Query job status ownership** mirrors compression. The coordinator persists the Spider job id and transitions the CLP query job from `PENDING` to `RUNNING`. Each per-archive `search` TDL task runs clp-s, which writes results directly to MongoDB, and returns only the small completion payload needed by the graph. After all search tasks succeed, Spider runs `search::commit` as the graph's termination task. That TDL function executes on a Spider worker, uses the worker's `SpiderTaskExecutorConfig` plus DB credentials from its environment, reverse-looks up the CLP query job by `spider_id`, locks the row, and CAS-transitions it from `RUNNING` to `SUCCEEDED` with its duration. It does not read or modify the MongoDB results.
+
+The coordinator continues polling Spider until the graph is terminal. On success it verifies that `search::commit` has already committed `SUCCEEDED`; it does not perform a second success write. If Spider fails or is unexpectedly cancelled before a successful commit, the coordinator records `FAILED` and a `status_msg`, while first preserving an already-committed `SUCCEEDED` result. This division makes successful publication atomic and idempotent in the worker-side commit transaction while retaining coordinator-side failure reporting and restart recovery.
+
+The Rust job handle should follow the persistence restraint from §2.1. Its async control flow can
+represent preparation, submission, Spider polling, and commit verification without adding those
+phases to `QueryJobStatus` or writing them to MySQL. Persist additional state only when it closes a
+real crash-recovery ambiguity.
 
 MVP features:
 
@@ -261,9 +283,9 @@ MVP features:
 - **Two-phase fetch** — re-dispatch `PENDING` rows already marked for dispatch, then fetch new `PENDING` rows up to the available concurrency permits.
 - **Job categorization** — deserialize msgpack `job_config` and branch on `type` + `aggregation_config`; MVP accepts only `SEARCH_OR_AGGREGATION` with `aggregation_config = None` and leaves the rest for later phases (returned as unsupported).
 - **Concurrency control** — a semaphore bounding in-flight jobs, with a permit owned by each job handle.
-- **Dispatch** — submit the job to Spider, persist the Spider job id, and mark the row `RUNNING` with `start_time`/`num_tasks`.
+- **Dispatch** — submit a graph containing one `search` task per archive plus a `search::commit` termination task, persist the Spider job id, and mark the row `RUNNING` with `start_time`/`num_tasks`.
 - **In-flight tracking** — poll Spider job state (idempotent start, exponential backoff) until terminal.
-- **Job completion** — on terminal Spider state, update the row to `SUCCEEDED`/`FAILED` with `duration`/`status_msg`; results already sit in the results cache (per-job collection) written by clp-s — the coordinator does not touch them.
+- **Job completion** — `search::commit` writes `SUCCEEDED` and `duration` transactionally after all search tasks succeed; on graph failure, the coordinator writes `FAILED` and `status_msg`. Results already sit in the results cache (per-job collection) written by clp-s; neither the coordinator nor the commit task touches them.
 - **Startup recovery** — re-attach to `RUNNING` rows that already have a Spider job id, so a coordinator restart doesn't drop in-flight jobs.
 - **Schema additions** — `QUERY_JOBS_TABLE_NAME` gains `status_msg`, `update_time`, `spider_id`, `dispatch_time` + indices, aligned with the compression jobs table.
 

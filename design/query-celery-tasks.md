@@ -33,6 +33,21 @@ The Python query scheduler owns job-level orchestration. It selects the target
 archives, inserts one SQL task row per archive, creates the corresponding Celery
 signatures, and determines the final job status from their returned results.
 
+The scheduler maintains two different kinds of state. `QueryJobStatus` is the
+durable, externally visible lifecycle in MySQL. `InternalJobState` is ephemeral
+bookkeeping in `active_jobs`: `WAITING_FOR_REDUCER`, `WAITING_FOR_DISPATCH`, and
+`RUNNING` tell the scheduler whether to acquire a reducer, dispatch an archive
+batch, or poll/revoke a Celery group. One MySQL `RUNNING` job can move through
+several of these internal phases without changing its durable status.
+
+This separation is intentional. A status or supporting column belongs in MySQL
+when another process must observe it or when it is needed to make restart
+recovery unambiguous. Reconstructible execution phases should remain in memory,
+which avoids unnecessary MySQL updates and row contention. A replacement
+coordinator may persist new recovery facts such as an external scheduler job ID,
+but should not copy `InternalJobState` into the public status enum merely to
+describe where its current function is executing.
+
 - `SEARCH_OR_AGGREGATION` creates one `search.s(...)` per archive.
 - `EXTRACT_JSON` and `EXTRACT_IR` create one `extract_stream.s(...)` per archive.
 
