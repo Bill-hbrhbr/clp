@@ -321,8 +321,8 @@ flowchart LR
     Q1 --> O
     Q2 --> O
     Q3 --> O
-    O -->|SUCCEEDED| S
-    O -->|FAILED| F
+    O -->|all nodes succeed: SUCCEEDED| S
+    O -->|any node exhausts its attempts: FAILED| F
 ```
 
 The solid lines converge on Spider's graph outcome, not on another task node.
