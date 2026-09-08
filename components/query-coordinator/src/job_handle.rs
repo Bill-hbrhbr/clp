@@ -18,18 +18,6 @@ use crate::query_job_submitter::ArchiveMetadata;
 use crate::query_job_submitter::QueryJobOutcome;
 use crate::query_job_submitter::QueryJobSubmitter;
 
-/// The coordinator-prepared inputs for one Spider query graph.
-pub struct QueryPlan {
-    /// Query behavior shared by every archive task.
-    pub clp_s_query_option: ClpSQueryOption,
-
-    /// Result destination shared by every archive task.
-    pub output_handle: OutputHandle,
-
-    /// The archives to query, each paired with its task execution policy.
-    pub archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
-}
-
 /// Spider polling options shared by query-job handles.
 pub struct SpiderOption {
     /// Initial delay after a non-terminal Spider job-state poll.
@@ -49,7 +37,9 @@ pub struct QueryJobHandle<SubmitterType: QueryJobSubmitter> {
     query_job_id: QueryJobId,
     job_submitter: SubmitterType,
     resource_group_id: ResourceGroupId,
-    query_plan: QueryPlan,
+    clp_s_query_option: ClpSQueryOption,
+    output_handle: OutputHandle,
+    archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
     spider_option: Arc<SpiderOption>,
 }
 
@@ -64,7 +54,9 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         query_job_id: QueryJobId,
         job_submitter: SubmitterType,
         resource_group_id: ResourceGroupId,
-        query_plan: QueryPlan,
+        clp_s_query_option: ClpSQueryOption,
+        output_handle: OutputHandle,
+        archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
         spider_option: Arc<SpiderOption>,
     ) -> Self {
         Self {
@@ -72,7 +64,9 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
             query_job_id,
             job_submitter,
             resource_group_id,
-            query_plan,
+            clp_s_query_option,
+            output_handle,
+            archives_to_search,
             spider_option,
         }
     }
@@ -137,7 +131,10 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     /// * Forwards [`Self::submit_to_spider`]'s return values on failure.
     /// * Forwards [`Self::persist_submission`]'s return values on failure.
     async fn submit(&self) -> Result<SpiderJobId, Error> {
-        let num_tasks = self.query_plan.archives_to_search.len();
+        let num_tasks = self.archives_to_search.len();
+        if num_tasks == 0 {
+            return Err(Error::NoArchivesToSearch);
+        }
         let persisted_num_tasks =
             i32::try_from(num_tasks).map_err(|_| Error::TooManyQueryTasks(num_tasks))?;
         let spider_job_id = self.submit_to_spider().await?;
@@ -170,9 +167,9 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
             .submit_query_job(
                 self.query_job_id,
                 self.resource_group_id,
-                self.query_plan.clp_s_query_option.clone(),
-                self.query_plan.output_handle.clone(),
-                self.query_plan.archives_to_search.clone(),
+                self.clp_s_query_option.clone(),
+                self.output_handle.clone(),
+                self.archives_to_search.clone(),
             )
             .await
     }
@@ -245,7 +242,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
                 "The Spider query job was unexpectedly cancelled.".to_string(),
             ),
         };
-        self.update_terminal_status(status, &status_message, false)
+        self.update_terminal_status(status, &status_message, QueryJobStatus::Running)
             .await
             .map_err(|source| Error::TerminalStatusPersistence {
                 query_job_id: self.query_job_id,
@@ -268,7 +265,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
             .update_terminal_status(
                 QueryJobStatus::Failed,
                 &format!("Query-job orchestration failed: {error}"),
-                true,
+                QueryJobStatus::Pending,
             )
             .await
         {
@@ -280,8 +277,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         }
     }
 
-    /// Updates a non-terminal query job while preserving every existing terminal or cancellation
-    /// state. When `allow_pending` is false, only a running job may transition.
+    /// Updates a query job only when it has the expected non-terminal status.
     /// A zero-row update is treated as success so an ineligible or missing job row is left
     /// unchanged.
     ///
@@ -294,23 +290,18 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         &self,
         status: QueryJobStatus,
         status_message: &str,
-        allow_pending: bool,
+        expected_status: QueryJobStatus,
     ) -> Result<(), sqlx::Error> {
-        let eligible_statuses = if allow_pending { "?, ?" } else { "?" };
         let query = format!(
             "UPDATE `{QUERY_JOBS_TABLE_NAME}` SET `status` = ?, `status_msg` = LEFT(?, 512), \
              `duration` = CASE WHEN `start_time` IS NULL THEN 0 ELSE TIMESTAMPDIFF(MICROSECOND, \
-             `start_time`, CURRENT_TIMESTAMP(3)) / 1000000.0 END WHERE `id` = ? AND `status` IN \
-             ({eligible_statuses})"
+             `start_time`, CURRENT_TIMESTAMP(3)) / 1000000.0 END WHERE `id` = ? AND `status` = ?"
         );
-        let mut query = sqlx::query(&query)
+        let query = sqlx::query(&query)
             .bind(i32::from(status))
             .bind(status_message)
             .bind(self.query_job_id)
-            .bind(i32::from(QueryJobStatus::Running));
-        if allow_pending {
-            query = query.bind(i32::from(QueryJobStatus::Pending));
-        }
+            .bind(i32::from(expected_status));
         query.execute(&self.db_pool).await?;
         Ok(())
     }
