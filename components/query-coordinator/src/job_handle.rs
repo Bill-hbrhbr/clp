@@ -8,6 +8,7 @@ use clp_rust_utils::job_config::QueryJobId;
 use clp_rust_utils::job_config::QueryJobStatus;
 use clp_rust_utils::task_io::query::ClpSQueryOption;
 use clp_rust_utils::task_io::query::OutputHandle;
+use const_format::formatcp;
 use spider_core::task::ExecutionPolicy;
 use spider_core::types::id::JobId as SpiderJobId;
 use spider_core::types::id::ResourceGroupId;
@@ -18,12 +19,9 @@ use crate::query_job_submitter::ArchiveMetadata;
 use crate::query_job_submitter::QueryJobOutcome;
 use crate::query_job_submitter::QueryJobSubmitter;
 
-/// Spider polling options shared by query-job handles.
+/// Options for a query job running in Spider.
 pub struct SpiderOption {
-    /// Initial delay after a non-terminal Spider job-state poll.
     pub initial_poll_backoff: Duration,
-
-    /// Maximum delay between Spider job-state polls.
     pub max_poll_backoff: Duration,
 }
 
@@ -187,16 +185,16 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         spider_job_id: SpiderJobId,
         num_tasks: i32,
     ) -> Result<(), Error> {
-        let query = format!(
+        let query = formatcp!(
             "UPDATE `{QUERY_JOBS_TABLE_NAME}` SET `spider_id` = ?, `status` = ?, `num_tasks` = ?, \
              `start_time` = CURRENT_TIMESTAMP(3) WHERE `id` = ? AND `status` = ?"
         );
-        let result = sqlx::query(&query)
+        let result = sqlx::query(query)
             .bind(spider_job_id.get())
-            .bind(i32::from(QueryJobStatus::Running))
+            .bind(QueryJobStatus::Running)
             .bind(num_tasks)
             .bind(self.query_job_id)
-            .bind(i32::from(QueryJobStatus::Pending))
+            .bind(QueryJobStatus::Pending)
             .execute(&self.db_pool)
             .await?;
 
@@ -212,7 +210,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     ///
     /// Returns an error if:
     ///
-    /// * [`Error::TerminalStatusPersistence`] if the terminal query-job status cannot be persisted.
+    /// * [`Error::TerminalStatusPersistence`] if the terminal query job status cannot be persisted.
     /// * Forwards [`QueryJobSubmitter::run_query_job_to_completion`]'s return values on failure.
     async fn to_completion(&self, spider_job_id: SpiderJobId) -> Result<(), Error> {
         let outcome = self
@@ -250,7 +248,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
             })
     }
 
-    /// Reports a query-job orchestration failure.
+    /// Reports a query job orchestration failure.
     ///
     /// Logs the original error and makes a best-effort attempt to mark the query job as failed. If
     /// terminal-status persistence fails, the status-update error is logged and otherwise ignored.
@@ -258,23 +256,23 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         tracing::error!(
             query_job_id = % self.query_job_id,
             error = % error,
-            "Query-job orchestration failed.",
+            "Query job orchestration failed.",
         );
 
-        if let Err(status_error) = self
+        let _ = self
             .update_terminal_status(
                 QueryJobStatus::Failed,
-                &format!("Query-job orchestration failed: {error}"),
+                &format!("Query job orchestration failed: {error}"),
                 QueryJobStatus::Pending,
             )
             .await
-        {
-            tracing::error!(
-                query_job_id = % self.query_job_id,
-                error = % status_error,
-                "Failed to persist the query-job failure.",
-            );
-        }
+            .inspect_err(|status_error| {
+                tracing::error!(
+                    query_job_id = % self.query_job_id,
+                    error = % status_error,
+                    "Failed to persist the query job failure.",
+                );
+            });
     }
 
     /// Updates a query job only when it has the expected non-terminal status.
@@ -292,16 +290,16 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         status_message: &str,
         expected_status: QueryJobStatus,
     ) -> Result<(), sqlx::Error> {
-        let query = format!(
+        let query = formatcp!(
             "UPDATE `{QUERY_JOBS_TABLE_NAME}` SET `status` = ?, `status_msg` = LEFT(?, 512), \
              `duration` = CASE WHEN `start_time` IS NULL THEN 0 ELSE TIMESTAMPDIFF(MICROSECOND, \
              `start_time`, CURRENT_TIMESTAMP(3)) / 1000000.0 END WHERE `id` = ? AND `status` = ?"
         );
-        let query = sqlx::query(&query)
-            .bind(i32::from(status))
+        let query = sqlx::query(query)
+            .bind(status)
             .bind(status_message)
             .bind(self.query_job_id)
-            .bind(i32::from(expected_status));
+            .bind(expected_status);
         query.execute(&self.db_pool).await?;
         Ok(())
     }

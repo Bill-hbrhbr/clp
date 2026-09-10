@@ -1,4 +1,4 @@
-//! The query-job submission interface.
+//! The query job submission interface.
 
 mod spider;
 
@@ -86,7 +86,7 @@ pub trait QueryJobSubmitter: Clone + Send + Sync {
     ///
     /// # Returns
     ///
-    /// The terminal query-job outcome on success.
+    /// The terminal query job outcome on success.
     ///
     /// # Errors
     ///
