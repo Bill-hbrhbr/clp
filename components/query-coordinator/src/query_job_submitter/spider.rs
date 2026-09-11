@@ -68,8 +68,12 @@ fn build_query_task_graph(
             input_sources: None,
         })?;
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&query_job_id)?));
-        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(clp_s_query_option)?));
-        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&archive.dataset)?));
+        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(
+            clp_s_query_option,
+        )?));
+        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(
+            &archive.dataset,
+        )?));
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&archive.id)?));
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(output_handle)?));
     }
