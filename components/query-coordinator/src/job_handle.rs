@@ -149,7 +149,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     ///
     /// * [`Error::TooManyQueryTasks`] if the number of query tasks exceeds `i32`'s range.
     /// * Forwards [`QueryJobSubmitter::submit_query_job`]'s return values on failure.
-    /// * Forwards [`Self::persist_submission`]'s return values on failure.
+    /// * Forwards [`Self::persist_spider_job_id`]'s return values on failure.
     async fn submit(&self) -> Result<SpiderJobId, Error> {
         let archives_to_search = self.prepare_task_inputs().await?;
         let num_tasks = archives_to_search.len();
@@ -176,7 +176,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
             "Query job submitted.",
         );
 
-        self.persist_submission(spider_job_id, persisted_num_tasks)
+        self.persist_spider_job_id(spider_job_id, persisted_num_tasks)
             .await?;
         Ok(spider_job_id)
     }
@@ -204,7 +204,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     ///
     /// * [`Error::JobNotPending`] if the query job is no longer pending.
     /// * Forwards [`sqlx::query::Query::execute`]'s return values on failure.
-    async fn persist_submission(
+    async fn persist_spider_job_id(
         &self,
         spider_job_id: SpiderJobId,
         num_tasks: i32,
