@@ -36,11 +36,11 @@ pub struct SpiderOption {
 /// * `SubmitterType` - The type of the job submitter for Spider job submission.
 pub struct QueryJobHandle<SubmitterType: QueryJobSubmitter> {
     db_pool: MySqlPool,
-    db_config: Database,
+    _db_config: Database,
     query_job_id: QueryJobId,
     job_submitter: SubmitterType,
     resource_group_id: ResourceGroupId,
-    search_job_config: SearchJobConfig,
+    _search_job_config: SearchJobConfig,
     clp_s_query_option: ClpSQueryOption,
     output_handle: OutputHandle,
     spider_option: Arc<SpiderOption>,
@@ -56,6 +56,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     /// # Errors
     ///
     /// Returns an error if the query string is empty.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         db_pool: MySqlPool,
         db_config: Database,
@@ -80,11 +81,11 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
 
         Ok(Self {
             db_pool,
-            db_config,
+            _db_config: db_config,
             query_job_id,
             job_submitter,
             resource_group_id,
-            search_job_config,
+            _search_job_config: search_job_config,
             clp_s_query_option,
             output_handle,
             spider_option,
