@@ -44,9 +44,9 @@ pub(super) fn search(
     config: &SpiderTaskExecutorConfig,
     query_job_id: QueryJobId,
     clp_s_query_option: &ClpSQueryOption,
-    output_handle: &OutputHandle,
-    dataset: Option<&str>,
     archive_id: String,
+    dataset: Option<&str>,
+    output_handle: &OutputHandle,
 ) -> anyhow::Result<()> {
     if StorageEngine::ClpS != config.package.storage_engine {
         anyhow::bail!("the clp-s query task requires the `clp-s` storage engine");
@@ -670,9 +670,9 @@ mod tests {
             &config,
             42,
             &unbounded_query_option(),
-            &OutputHandle::File,
-            None,
             "archive-id".to_string(),
+            None,
+            &OutputHandle::File,
         )
         .expect_err("the file output handler is unsupported");
 
@@ -689,13 +689,13 @@ mod tests {
             &config,
             42,
             &unbounded_query_option(),
+            "archive-id".to_string(),
+            None,
             &OutputHandle::ResultsCache {
                 uri: NonEmptyString::from_static_str(
                     "mongodb://results-cache:27017/clp-query-results",
                 ),
             },
-            None,
-            "archive-id".to_string(),
         )
         .expect_err("the clp storage engine is unsupported");
 

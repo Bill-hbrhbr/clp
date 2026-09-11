@@ -24,9 +24,9 @@ pub(crate) fn clp_s_search_task(
         crate::common::spider_task_executor_config(),
         query_job_id,
         &clp_s_query_option,
-        &output_handle,
-        dataset.as_ref().map(NonEmptyString::as_str),
         archive_id.into_inner(),
+        dataset.as_ref().map(NonEmptyString::as_str),
+        &output_handle,
     )
     .map_err(|e| TdlError::ExecutionError(format!("{e:#}")))
 }
