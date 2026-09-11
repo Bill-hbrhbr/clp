@@ -126,7 +126,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     /// Returns an error if:
     ///
     /// * [`Error::TooManyQueryTasks`] if the number of query tasks exceeds `i32`'s range.
-    /// * Forwards [`Self::submit_to_spider`]'s return values on failure.
+    /// * Forwards [`QueryJobSubmitter::submit_query_job`]'s return values on failure.
     /// * Forwards [`Self::persist_submission`]'s return values on failure.
     async fn submit(&self) -> Result<SpiderJobId, Error> {
         let num_tasks = self.archives_to_search.len();
@@ -135,7 +135,16 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         }
         let persisted_num_tasks =
             i32::try_from(num_tasks).map_err(|_| Error::TooManyQueryTasks(num_tasks))?;
-        let spider_job_id = self.submit_to_spider().await?;
+        let spider_job_id = self
+            .job_submitter
+            .submit_query_job(
+                self.query_job_id,
+                self.resource_group_id,
+                self.clp_s_query_option.clone(),
+                self.output_handle.clone(),
+                self.archives_to_search.clone(),
+            )
+            .await?;
 
         tracing::info!(
             query_job_id = % self.query_job_id,
@@ -147,29 +156,6 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         self.persist_submission(spider_job_id, persisted_num_tasks)
             .await?;
         Ok(spider_job_id)
-    }
-
-    /// Submits the prepared query graph to Spider.
-    ///
-    /// # Returns
-    ///
-    /// The submitted Spider job ID on success.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if:
-    ///
-    /// * Forwards [`QueryJobSubmitter::submit_query_job`]'s return values on failure.
-    async fn submit_to_spider(&self) -> Result<SpiderJobId, Error> {
-        self.job_submitter
-            .submit_query_job(
-                self.query_job_id,
-                self.resource_group_id,
-                self.clp_s_query_option.clone(),
-                self.output_handle.clone(),
-                self.archives_to_search.clone(),
-            )
-            .await
     }
 
     /// Persists the Spider job ID and marks the query job as running.
