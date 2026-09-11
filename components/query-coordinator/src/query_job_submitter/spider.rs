@@ -83,7 +83,7 @@ impl QueryJobSubmitter for SpiderClient {
                 };
                 QueryJobOutcome::Failed { error_message }
             }
-            JobState::Cancelled => QueryJobOutcome::UnexpectedlyCancelled,
+            JobState::Cancelled => todo!("query job cancellation is not implemented"),
             _ => unreachable!("a terminal Spider state must have a terminal outcome"),
         })
     }

@@ -196,7 +196,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     ///
     /// Returns an error if:
     ///
-    /// * [`Error::TerminalStatusPersistence`] if the terminal query job status cannot be persisted.
+    /// * Forwards [`Self::update_job_status`]'s return values on failure.
     /// * Forwards [`QueryJobSubmitter::run_query_job_to_completion`]'s return values on failure.
     async fn to_completion(&self, spider_job_id: SpiderJobId) -> Result<(), Error> {
         let outcome = self
@@ -216,22 +216,15 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         );
 
         let (status, status_message) = match outcome {
-            QueryJobOutcome::Succeeded => (QueryJobStatus::Succeeded, String::new()),
+            QueryJobOutcome::Succeeded => (QueryJobStatus::Succeeded, None),
             QueryJobOutcome::Failed { error_message } => (
                 QueryJobStatus::Failed,
-                format!("The Spider query job failed: {error_message}"),
-            ),
-            QueryJobOutcome::UnexpectedlyCancelled => (
-                QueryJobStatus::Failed,
-                "The Spider query job was unexpectedly cancelled.".to_string(),
+                Some(format!("The Spider query job failed: {error_message}")),
             ),
         };
-        self.update_terminal_status(status, &status_message, QueryJobStatus::Running)
-            .await
-            .map_err(|source| Error::TerminalStatusPersistence {
-                query_job_id: self.query_job_id,
-                source,
-            })
+        self.update_job_status(status, status_message.as_deref(), QueryJobStatus::Running)
+            .await?;
+        Ok(())
     }
 
     /// Reports a query job orchestration failure.
@@ -246,9 +239,9 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         );
 
         let _ = self
-            .update_terminal_status(
+            .update_job_status(
                 QueryJobStatus::Failed,
-                &format!("Query job orchestration failed: {error}"),
+                Some(&format!("Query job orchestration failed: {error}")),
                 QueryJobStatus::Pending,
             )
             .await
@@ -262,6 +255,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     }
 
     /// Updates a query job only when it has the expected non-terminal status.
+    /// Leaves the status message unchanged when `status_message` is `None`.
     /// A zero-row update is treated as success so an ineligible or missing job row is left
     /// unchanged.
     ///
@@ -270,14 +264,15 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     /// Returns an error if:
     ///
     /// * Forwards [`sqlx::query::Query::execute`]'s return values on failure.
-    async fn update_terminal_status(
+    async fn update_job_status(
         &self,
         status: QueryJobStatus,
-        status_message: &str,
+        status_message: Option<&str>,
         expected_status: QueryJobStatus,
     ) -> Result<(), sqlx::Error> {
         let query = formatcp!(
-            "UPDATE `{QUERY_JOBS_TABLE_NAME}` SET `status` = ?, `status_msg` = LEFT(?, 512), \
+            "UPDATE `{QUERY_JOBS_TABLE_NAME}` SET `status` = ?, \
+             `status_msg` = COALESCE(LEFT(?, 512), `status_msg`), \
              `duration` = CASE WHEN `start_time` IS NULL THEN 0 ELSE TIMESTAMPDIFF(MICROSECOND, \
              `start_time`, CURRENT_TIMESTAMP(3)) / 1000000.0 END WHERE `id` = ? AND `status` = ?"
         );
