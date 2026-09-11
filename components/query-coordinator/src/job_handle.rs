@@ -1,14 +1,17 @@
 //! Lifecycle management for one coordinator-planned query job.
 
+use std::num::NonZeroU32;
 use std::sync::Arc;
 use std::time::Duration;
 
 use clp_rust_utils::job_config::QUERY_JOBS_TABLE_NAME;
 use clp_rust_utils::job_config::QueryJobId;
 use clp_rust_utils::job_config::QueryJobStatus;
+use clp_rust_utils::job_config::SearchJobConfig;
 use clp_rust_utils::task_io::query::ClpSQueryOption;
 use clp_rust_utils::task_io::query::OutputHandle;
 use const_format::formatcp;
+use non_empty_string::NonEmptyString;
 use spider_core::task::ExecutionPolicy;
 use spider_core::types::id::JobId as SpiderJobId;
 use spider_core::types::id::ResourceGroupId;
@@ -35,6 +38,7 @@ pub struct QueryJobHandle<SubmitterType: QueryJobSubmitter> {
     query_job_id: QueryJobId,
     job_submitter: SubmitterType,
     resource_group_id: ResourceGroupId,
+    search_job_config: SearchJobConfig,
     clp_s_query_option: ClpSQueryOption,
     output_handle: OutputHandle,
     spider_option: Arc<SpiderOption>,
@@ -45,25 +49,42 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     ///
     /// # Returns
     ///
-    /// A newly created [`QueryJobHandle`] for the given already-planned query job.
-    pub const fn new(
+    /// A newly created [`QueryJobHandle`] for the given query job configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the query string is empty.
+    pub fn new(
         db_pool: MySqlPool,
         query_job_id: QueryJobId,
         job_submitter: SubmitterType,
         resource_group_id: ResourceGroupId,
-        clp_s_query_option: ClpSQueryOption,
+        search_job_config: SearchJobConfig,
         output_handle: OutputHandle,
         spider_option: Arc<SpiderOption>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, Error> {
+        let query_string = NonEmptyString::try_from(search_job_config.query_string.clone())
+            .map_err(|_| {
+                Error::InvalidQueryJobConfig("query string must not be empty".to_owned())
+            })?;
+        let clp_s_query_option = ClpSQueryOption {
+            query_string,
+            max_num_results: NonZeroU32::new(search_job_config.max_num_results),
+            begin_timestamp_millisecs: search_job_config.begin_timestamp,
+            end_timestamp_millisecs: search_job_config.end_timestamp,
+            ignore_case: search_job_config.ignore_case,
+        };
+
+        Ok(Self {
             db_pool,
             query_job_id,
             job_submitter,
             resource_group_id,
+            search_job_config,
             clp_s_query_option,
             output_handle,
             spider_option,
-        }
+        })
     }
 
     /// Submits the prepared graph and drives the query job to a terminal state.

@@ -3,6 +3,9 @@
 /// Errors returned by the query coordinator.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("invalid query job configuration: {0}")]
+    InvalidQueryJobConfig(String),
+
     #[error("query job {0} is no longer pending")]
     JobNotPending(clp_rust_utils::job_config::QueryJobId),
 
