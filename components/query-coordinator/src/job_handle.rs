@@ -37,7 +37,6 @@ pub struct QueryJobHandle<SubmitterType: QueryJobSubmitter> {
     resource_group_id: ResourceGroupId,
     clp_s_query_option: ClpSQueryOption,
     output_handle: OutputHandle,
-    archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
     spider_option: Arc<SpiderOption>,
 }
 
@@ -54,7 +53,6 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         resource_group_id: ResourceGroupId,
         clp_s_query_option: ClpSQueryOption,
         output_handle: OutputHandle,
-        archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
         spider_option: Arc<SpiderOption>,
     ) -> Self {
         Self {
@@ -64,7 +62,6 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
             resource_group_id,
             clp_s_query_option,
             output_handle,
-            archives_to_search,
             spider_option,
         }
     }
@@ -129,7 +126,8 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     /// * Forwards [`QueryJobSubmitter::submit_query_job`]'s return values on failure.
     /// * Forwards [`Self::persist_submission`]'s return values on failure.
     async fn submit(&self) -> Result<SpiderJobId, Error> {
-        let num_tasks = self.archives_to_search.len();
+        let archives_to_search = self.prepare_task_inputs().await?;
+        let num_tasks = archives_to_search.len();
         if num_tasks == 0 {
             return Err(Error::NoArchivesToSearch);
         }
@@ -142,7 +140,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
                 self.resource_group_id,
                 self.clp_s_query_option.clone(),
                 self.output_handle.clone(),
-                self.archives_to_search.clone(),
+                archives_to_search,
             )
             .await?;
 
@@ -156,6 +154,21 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         self.persist_submission(spider_job_id, persisted_num_tasks)
             .await?;
         Ok(spider_job_id)
+    }
+
+    /// Prepares the archive inputs and execution policies for the query tasks.
+    ///
+    /// # Returns
+    ///
+    /// The archives to search and their execution policies on success.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if archive input preparation fails.
+    async fn prepare_task_inputs(
+        &self,
+    ) -> Result<Vec<(ArchiveMetadata, ExecutionPolicy)>, Error> {
+        todo!("prepare query task inputs")
     }
 
     /// Persists the Spider job ID and marks the query job as running.
