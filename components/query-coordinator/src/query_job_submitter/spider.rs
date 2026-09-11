@@ -21,10 +21,19 @@ use crate::query_job_submitter::QueryJobSubmitter;
 
 /// Builds independent archive-search tasks and their positionally ordered external inputs.
 ///
+/// # Returns
+///
+/// The task graph and its positionally ordered external inputs on success.
+///
 /// # Errors
 ///
-/// Returns an error if no archives are supplied, graph construction fails, or input serialization
-/// fails.
+/// Returns an error if:
+///
+/// * [`Error::NoArchivesToSearch`] if no archives are supplied.
+/// * Forwards [`TaskGraph::new`]'s return values on failure.
+/// * Forwards [`ValueTypeDescriptor::struct_from_name`]'s return values on failure.
+/// * Forwards [`TaskGraph::insert_task`]'s return values on failure.
+/// * Forwards [`rmp_serde::to_vec`]'s return values on failure.
 fn build_query_task_graph(
     query_job_id: QueryJobId,
     clp_s_query_option: &ClpSQueryOption,
@@ -70,7 +79,9 @@ fn build_query_task_graph(
         // TaskContext is supplied by Spider, and archive size is coordinator-only metadata.
         inputs.push(TaskInput::ValuePayload(query_job_id_payload.clone()));
         inputs.push(TaskInput::ValuePayload(query_option_payload.clone()));
-        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&archive.dataset)?));
+        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(
+            &archive.dataset,
+        )?));
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&archive.id)?));
         inputs.push(TaskInput::ValuePayload(output_handle_payload.clone()));
     }
@@ -82,8 +93,10 @@ fn build_query_task_graph(
 impl QueryJobSubmitter for SpiderClient {
     /// # Errors
     ///
-    /// Returns an error if graph construction, input serialization, or Spider registration fails.
-    /// Empty archive lists are rejected before contacting Spider.
+    /// Returns an error if:
+    ///
+    /// * Forwards [`build_query_task_graph`]'s return values on failure.
+    /// * Forwards [`SpiderClient::submit_job`]'s return values on failure.
     async fn submit_query_job(
         &self,
         query_job_id: QueryJobId,
