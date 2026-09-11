@@ -4,6 +4,7 @@ use std::num::NonZeroU32;
 use std::sync::Arc;
 use std::time::Duration;
 
+use clp_rust_utils::clp_config::package::config::Database;
 use clp_rust_utils::job_config::QUERY_JOBS_TABLE_NAME;
 use clp_rust_utils::job_config::QueryJobId;
 use clp_rust_utils::job_config::QueryJobStatus;
@@ -35,6 +36,7 @@ pub struct SpiderOption {
 /// * `SubmitterType` - The type of the job submitter for Spider job submission.
 pub struct QueryJobHandle<SubmitterType: QueryJobSubmitter> {
     db_pool: MySqlPool,
+    db_config: Database,
     query_job_id: QueryJobId,
     job_submitter: SubmitterType,
     resource_group_id: ResourceGroupId,
@@ -56,6 +58,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     /// Returns an error if the query string is empty.
     pub fn new(
         db_pool: MySqlPool,
+        db_config: Database,
         query_job_id: QueryJobId,
         job_submitter: SubmitterType,
         resource_group_id: ResourceGroupId,
@@ -77,6 +80,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
 
         Ok(Self {
             db_pool,
+            db_config,
             query_job_id,
             job_submitter,
             resource_group_id,
