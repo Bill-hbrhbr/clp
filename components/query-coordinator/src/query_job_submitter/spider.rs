@@ -29,7 +29,6 @@ use crate::query_job_submitter::QueryJobSubmitter;
 ///
 /// Returns an error if:
 ///
-/// * [`Error::NoArchivesToSearch`] if no archives are supplied.
 /// * Forwards [`TaskGraph::new`]'s return values on failure.
 /// * Forwards [`ValueTypeDescriptor::struct_from_name`]'s return values on failure.
 /// * Forwards [`TaskGraph::insert_task`]'s return values on failure.
@@ -43,10 +42,6 @@ fn build_query_task_graph(
     // NOTE: Keep these names and the input order in sync with the TDL package definitions.
     const CLP_TDL_PACKAGE_NAME: &str = "clp";
     const QUERY_TASK_FUNC: &str = "query::clp_s_search";
-
-    if archives_to_search.is_empty() {
-        return Err(Error::NoArchivesToSearch);
-    }
 
     let mut graph = TaskGraph::new(None, None)?;
     let mut inputs = Vec::new();

@@ -3,9 +3,6 @@
 /// Errors returned by the query coordinator.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("no archives were selected for the query job")]
-    NoArchivesToSearch,
-
     #[error("spider request failure: {0}")]
     SpiderClient(#[from] spider_client::error::ClientError),
 
