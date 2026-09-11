@@ -190,9 +190,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     /// # Errors
     ///
     /// Returns an error if archive input preparation fails.
-    async fn prepare_task_inputs(
-        &self,
-    ) -> Result<Vec<(ArchiveMetadata, ExecutionPolicy)>, Error> {
+    async fn prepare_task_inputs(&self) -> Result<Vec<(ArchiveMetadata, ExecutionPolicy)>, Error> {
         todo!("prepare query task inputs")
     }
 
@@ -309,10 +307,10 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
         expected_status: QueryJobStatus,
     ) -> Result<(), sqlx::Error> {
         let query = formatcp!(
-            "UPDATE `{QUERY_JOBS_TABLE_NAME}` SET `status` = ?, \
-             `status_msg` = COALESCE(LEFT(?, 512), `status_msg`), \
-             `duration` = CASE WHEN `start_time` IS NULL THEN 0 ELSE TIMESTAMPDIFF(MICROSECOND, \
-             `start_time`, CURRENT_TIMESTAMP(3)) / 1000000.0 END WHERE `id` = ? AND `status` = ?"
+            "UPDATE `{QUERY_JOBS_TABLE_NAME}` SET `status` = ?, `status_msg` = COALESCE(LEFT(?, \
+             512), `status_msg`), `duration` = CASE WHEN `start_time` IS NULL THEN 0 ELSE \
+             TIMESTAMPDIFF(MICROSECOND, `start_time`, CURRENT_TIMESTAMP(3)) / 1000000.0 END WHERE \
+             `id` = ? AND `status` = ?"
         );
         let query = sqlx::query(query)
             .bind(status)
