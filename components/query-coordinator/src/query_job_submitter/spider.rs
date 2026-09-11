@@ -44,8 +44,8 @@ fn build_query_task_graph(
     const QUERY_TASK_FUNC: &str = "query::clp_s_search";
 
     let mut graph = TaskGraph::new(None, None)?;
-    let mut inputs = Vec::new();
 
+    let mut inputs = Vec::new();
     for (archive, execution_policy) in archives_to_search {
         graph.insert_task(TaskDescriptor {
             tdl_context: TdlContext {
@@ -67,13 +67,9 @@ fn build_query_task_graph(
             outputs: vec![],
             input_sources: None,
         })?;
-
-        // TaskContext is supplied by Spider, and archive size is coordinator-only metadata.
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&query_job_id)?));
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(clp_s_query_option)?));
-        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(
-            &archive.dataset,
-        )?));
+        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&archive.dataset)?));
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&archive.id)?));
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(output_handle)?));
     }
@@ -103,15 +99,15 @@ impl QueryJobSubmitter for SpiderClient {
             &output_handle,
             archives_to_search,
         )?;
-        // The handler must persist this ID before starting the job. Do not retry registration:
-        // an uncertain response can mean Spider accepted the graph already.
         let spider_job_id = self.submit_job(resource_group_id, &graph, inputs).await?;
+
         tracing::info!(
             query_job_id = % query_job_id,
             spider_job_id = % spider_job_id,
             num_tasks = graph.get_num_tasks(),
             "Submitted query job to Spider.",
         );
+
         Ok(spider_job_id)
     }
 }
