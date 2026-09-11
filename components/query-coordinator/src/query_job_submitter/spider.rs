@@ -45,9 +45,6 @@ fn build_query_task_graph(
 
     let mut graph = TaskGraph::new(None, None)?;
     let mut inputs = Vec::new();
-    let query_job_id_payload = rmp_serde::to_vec(&query_job_id)?;
-    let query_option_payload = rmp_serde::to_vec(clp_s_query_option)?;
-    let output_handle_payload = rmp_serde::to_vec(output_handle)?;
 
     for (archive, execution_policy) in archives_to_search {
         graph.insert_task(TaskDescriptor {
@@ -72,13 +69,13 @@ fn build_query_task_graph(
         })?;
 
         // TaskContext is supplied by Spider, and archive size is coordinator-only metadata.
-        inputs.push(TaskInput::ValuePayload(query_job_id_payload.clone()));
-        inputs.push(TaskInput::ValuePayload(query_option_payload.clone()));
+        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&query_job_id)?));
+        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(clp_s_query_option)?));
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(
             &archive.dataset,
         )?));
         inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(&archive.id)?));
-        inputs.push(TaskInput::ValuePayload(output_handle_payload.clone()));
+        inputs.push(TaskInput::ValuePayload(rmp_serde::to_vec(output_handle)?));
     }
 
     Ok((graph, inputs))
