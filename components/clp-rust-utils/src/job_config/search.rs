@@ -3,6 +3,8 @@ use num_enum::IntoPrimitive;
 use num_enum::TryFromPrimitive;
 use serde::Deserialize;
 use serde::Serialize;
+use strum::EnumString;
+use utoipa::ToSchema;
 
 pub const QUERY_JOBS_TABLE_NAME: &str = "query_jobs";
 
@@ -40,7 +42,18 @@ pub struct SearchJobConfig {
 
 /// Mirror of `job_orchestration.scheduler.constants.QueryJobStatus`. Must be kept in sync.
 #[derive(
-    Clone, Debug, Deserialize, Eq, IntoPrimitive, PartialEq, Serialize, TryFromPrimitive, sqlx::Type,
+    Clone,
+    Copy,
+    Debug,
+    Deserialize,
+    EnumString,
+    Eq,
+    IntoPrimitive,
+    PartialEq,
+    Serialize,
+    ToSchema,
+    TryFromPrimitive,
+    sqlx::Type,
 )]
 #[repr(i32)]
 pub enum QueryJobStatus {
