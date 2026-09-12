@@ -161,7 +161,10 @@ impl Coordinator {
                 spider_job_id = % spider_job_id,
                 "Recovering a previously submitted job."
             );
-            let Ok(job_handle) = coordinator.create_job_handle(job_id, search_job_config).await else {
+            let Ok(job_handle) = coordinator
+                .create_job_handle(job_id, search_job_config)
+                .await
+            else {
                 continue;
             };
             tokio::spawn(async move {
@@ -433,13 +436,13 @@ impl Coordinator {
     /// * Forwards [`sqlx::query::QueryAs::fetch_all`]'s return values on failure.
     async fn fetch_new_job_rows(&mut self) -> Result<Vec<PendingJobRowProjection>, Error> {
         const FIRST_FETCH_QUERY: &str = formatcp!(
-            "SELECT `id`, `job_config` FROM `{table}` WHERE `type` = ? AND `status` = ? \
-             AND `dispatch_time` IS NOT NULL ORDER BY `id` ASC;",
+            "SELECT `id`, `job_config` FROM `{table}` WHERE `type` = ? AND `status` = ? AND \
+             `dispatch_time` IS NOT NULL ORDER BY `id` ASC;",
             table = QUERY_JOBS_TABLE_NAME,
         );
         const SUBSEQUENT_FETCH_QUERY: &str = formatcp!(
-            "SELECT `id`, `job_config` FROM `{table}` WHERE `type` = ? AND `status` = ? \
-             AND `dispatch_time` IS NULL AND `id` > ? ORDER BY `id` ASC LIMIT ?;",
+            "SELECT `id`, `job_config` FROM `{table}` WHERE `type` = ? AND `status` = ? AND \
+             `dispatch_time` IS NULL AND `id` > ? ORDER BY `id` ASC LIMIT ?;",
             table = QUERY_JOBS_TABLE_NAME,
         );
 
@@ -510,8 +513,8 @@ impl Coordinator {
         &self,
     ) -> Result<Vec<(QueryJobId, SpiderJobId, SearchJobConfig)>, Error> {
         const QUERY: &str = formatcp!(
-            "SELECT `id`, `spider_id`, `job_config` FROM `{table}` WHERE `type` = ? \
-             AND `status` = ? AND `spider_id` IS NOT NULL;",
+            "SELECT `id`, `spider_id`, `job_config` FROM `{table}` WHERE `type` = ? AND `status` \
+             = ? AND `spider_id` IS NOT NULL;",
             table = QUERY_JOBS_TABLE_NAME,
         );
 
@@ -522,24 +525,25 @@ impl Coordinator {
             .fetch_all(&self.db_pool)
             .await?
         {
-            let search_job_config: SearchJobConfig =
-                match rmp_serde::from_slice(&row.serialized_search_job_config) {
-                    Ok(search_job_config) => search_job_config,
-                    Err(e) => {
-                        tracing::error!(
-                            error = % e,
-                            job_id = % row.id,
-                            "Failed to deserialize search job config of a running job. The database \
-                             might be corrupted. Skipping."
-                        );
-                        self.mark_job_failed(
-                            row.id,
-                            &format!("Failed to deserialize search job config: {e}"),
-                        )
-                        .await;
-                        continue;
-                    }
-                };
+            let search_job_config: SearchJobConfig = match rmp_serde::from_slice(
+                &row.serialized_search_job_config,
+            ) {
+                Ok(search_job_config) => search_job_config,
+                Err(e) => {
+                    tracing::error!(
+                        error = % e,
+                        job_id = % row.id,
+                        "Failed to deserialize search job config of a running job. The database \
+                         might be corrupted. Skipping."
+                    );
+                    self.mark_job_failed(
+                        row.id,
+                        &format!("Failed to deserialize search job config: {e}"),
+                    )
+                    .await;
+                    continue;
+                }
+            };
             if search_job_config.aggregation_config.is_some() {
                 continue;
             }

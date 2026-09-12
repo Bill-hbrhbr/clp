@@ -39,9 +39,8 @@ pub struct SearchJobConfig {
 }
 
 /// Mirror of `job_orchestration.scheduler.constants.QueryJobStatus`. Must be kept in sync.
-#[derive(
-    Clone, Debug, Deserialize, Eq, IntoPrimitive, PartialEq, Serialize, TryFromPrimitive, sqlx::Type,
-)]
+#[derive(Clone, Debug, Deserialize, Eq, IntoPrimitive, PartialEq, Serialize, TryFromPrimitive)]
+#[derive(sqlx::Type)]
 #[repr(i32)]
 pub enum QueryJobStatus {
     Pending = 0,
