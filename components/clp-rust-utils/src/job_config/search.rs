@@ -56,6 +56,7 @@ pub struct SearchJobConfig {
     sqlx::Type,
 )]
 #[repr(i32)]
+#[strum(ascii_case_insensitive)]
 pub enum QueryJobStatus {
     Pending = 0,
     Running = 1,
