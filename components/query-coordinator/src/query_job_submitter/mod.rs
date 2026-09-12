@@ -1,6 +1,8 @@
-//! The query-job submission interface.
+//! The query job submission interface.
 
 mod spider;
+
+use std::time::Duration;
 
 use async_trait::async_trait;
 use clp_rust_utils::job_config::ArchiveId;
@@ -25,6 +27,19 @@ pub struct ArchiveMetadata {
 
     /// The archive's compressed size in bytes.
     pub size: u64,
+}
+
+/// The terminal outcome of a query job.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum QueryJobOutcome {
+    /// Every archive query completed successfully.
+    Succeeded,
+
+    /// At least one archive query failed.
+    Failed {
+        /// The error reported by Spider.
+        error_message: String,
+    },
 }
 
 /// Drives CLP query jobs on a Spider (Huntsman) cluster.
@@ -57,4 +72,26 @@ pub trait QueryJobSubmitter: Clone + Send + Sync {
         output_handle: OutputHandle,
         archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
     ) -> Result<JobId, Error>;
+
+    /// Idempotently starts `spider_job_id` and waits for it to reach a terminal state.
+    ///
+    /// # Parameters
+    ///
+    /// * `spider_job_id` - The ID of the Spider job to start and monitor.
+    /// * `initial_poll_backoff` - The initial delay after a non-terminal job-state poll.
+    /// * `max_poll_backoff` - The maximum delay between job-state polls.
+    ///
+    /// # Returns
+    ///
+    /// The terminal query job outcome on success.
+    ///
+    /// # Errors
+    ///
+    /// Implementations must document their error conditions.
+    async fn run_query_job_to_completion(
+        &self,
+        spider_job_id: JobId,
+        initial_poll_backoff: Duration,
+        max_poll_backoff: Duration,
+    ) -> Result<QueryJobOutcome, Error>;
 }
