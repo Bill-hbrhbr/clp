@@ -19,11 +19,49 @@ use crate::Error;
 use crate::query_job_submitter::ArchiveMetadata;
 use crate::query_job_submitter::QueryJobSubmitter;
 
+#[async_trait]
+impl QueryJobSubmitter for SpiderClient {
+    /// # Errors
+    ///
+    /// Returns an error if:
+    ///
+    /// * Forwards [`build_query_task_graph`]'s return values on failure.
+    /// * Forwards [`SpiderClient::submit_job`]'s return values on failure.
+    async fn submit_query_job(
+        &self,
+        query_job_id: QueryJobId,
+        resource_group_id: ResourceGroupId,
+        clp_s_query_option: ClpSQueryOption,
+        output_handle: OutputHandle,
+        archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
+    ) -> Result<JobId, Error> {
+        let (graph, inputs) = build_query_task_graph(
+            query_job_id,
+            &clp_s_query_option,
+            &output_handle,
+            archives_to_search,
+        )?;
+        let spider_job_id = self.submit_job(resource_group_id, &graph, inputs).await?;
+
+        tracing::info!(
+            query_job_id = % query_job_id,
+            spider_job_id = % spider_job_id,
+            num_tasks = graph.get_num_tasks(),
+            "Submitted query job to Spider.",
+        );
+
+        Ok(spider_job_id)
+    }
+}
+
 /// Builds independent archive-search tasks and their positionally ordered external inputs.
 ///
 /// # Returns
 ///
-/// The task graph and its positionally ordered external inputs on success.
+/// A tuple on success, containing:
+///
+/// * The constructed task graph.
+/// * The positionally ordered external inputs.
 ///
 /// # Errors
 ///
@@ -79,39 +117,4 @@ fn build_query_task_graph(
     }
 
     Ok((graph, inputs))
-}
-
-#[async_trait]
-impl QueryJobSubmitter for SpiderClient {
-    /// # Errors
-    ///
-    /// Returns an error if:
-    ///
-    /// * Forwards [`build_query_task_graph`]'s return values on failure.
-    /// * Forwards [`SpiderClient::submit_job`]'s return values on failure.
-    async fn submit_query_job(
-        &self,
-        query_job_id: QueryJobId,
-        resource_group_id: ResourceGroupId,
-        clp_s_query_option: ClpSQueryOption,
-        output_handle: OutputHandle,
-        archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
-    ) -> Result<JobId, Error> {
-        let (graph, inputs) = build_query_task_graph(
-            query_job_id,
-            &clp_s_query_option,
-            &output_handle,
-            archives_to_search,
-        )?;
-        let spider_job_id = self.submit_job(resource_group_id, &graph, inputs).await?;
-
-        tracing::info!(
-            query_job_id = % query_job_id,
-            spider_job_id = % spider_job_id,
-            num_tasks = graph.get_num_tasks(),
-            "Submitted query job to Spider.",
-        );
-
-        Ok(spider_job_id)
-    }
 }
