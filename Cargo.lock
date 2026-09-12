@@ -3279,11 +3279,14 @@ dependencies = [
  "clp-rust-utils",
  "const_format",
  "non-empty-string",
+ "rmp-serde",
  "spider-client",
  "spider-core",
  "sqlx",
  "thiserror",
  "tokio",
+ "tokio-util",
+ "tonic",
  "tracing",
 ]
 
