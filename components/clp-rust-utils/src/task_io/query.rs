@@ -28,4 +28,14 @@ pub struct ClpSQueryOption {
 
 /// The output handler that `clp-s` writes a query task's results to.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum OutputHandle {}
+#[serde(deny_unknown_fields, tag = "type")]
+pub enum OutputHandle {
+    /// The results cache, addressed by a MongoDB URI whose path names the database. The collection
+    /// is the query job's ID.
+    #[serde(rename = "results_cache")]
+    ResultsCache { uri: NonEmptyString },
+
+    /// A file per archive. Not yet supported by the Spider query flow.
+    #[serde(rename = "file")]
+    File,
+}
