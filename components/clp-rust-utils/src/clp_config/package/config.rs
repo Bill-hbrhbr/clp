@@ -10,6 +10,7 @@ use serde::Deserialize;
 use crate::clp_config::AwsAuthentication;
 use crate::clp_config::S3Config;
 use crate::dataset::resolve_dataset_name;
+use crate::types::non_empty_string::ExpectedNonEmpty;
 
 /// Mirror of `clp_py_utils.clp_config.ClpConfig`.
 ///
@@ -280,6 +281,17 @@ pub struct ResultsCache {
     pub db_name: String,
 }
 
+impl ResultsCache {
+    /// Returns the MongoDB URI for the results cache database.
+    #[must_use]
+    pub fn uri(&self) -> NonEmptyString {
+        NonEmptyString::from_string(format!(
+            "mongodb://{}:{}/{}",
+            self.host, self.port, self.db_name
+        ))
+    }
+}
+
 impl Default for ResultsCache {
     fn default() -> Self {
         Self {
@@ -487,6 +499,37 @@ impl Default for Telemetry {
         Self {
             disable: false,
             endpoint: "https://telemetry.yscope.io".to_owned(),
+        }
+    }
+}
+
+/// Query coordinator configuration.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(default)]
+pub struct QueryCoordinator {
+    pub resource_group: SpiderResourceGroup,
+    pub job_polling_interval_millisecs: NonZeroU64,
+    pub max_concurrent_jobs: NonZeroUsize,
+    pub result_polling: PollingBackoff,
+}
+
+impl Default for QueryCoordinator {
+    fn default() -> Self {
+        Self {
+            resource_group: SpiderResourceGroup {
+                name: NonEmptyString::new("query-coordinator".to_owned())
+                    .expect("default resource group name should not be empty"),
+            },
+            job_polling_interval_millisecs: NonZeroU64::new(100)
+                .expect("default jobs poll delay should not be zero"),
+            max_concurrent_jobs: NonZeroUsize::new(1000)
+                .expect("default maximum number of concurrent jobs should not be zero"),
+            result_polling: PollingBackoff {
+                init_backoff_millisecs: NonZeroU64::new(100)
+                    .expect("default result polling init backoff should not be zero"),
+                max_backoff_millisecs: NonZeroU64::new(1000)
+                    .expect("default result polling max backoff should not be zero"),
+            },
         }
     }
 }
