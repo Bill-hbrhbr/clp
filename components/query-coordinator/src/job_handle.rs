@@ -21,6 +21,7 @@ use sqlx::MySqlPool;
 use sqlx::Transaction;
 
 use crate::Error;
+use crate::archive_selection::ArchiveSelectionOptions;
 use crate::query_job_submitter::ArchiveMetadata;
 use crate::query_job_submitter::QueryJobOutcome;
 use crate::query_job_submitter::QueryJobSubmitter;
@@ -34,6 +35,7 @@ pub struct SpiderOption {
 pub struct QueryJobHandleContext {
     pub db_pool: MySqlPool,
     pub db_config: Database,
+    pub archive_selection_options: ArchiveSelectionOptions,
     pub spider_option: SpiderOption,
 }
 
@@ -47,7 +49,7 @@ pub struct QueryJobHandle<SubmitterType: QueryJobSubmitter> {
     query_job_id: QueryJobId,
     job_submitter: SubmitterType,
     resource_group_id: ResourceGroupId,
-    _search_job_config: SearchJobConfig,
+    search_job_config: SearchJobConfig,
     clp_s_query_option: ClpSQueryOption,
     output_handle: OutputHandle,
 }
@@ -90,7 +92,7 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
             query_job_id,
             job_submitter,
             resource_group_id,
-            _search_job_config: search_job_config,
+            search_job_config,
             clp_s_query_option,
             output_handle,
         })
@@ -215,9 +217,19 @@ impl<SubmitterType: QueryJobSubmitter> QueryJobHandle<SubmitterType> {
     ///
     /// # Errors
     ///
-    /// Returns an error if archive input preparation fails.
+    /// Returns an error if:
+    ///
+    /// * Forwards [`ArchiveSelectionOptions::prepare_task_inputs`]'s return values on failure.
     async fn plan(&self) -> Result<Vec<(ArchiveMetadata, ExecutionPolicy)>, Error> {
-        todo!("prepare query task inputs")
+        self.context
+            .archive_selection_options
+            .prepare_task_inputs(
+                &self.context.db_pool,
+                &self.context.db_config,
+                self.query_job_id,
+                &self.search_job_config,
+            )
+            .await
     }
 
     /// Persists the Spider job ID and marks the query job as running.
