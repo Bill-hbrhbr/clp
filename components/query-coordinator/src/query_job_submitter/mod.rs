@@ -1,22 +1,24 @@
-//! The query job submission interface.
+//! The query-job submission interface.
 
 mod spider;
 
 use std::time::Duration;
 
 use async_trait::async_trait;
-use clp_rust_utils::job_config::ArchiveId;
 use clp_rust_utils::job_config::QueryJobId;
 use clp_rust_utils::task_io::query::ClpSQueryOption;
 use clp_rust_utils::task_io::query::OutputHandle;
+use clp_rust_utils::types::ArchiveId;
 use non_empty_string::NonEmptyString;
+use serde::Deserialize;
+use serde::Serialize;
 use spider_core::task::ExecutionPolicy;
 use spider_core::types::id::JobId;
 use spider_core::types::id::ResourceGroupId;
 
 use crate::Error;
 
-/// Identifies an archive handled by query tasks.
+/// Metadata for an archive handled by query tasks.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ArchiveMetadata {
     /// The archive's ID.
@@ -27,25 +29,28 @@ pub struct ArchiveMetadata {
 
     /// The archive's compressed size in bytes.
     pub size: u64,
+
+    /// The archive's end timestamp in Unix epoch milliseconds.
+    pub end_timestamp: i64,
 }
 
 /// The terminal outcome of a query job.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum QueryJobOutcome {
-    /// Every archive query completed successfully.
+    /// The job completed successfully.
     Succeeded,
 
-    /// At least one archive query failed.
-    Failed {
-        /// The error reported by Spider.
-        error_message: String,
-    },
+    /// The job failed with the given error.
+    Failed { error_message: String },
+
+    /// The job was cancelled before reaching completion.
+    Cancelled,
 }
 
 /// Drives CLP query jobs on a Spider (Huntsman) cluster.
 #[async_trait]
 pub trait QueryJobSubmitter: Clone + Send + Sync {
-    /// Builds the query task graph for the given archives and registers it with Spider, without
+    /// Builds the query task graph for `archives_to_search` and registers it with Spider, without
     /// starting it.
     ///
     /// # Parameters
@@ -55,7 +60,7 @@ pub trait QueryJobSubmitter: Clone + Send + Sync {
     /// * `clp_s_query_option` - `clp-s` query options shared by every task in the job.
     /// * `output_handle` - The output handle selecting how the query outputs are returned.
     /// * `archives_to_search` - The archives to search, each represents a query task paired with
-    ///   the task execution policy.
+    ///   its execution policy.
     ///
     /// # Returns
     ///
@@ -73,17 +78,20 @@ pub trait QueryJobSubmitter: Clone + Send + Sync {
         archives_to_search: Vec<(ArchiveMetadata, ExecutionPolicy)>,
     ) -> Result<JobId, Error>;
 
-    /// Idempotently starts `spider_job_id` and waits for it to reach a terminal state.
+    /// Idempotently starts the job identified by `spider_job_id` (only if it hasn't already been
+    /// started) and waits until it reaches a terminal state.
+    ///
+    /// Safe to call regardless of whether the job is not-yet-started, already running, or already
+    /// terminal.
     ///
     /// # Parameters
     ///
-    /// * `spider_job_id` - The ID of the Spider job to start and monitor.
-    /// * `initial_poll_backoff` - The initial delay after a non-terminal job-state poll.
-    /// * `max_poll_backoff` - The maximum delay between job-state polls.
+    /// * `spider_job_id` - The job to start (if needed) and wait on.
+    /// * `poll_interval` - The delay after each non-terminal job-state poll.
     ///
     /// # Returns
     ///
-    /// The terminal query job outcome on success.
+    /// The job's terminal outcome on success.
     ///
     /// # Errors
     ///
@@ -91,7 +99,6 @@ pub trait QueryJobSubmitter: Clone + Send + Sync {
     async fn run_query_job_to_completion(
         &self,
         spider_job_id: JobId,
-        initial_poll_backoff: Duration,
-        max_poll_backoff: Duration,
+        poll_interval: Duration,
     ) -> Result<QueryJobOutcome, Error>;
 }

@@ -10,6 +10,8 @@ use serde::Deserialize;
 use crate::clp_config::AwsAuthentication;
 use crate::clp_config::S3Config;
 use crate::dataset::resolve_dataset_name;
+use crate::types::ArchiveId;
+use crate::types::non_empty_string::ExpectedNonEmpty;
 
 /// Mirror of `clp_py_utils.clp_config.ClpConfig`.
 ///
@@ -280,6 +282,17 @@ pub struct ResultsCache {
     pub db_name: String,
 }
 
+impl ResultsCache {
+    /// Returns the MongoDB URI for the results cache database.
+    #[must_use]
+    pub fn uri(&self) -> NonEmptyString {
+        NonEmptyString::from_string(format!(
+            "mongodb://{}:{}/{}",
+            self.host, self.port, self.db_name
+        ))
+    }
+}
+
 impl Default for ResultsCache {
     fn default() -> Self {
         Self {
@@ -388,12 +401,21 @@ impl ArchiveOutput {
     ///
     /// The dataset's archive storage directory joined with `archive_id`, where a `None` dataset
     /// resolves to `default`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the derived object key is empty. This should never happen since the key always
+    /// contains at least the `/` separator.
     #[must_use]
-    pub fn dataset_archive_object_key(&self, dataset: Option<&str>, archive_id: &str) -> String {
-        format!(
+    pub fn dataset_archive_object_key(
+        &self,
+        dataset: Option<&str>,
+        archive_id: &ArchiveId,
+    ) -> NonEmptyString {
+        NonEmptyString::from_string(format!(
             "{}/{archive_id}",
             self.dataset_archive_storage_directory(dataset)
-        )
+        ))
     }
 }
 
@@ -487,6 +509,46 @@ impl Default for Telemetry {
         Self {
             disable: false,
             endpoint: "https://telemetry.yscope.io".to_owned(),
+        }
+    }
+}
+
+/// Query coordinator configuration.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(default)]
+pub struct QueryCoordinator {
+    pub resource_group: SpiderResourceGroup,
+    pub job_polling_interval_millisecs: NonZeroU64,
+    pub max_concurrent_jobs: NonZeroUsize,
+    pub result_polling_interval_millisecs: NonZeroU64,
+    pub max_datasets_per_query: Option<NonZeroUsize>,
+    pub query_task_max_retry: u32,
+    pub query_task_soft_timeout_secs: NonZeroU64,
+    pub query_task_hard_timeout_secs: NonZeroU64,
+}
+
+impl Default for QueryCoordinator {
+    fn default() -> Self {
+        Self {
+            resource_group: SpiderResourceGroup {
+                name: NonEmptyString::new("query-coordinator".to_owned())
+                    .expect("default resource group name should not be empty"),
+            },
+            job_polling_interval_millisecs: NonZeroU64::new(100)
+                .expect("default jobs poll delay should not be zero"),
+            max_concurrent_jobs: NonZeroUsize::new(1000)
+                .expect("default maximum number of concurrent jobs should not be zero"),
+            result_polling_interval_millisecs: NonZeroU64::new(100)
+                .expect("default result polling interval should not be zero"),
+            max_datasets_per_query: Some(
+                NonZeroUsize::new(10)
+                    .expect("default maximum number of datasets per query should not be zero"),
+            ),
+            query_task_max_retry: 1,
+            query_task_soft_timeout_secs: NonZeroU64::new(600)
+                .expect("default query task soft timeout should not be zero"),
+            query_task_hard_timeout_secs: NonZeroU64::new(1200)
+                .expect("default query task hard timeout should not be zero"),
         }
     }
 }
@@ -719,8 +781,12 @@ mod tests {
 
         use crate::clp_config::AwsAuthentication;
         use crate::clp_config::S3Config;
+        use crate::types::ArchiveId;
         use crate::types::non_empty_string::ExpectedNonEmpty;
 
+        const ARCHIVE_ID: &str = "018e90e5-8b2a-4a61-a2fc-cac799936caf";
+
+        let archive_id = ArchiveId::try_from(ARCHIVE_ID).expect("valid archive UUID");
         let archive_output = ArchiveOutput {
             storage: ArchiveOutputStorage::S3 {
                 staging_directory: "var/data/staged-archives".to_owned(),
@@ -736,12 +802,16 @@ mod tests {
         };
 
         assert_eq!(
-            archive_output.dataset_archive_object_key(None, "abc"),
-            "LIB1/default/abc"
+            archive_output
+                .dataset_archive_object_key(None, &archive_id)
+                .as_str(),
+            format!("LIB1/default/{ARCHIVE_ID}")
         );
         assert_eq!(
-            archive_output.dataset_archive_object_key(Some("mydataset"), "abc"),
-            "LIB1/mydataset/abc"
+            archive_output
+                .dataset_archive_object_key(Some("mydataset"), &archive_id)
+                .as_str(),
+            format!("LIB1/mydataset/{ARCHIVE_ID}")
         );
     }
 
